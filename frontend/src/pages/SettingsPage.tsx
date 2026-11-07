@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { toast } from 'sonner';
 import {
   Palette,
   Globe,
@@ -17,6 +18,11 @@ import {
   Search,
   Brain,
   RefreshCw,
+  Server,
+  Package,
+  Plus,
+  X,
+  Terminal,
 } from 'lucide-react';
 import { useAppStore, type ThemeMode } from '../lib/store';
 import {
@@ -33,8 +39,15 @@ import {
   deleteToolCredential,
   isTauri,
   fetchOllamaModels,
+  fetchMcpServers,
+  addMcpServer,
+  deleteMcpServer,
+  fetchPlugins,
+  reloadPlugins,
   type InferenceSource,
   type MemoryStats,
+  type McpServerConfig,
+  type PluginInfo,
 } from '../lib/api';
 import { isAutoUpdateDisabled, setAutoUpdateDisabled } from '../components/Desktop/UpdateChecker';
 
@@ -276,6 +289,361 @@ export function MemoryStatusRow({
         )}
       </div>
     </SettingRow>
+  );
+}
+
+function McpServersSection() {
+  const [servers, setServers] = useState<McpServerConfig[]>([]);
+  const [plugins, setPlugins] = useState<PluginInfo[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [serverName, setServerName] = useState('');
+  const [serverType, setServerType] = useState<'command' | 'url'>('command');
+  const [commandStr, setCommandStr] = useState('');
+  const [urlStr, setUrlStr] = useState('');
+  const [argsStr, setArgsStr] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [reloading, setReloading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const loadData = useCallback(async () => {
+    try {
+      const [srvRes, plugRes] = await Promise.all([
+        fetchMcpServers().catch(() => ({ servers: [], count: 0 })),
+        fetchPlugins().catch(() => ({ plugins: [], count: 0 })),
+      ]);
+      setServers(srvRes.servers || []);
+      setPlugins(plugRes.plugins || []);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
+
+  const handleAddServer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!serverName.trim()) {
+      setErrorMsg('Server name is required');
+      return;
+    }
+    setErrorMsg('');
+    setSubmitting(true);
+    try {
+      const args = argsStr.trim() ? argsStr.trim().split(/\s+/) : [];
+      const res = await addMcpServer({
+        name: serverName.trim(),
+        command: serverType === 'command' ? commandStr.trim() : undefined,
+        url: serverType === 'url' ? urlStr.trim() : undefined,
+        args: serverType === 'command' && args.length > 0 ? args : undefined,
+        enabled: true,
+      });
+      if (res.error) {
+        toast.error(`Added server, but connection note: ${res.error}`);
+      } else {
+        toast.success(`Connected MCP server '${serverName.trim()}' (${res.count} tools discovered)`);
+      }
+      setShowAddForm(false);
+      setServerName('');
+      setCommandStr('');
+      setUrlStr('');
+      setArgsStr('');
+      await loadData();
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to add MCP server');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteServer = async (name: string) => {
+    try {
+      await deleteMcpServer(name);
+      toast.success(`Removed MCP server '${name}'`);
+      setServers((prev) => prev.filter((s) => s.name !== name));
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to remove MCP server');
+    }
+  };
+
+  const handleReloadPlugins = async () => {
+    setReloading(true);
+    try {
+      const res = await reloadPlugins();
+      setPlugins(res.plugins || []);
+      toast.success(`Loaded ${res.count} plugin${res.count === 1 ? '' : 's'}`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to reload plugins');
+    } finally {
+      setReloading(false);
+    }
+  };
+
+  return (
+    <Section title="MCP Servers & Plugins">
+      {/* Configured MCP Servers */}
+      <SettingRow
+        label="MCP Servers"
+        description="Connect Model Context Protocol servers to grant tools directly to agents"
+      >
+        <button
+          type="button"
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+          style={{
+            background: showAddForm ? 'var(--color-bg-tertiary)' : 'var(--color-accent)',
+            color: showAddForm ? 'var(--color-text)' : 'white',
+          }}
+        >
+          {showAddForm ? <X size={14} /> : <Plus size={14} />}
+          {showAddForm ? 'Cancel' : 'Add Server'}
+        </button>
+      </SettingRow>
+
+      {/* Add Server Inline Form */}
+      {showAddForm && (
+        <form
+          onSubmit={handleAddServer}
+          className="p-4 rounded-xl flex flex-col gap-3 my-2"
+          style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}
+        >
+          <div className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
+            Add New MCP Server
+          </div>
+          {errorMsg && (
+            <div className="text-xs text-red-400 p-2 rounded" style={{ background: 'rgba(239, 68, 68, 0.1)' }}>
+              {errorMsg}
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] mb-1" style={{ color: 'var(--color-text-secondary)' }}>Server Name</label>
+              <input
+                type="text"
+                placeholder="e.g. filesystem, github, weather"
+                value={serverName}
+                onChange={(e) => setServerName(e.target.value)}
+                required
+                className="w-full text-xs px-3 py-2 rounded-lg outline-none"
+                style={{ background: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] mb-1" style={{ color: 'var(--color-text-secondary)' }}>Transport Type</label>
+              <select
+                value={serverType}
+                onChange={(e) => setServerType(e.target.value as any)}
+                className="w-full text-xs px-3 py-2 rounded-lg outline-none"
+                style={{ background: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
+              >
+                <option value="command">Stdio (Local Command / npx)</option>
+                <option value="url">HTTP / SSE Endpoint</option>
+              </select>
+            </div>
+          </div>
+
+          {serverType === 'command' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] mb-1" style={{ color: 'var(--color-text-secondary)' }}>Command</label>
+                <input
+                  type="text"
+                  placeholder="e.g. npx, uvx, python"
+                  value={commandStr}
+                  onChange={(e) => setCommandStr(e.target.value)}
+                  required
+                  className="w-full text-xs px-3 py-2 rounded-lg outline-none font-mono"
+                  style={{ background: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] mb-1" style={{ color: 'var(--color-text-secondary)' }}>Arguments (space separated)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. -y @modelcontextprotocol/server-filesystem ./workspace"
+                  value={argsStr}
+                  onChange={(e) => setArgsStr(e.target.value)}
+                  className="w-full text-xs px-3 py-2 rounded-lg outline-none font-mono"
+                  style={{ background: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-[11px] mb-1" style={{ color: 'var(--color-text-secondary)' }}>Server URL</label>
+              <input
+                type="url"
+                placeholder="https://... or http://localhost:8000/sse"
+                value={urlStr}
+                onChange={(e) => setUrlStr(e.target.value)}
+                required
+                className="w-full text-xs px-3 py-2 rounded-lg outline-none font-mono"
+                style={{ background: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
+              />
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 mt-1">
+            <button
+              type="button"
+              onClick={() => setShowAddForm(false)}
+              className="px-3 py-1.5 rounded-lg text-xs cursor-pointer"
+              style={{ background: 'transparent', color: 'var(--color-text-secondary)' }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-opacity disabled:opacity-50"
+              style={{ background: 'var(--color-accent)', color: 'white' }}
+            >
+              {submitting ? 'Connecting...' : 'Connect & Save'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Server Cards List */}
+      <div className="flex flex-col gap-2 my-2">
+        {servers.length === 0 ? (
+          <div className="text-xs py-2 px-3 rounded-lg" style={{ background: 'var(--color-bg-secondary)', color: 'var(--color-text-tertiary)' }}>
+            No MCP servers configured yet. Click "Add Server" to connect filesystem, database, or external tool servers.
+          </div>
+        ) : (
+          servers.map((s) => (
+            <div
+              key={s.name}
+              className="p-3 rounded-xl flex items-center justify-between gap-3 text-xs"
+              style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}
+            >
+              <div className="flex flex-col gap-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>
+                    {s.name}
+                  </span>
+                  <span
+                    className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full"
+                    style={{
+                      background: s.connected ? 'rgba(34, 197, 94, 0.15)' : 'var(--color-bg-tertiary)',
+                      color: s.connected ? 'var(--color-success)' : 'var(--color-text-tertiary)',
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: s.connected ? 'var(--color-success)' : 'var(--color-text-tertiary)',
+                      }}
+                    />
+                    {s.connected ? 'Connected' : 'Configured'}
+                  </span>
+                  {s.command && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded font-mono" style={{ background: 'var(--color-surface)', color: 'var(--color-text-secondary)' }}>
+                      stdio: {s.command} {s.args ? s.args.join(' ') : ''}
+                    </span>
+                  )}
+                  {s.url && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded font-mono" style={{ background: 'var(--color-surface)', color: 'var(--color-text-secondary)' }}>
+                      sse: {s.url}
+                    </span>
+                  )}
+                </div>
+                {s.tools && s.tools.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    <span className="text-[10px]" style={{ color: 'var(--color-text-tertiary)' }}>Tools:</span>
+                    {s.tools.map((t) => (
+                      <span
+                        key={t}
+                        className="px-1.5 py-0.5 rounded text-[10px] font-mono"
+                        style={{ background: 'var(--color-surface)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => handleDeleteServer(s.name)}
+                className="p-1.5 rounded-lg transition-colors hover:text-red-400 cursor-pointer shrink-0"
+                style={{ color: 'var(--color-text-tertiary)' }}
+                title="Remove server"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Plugins Section */}
+      <SettingRow
+        label="Installed Plugins"
+        description="Local plugins loaded from plugins/ or ~/.nivos/plugins"
+      >
+        <button
+          type="button"
+          onClick={handleReloadPlugins}
+          disabled={reloading}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+          style={{ background: 'var(--color-bg-secondary)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
+        >
+          <RefreshCw size={12} className={reloading ? 'animate-spin' : ''} />
+          {reloading ? 'Reloading...' : 'Reload Plugins'}
+        </button>
+      </SettingRow>
+
+      <div className="flex flex-col gap-2 my-2">
+        {plugins.length === 0 ? (
+          <div className="text-xs py-2 px-3 rounded-lg" style={{ background: 'var(--color-bg-secondary)', color: 'var(--color-text-tertiary)' }}>
+            No external plugins discovered. Plugins placed in the <code className="font-mono">plugins/</code> folder are auto-loaded here.
+          </div>
+        ) : (
+          plugins.map((p) => (
+            <div
+              key={p.name}
+              className="p-3 rounded-xl flex items-center justify-between gap-3 text-xs"
+              style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}
+            >
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>
+                    {p.name}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded font-mono" style={{ background: 'var(--color-surface)', color: 'var(--color-text-secondary)' }}>
+                    v{p.version}
+                  </span>
+                  {p.error && (
+                    <span className="text-[10px] text-red-400">({p.error})</span>
+                  )}
+                </div>
+                {p.description && (
+                  <p className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
+                    {p.description}
+                  </p>
+                )}
+                {p.tools && p.tools.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-0.5">
+                    <span className="text-[10px]" style={{ color: 'var(--color-text-tertiary)' }}>Provided tools:</span>
+                    {p.tools.map((t) => (
+                      <span
+                        key={t}
+                        className="px-1.5 py-0.5 rounded text-[10px] font-mono"
+                        style={{ background: 'var(--color-surface)', color: 'var(--color-text-secondary)' }}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </Section>
   );
 }
 
@@ -658,6 +1026,9 @@ export function SettingsPage() {
               <ApiKeyInput keyName="TAVILY_API_KEY" placeholder="tvly-..." toolName="web_search" />
             </SettingRow>
           </Section>
+
+          {/* MCP Servers & Plugins */}
+          <McpServersSection />
 
           {/* Memory */}
           <Section title="Memory">

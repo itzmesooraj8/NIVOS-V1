@@ -1249,3 +1249,74 @@ export async function deleteWorkspaceFile(path: string): Promise<void> {
   });
   if (!res.ok) throw new Error(`Failed to delete workspace file: ${res.status}`);
 }
+
+export interface McpServerConfig {
+  name: string;
+  command?: string;
+  args?: string[];
+  url?: string;
+  token?: string;
+  env?: Record<string, string>;
+  enabled?: boolean;
+  connected?: boolean;
+  tools?: string[];
+  tool_count?: number;
+}
+
+export interface PluginInfo {
+  name: string;
+  version: string;
+  description: string;
+  author?: string;
+  entrypoint?: string;
+  tools: string[];
+  skills: string[];
+  mcp_servers: any[];
+  enabled: boolean;
+  path: string;
+  error?: string | null;
+}
+
+export async function fetchMcpServers(): Promise<{ servers: McpServerConfig[]; count: number }> {
+  const res = await apiFetch('/v1/mcp/servers');
+  if (!res.ok) throw new Error(`Failed to list MCP servers: ${res.status}`);
+  return res.json();
+}
+
+export async function addMcpServer(server: McpServerConfig): Promise<{
+  success: boolean;
+  name: string;
+  discovered_tools: string[];
+  count: number;
+  error?: string | null;
+}> {
+  const res = await apiFetch('/v1/mcp/servers', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(server),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to add MCP server: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function deleteMcpServer(name: string): Promise<void> {
+  const res = await apiFetch(`/v1/mcp/servers/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error(`Failed to delete MCP server: ${res.status}`);
+}
+
+export async function fetchPlugins(): Promise<{ plugins: PluginInfo[]; count: number }> {
+  const res = await apiFetch('/v1/plugins');
+  if (!res.ok) throw new Error(`Failed to list plugins: ${res.status}`);
+  return res.json();
+}
+
+export async function reloadPlugins(): Promise<{ plugins: PluginInfo[]; count: number }> {
+  const res = await apiFetch('/v1/plugins/reload', { method: 'POST' });
+  if (!res.ok) throw new Error(`Failed to reload plugins: ${res.status}`);
+  return res.json();
+}

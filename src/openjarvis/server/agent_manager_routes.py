@@ -394,7 +394,7 @@ def build_tools_list() -> List[Dict[str, Any]]:
         # the property descriptor and crashed on spec.description,
         # silently dropping every real tool from the picker.
         try:
-            tool_instance = tool_cls()
+            tool_instance = tool_cls() if isinstance(tool_cls, type) else tool_cls
             spec = tool_instance.spec
         except Exception as exc:
             logger.debug("Could not instantiate tool %s: %s", name, exc)
