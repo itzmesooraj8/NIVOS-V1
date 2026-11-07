@@ -219,3 +219,4 @@ async def reload_plugins() -> Dict[str, Any]:
     loader = get_plugin_loader()
     plugins = loader.discover_plugins()
     return {"plugins": [p.to_dict() for p in plugins], "count": len(plugins)}
+

@@ -74,3 +74,4 @@ def test_list_plugins_endpoint(mcp_test_client):
     resp = client.get("/v1/plugins")
     assert resp.status_code == 200
     assert "plugins" in resp.json()
+

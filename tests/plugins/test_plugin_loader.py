@@ -90,3 +90,4 @@ TOOLS = [DynamicPluginTool()]
     assert p.name == "py-plugin"
     assert "dynamic_plugin_tool" in p.tools
     assert ToolRegistry.contains("dynamic_plugin_tool")
+

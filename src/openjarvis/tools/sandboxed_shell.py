@@ -242,3 +242,4 @@ class SandboxedShellTool(BaseTool):
                 content=f"Execution failed: {exc}",
                 success=False,
             )
+

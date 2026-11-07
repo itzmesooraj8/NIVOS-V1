@@ -98,3 +98,4 @@ def test_list_and_delete_workspace_files(workspace_client):
     del_resp = client.delete("/v1/workspace/files?path=sub/file.txt")
     assert del_resp.status_code == 200
     assert not (ws_dir / "sub" / "file.txt").exists()
+

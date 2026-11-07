@@ -180,3 +180,4 @@ def get_plugin_loader() -> PluginLoader:
     if _default_loader is None:
         _default_loader = PluginLoader()
     return _default_loader
+
