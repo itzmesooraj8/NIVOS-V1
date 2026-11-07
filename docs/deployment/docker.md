@@ -1,6 +1,6 @@
 # Docker Deployment
 
-OpenJarvis provides Docker images for both CPU-only and GPU-accelerated deployments, along with a Docker Compose configuration that bundles the API server with an Ollama inference backend.
+Nivos provides Docker images for both CPU-only and GPU-accelerated deployments, along with a Docker Compose configuration that bundles the API server with an Ollama inference backend.
 
 ## Quick Start
 
@@ -10,7 +10,7 @@ refuses to start on a non-loopback address without one. Set it first:
 ```bash
 cd deploy/docker
 cp .env.example .env
-echo "OPENJARVIS_API_KEY=$(jarvis auth generate-key)" > .env   # or paste your own
+echo "OPENJARVIS_API_KEY=$(nivos auth generate-key)" > .env   # or paste your own
 ```
 
 Then start both the API server and an Ollama backend with Docker Compose:
@@ -27,7 +27,7 @@ This brings up two services:
 
 | Service  | Port  | Description                        |
 |----------|-------|------------------------------------|
-| `jarvis` | 8000  | OpenJarvis API server              |
+| `nivos` | 8000  | Nivos API server              |
 | `ollama` | 11434 | Ollama inference engine            |
 
 Verify the server is running:
@@ -71,7 +71,7 @@ WORKDIR /app
 
 EXPOSE 8000
 
-ENTRYPOINT ["jarvis"]
+ENTRYPOINT ["nivos"]
 CMD ["serve", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
@@ -117,7 +117,7 @@ WORKDIR /app
 
 EXPOSE 8000
 
-ENTRYPOINT ["jarvis"]
+ENTRYPOINT ["nivos"]
 CMD ["serve", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
@@ -138,7 +138,7 @@ docker run -d --gpus all -p 8000:8000 openjarvis:gpu
 
 ## Docker Compose Configuration
 
-The `docker-compose.yml` defines a complete deployment with the OpenJarvis API server and an Ollama backend:
+The `docker-compose.yml` defines a complete deployment with the Nivos API server and an Ollama backend:
 
 ```yaml
 version: "3.9"
@@ -171,7 +171,7 @@ volumes:
 
 ### Environment Variables
 
-The `jarvis` service is configured through environment variables:
+The `nivos` service is configured through environment variables:
 
 | Variable                      | Description                                             | Default                    |
 |-------------------------------|---------------------------------------------------------|----------------------------|
@@ -184,7 +184,7 @@ The `ollama-models` named volume persists downloaded models across container res
 
 ### Service Dependencies
 
-The `jarvis` service declares `depends_on: ollama`, ensuring the Ollama container starts before the API server. Both services use `restart: unless-stopped` to automatically recover from crashes.
+The `nivos` service declares `depends_on: ollama`, ensuring the Ollama container starts before the API server. Both services use `restart: unless-stopped` to automatically recover from crashes.
 
 ## Custom Configuration
 
@@ -212,7 +212,7 @@ services:
 
 ### Persisting Data
 
-To persist telemetry data, memory databases, and trace records across container restarts, mount the entire OpenJarvis data directory:
+To persist telemetry data, memory databases, and trace records across container restarts, mount the entire Nivos data directory:
 
 ```yaml
 services:
@@ -307,7 +307,7 @@ RUN pip install --no-cache-dir uv && \
 
 ### Overriding the Default Command
 
-The entrypoint is `jarvis` and the default command is `serve --host 0.0.0.0 --port 8000`. Override the command to change server options:
+The entrypoint is `nivos` and the default command is `serve --host 0.0.0.0 --port 8000`. Override the command to change server options:
 
 ```bash
 docker run -d -p 9000:9000 openjarvis:latest \
@@ -325,7 +325,7 @@ services:
       - "9000:9000"
 ```
 
-### Available CLI Options for `jarvis serve`
+### Available CLI Options for `nivos serve`
 
 | Option               | Description                                         |
 |----------------------|-----------------------------------------------------|

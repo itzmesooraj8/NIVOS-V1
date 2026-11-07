@@ -1,6 +1,6 @@
 # Telemetry & Traces
 
-OpenJarvis has two complementary observability systems: **telemetry** for per-inference metrics and **traces** for full interaction-level recording. Together, they provide comprehensive insight into system behavior and power the learning system's routing policy updates.
+Nivos has two complementary observability systems: **telemetry** for per-inference metrics and **traces** for full interaction-level recording. Together, they provide comprehensive insight into system behavior and power the learning system's routing policy updates.
 
 ---
 
@@ -154,18 +154,18 @@ All query methods accept optional `since` and `until` parameters (Unix timestamp
 
 ```bash
 # Show aggregated statistics
-jarvis telemetry stats
-jarvis telemetry stats -n 5          # Top 5 models only
+nivos telemetry stats
+nivos telemetry stats -n 5          # Top 5 models only
 
 # Export records
-jarvis telemetry export              # JSON to stdout
-jarvis telemetry export -f csv       # CSV to stdout
-jarvis telemetry export -o data.json # JSON to file
-jarvis telemetry export -f csv -o metrics.csv
+nivos telemetry export              # JSON to stdout
+nivos telemetry export -f csv       # CSV to stdout
+nivos telemetry export -o data.json # JSON to file
+nivos telemetry export -f csv -o metrics.csv
 
 # Clear all records
-jarvis telemetry clear               # With confirmation prompt
-jarvis telemetry clear --yes         # Without confirmation
+nivos telemetry clear               # With confirmation prompt
+nivos telemetry clear --yes         # Without confirmation
 ```
 
 ---

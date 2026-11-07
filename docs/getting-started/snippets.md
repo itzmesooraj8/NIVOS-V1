@@ -1,11 +1,11 @@
 ---
 title: Code Snippets
-description: Copy-paste patterns for common OpenJarvis tasks
+description: Copy-paste patterns for common Nivos tasks
 ---
 
 # Code Snippets
 
-Ready-to-use patterns for the most common OpenJarvis tasks. Each snippet is self-contained and copy-pasteable.
+Ready-to-use patterns for the most common Nivos tasks. Each snippet is self-contained and copy-pasteable.
 
 ## Ask a Question (3 lines)
 
@@ -68,12 +68,12 @@ tools = ["web_search", "think", "file_read"]
 prompt = "Research the given topic and write a summary."
 ```
 
-Run with: `jarvis compose run research_assistant "quantum computing advances"`
+Run with: `nivos compose run research_assistant "quantum computing advances"`
 
 ## API Server (1 command)
 
 ```bash
-jarvis serve --port 8000 --engine ollama --model qwen3:8b
+nivos serve --port 8000 --engine ollama --model qwen3:8b
 ```
 
 Any OpenAI-compatible client works against this endpoint.

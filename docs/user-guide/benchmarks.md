@@ -4,7 +4,7 @@ The benchmarking framework measures inference engine performance with reproducib
 
 ## Overview
 
-OpenJarvis ships with two benchmarks:
+Nivos ships with two benchmarks:
 
 | Benchmark     | Registry Key   | Measures                                      |
 |---------------|----------------|-----------------------------------------------|
@@ -205,28 +205,28 @@ Each line in the JSONL output is a JSON object:
 
 ```bash
 # Run all benchmarks with default settings (10 samples)
-jarvis bench run
+nivos bench run
 
 # Run with more samples for better statistical accuracy
-jarvis bench run -n 50
+nivos bench run -n 50
 
 # Run only the latency benchmark
-jarvis bench run -b latency
+nivos bench run -b latency
 
 # Run only the throughput benchmark with 20 samples
-jarvis bench run -b throughput -n 20
+nivos bench run -b throughput -n 20
 
 # Specify model and engine
-jarvis bench run -m qwen3:8b -e ollama
+nivos bench run -m qwen3:8b -e ollama
 
 # Output JSON summary to stdout
-jarvis bench run --json
+nivos bench run --json
 
 # Write JSONL results to a file
-jarvis bench run -o results.jsonl
+nivos bench run -o results.jsonl
 
 # Combine options
-jarvis bench run -b latency -n 100 -m qwen3:8b --json -o latency.jsonl
+nivos bench run -b latency -n 100 -m qwen3:8b --json -o latency.jsonl
 ```
 
 | Option                     | Type   | Default | Description                              |
@@ -323,7 +323,7 @@ class ContextLengthBenchmark(BaseBenchmark):
 Once registered, your benchmark is available through the CLI:
 
 ```bash
-jarvis bench run -b context_length
+nivos bench run -b context_length
 ```
 
 And through the `BenchmarkSuite`:

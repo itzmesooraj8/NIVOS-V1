@@ -278,9 +278,9 @@ config.add_command(show_group, "show")
 
 @config.command("path")
 def show_path() -> None:
-    """Print the resolved OpenJarvis directories (home, config, cache).
+    """Print the resolved Nivos directories (home, config, cache).
 
-    All OpenJarvis state lives under a single root, resolved in priority
+    All Nivos state lives under a single root, resolved in priority
     order: ``$OPENJARVIS_HOME`` > ``$XDG_DATA_HOME/openjarvis`` >
     ``~/.openjarvis``. Use this to confirm where your data is stored after
     setting an override.

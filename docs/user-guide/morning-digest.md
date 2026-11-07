@@ -4,11 +4,11 @@ A personalized daily briefing that collects data from your connected services, s
 
 ## Quickstart (5 minutes)
 
-### 1. Install and set up OpenJarvis
+### 1. Install and set up Nivos
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis
+git clone https://github.com/nivos/nivos.git
+cd Nivos
 uv sync --extra dev
 ```
 
@@ -34,7 +34,7 @@ default_model = "qwen3.5:9b"
 enabled = true
 schedule = "0 6 * * *"          # 6 AM daily (cron syntax)
 timezone = "America/Los_Angeles"
-persona = "jarvis"
+persona = "nivos"
 honorific = "sir"               # or "ma'am", "boss", etc.
 tts_backend = "cartesia"        # or "openai"
 voice_id = "c8f7835e-28a3-4f0c-80d7-c1302ac62aae"  # Alistair (British male)
@@ -58,18 +58,18 @@ sources = ["weather", "hackernews", "news_rss"]
 
 ```bash
 # Google (one flow covers Gmail, Calendar, Tasks, Contacts, Drive)
-jarvis connect gdrive
+nivos connect gdrive
 # Paste: <client_id>:<client_secret> — browser opens automatically
 
 # Oura Ring (personal access token)
-jarvis connect oura
+nivos connect oura
 # Paste your token from https://cloud.ouraring.com/personal-access-tokens
 
 # Spotify
-jarvis connect spotify
+nivos connect spotify
 
 # Strava
-jarvis connect strava
+nivos connect strava
 ```
 
 For Weather, GitHub, and News — save credential files directly:
@@ -107,7 +107,7 @@ export OPENAI_API_KEY="sk-proj-..."
 ### 6. Run your first digest
 
 ```bash
-CARTESIA_API_KEY="sk_car_..." jarvis digest --fresh
+CARTESIA_API_KEY="sk_car_..." nivos digest --fresh
 ```
 
 The digest will:
@@ -119,13 +119,13 @@ The digest will:
 ## CLI Commands
 
 ```bash
-jarvis digest --fresh          # Generate a new digest now
-jarvis digest                  # Show today's cached digest
-jarvis digest --text-only      # Print text without audio
-jarvis digest --history        # Show past digests
-jarvis digest --schedule "0 6 * * *"   # Set daily schedule
-jarvis digest --schedule off   # Disable schedule
-jarvis digest --schedule       # Show current schedule
+nivos digest --fresh          # Generate a new digest now
+nivos digest                  # Show today's cached digest
+nivos digest --text-only      # Print text without audio
+nivos digest --history        # Show past digests
+nivos digest --schedule "0 6 * * *"   # Set daily schedule
+nivos digest --schedule off   # Disable schedule
+nivos digest --schedule       # Show current schedule
 ```
 
 ## Saying "Good morning"
@@ -166,7 +166,7 @@ The `sections` list controls what the digest covers, in order of priority:
 
 ### Persona
 
-The `persona` field loads a prompt file from `configs/openjarvis/prompts/personas/{name}.md`. The default `jarvis` persona delivers briefings with dry British wit, prioritizes urgent items, and interprets health data as trends rather than raw numbers.
+The `persona` field loads a prompt file from `configs/openjarvis/prompts/personas/{name}.md`. The default `nivos` persona delivers briefings with dry British wit, prioritizes urgent items, and interprets health data as trends rather than raw numbers.
 
 To create a custom persona, add a new `.md` file in the personas directory.
 
@@ -191,7 +191,7 @@ Add any RSS or Atom feed to `~/.openjarvis/connectors/news_rss.json`:
 The digest is also available via the FastAPI server:
 
 ```bash
-jarvis serve  # Start the server
+nivos serve  # Start the server
 
 # GET  /api/digest           — Get today's digest text
 # GET  /api/digest/audio     — Stream the digest audio (MP3)
@@ -207,9 +207,9 @@ The desktop and browser apps show an inline audio player when a digest is genera
 
 ## Troubleshooting
 
-**"No digest for today"** — Run `jarvis digest --fresh` to generate one.
+**"No digest for today"** — Run `nivos digest --fresh` to generate one.
 
-**Empty sections** — Check connector status with `jarvis connect --list`. Ensure tokens haven't expired (Google/Spotify tokens expire after 1 hour and are auto-refreshed on next use).
+**Empty sections** — Check connector status with `nivos connect --list`. Ensure tokens haven't expired (Google/Spotify tokens expire after 1 hour and are auto-refreshed on next use).
 
 **Weather not working** — OpenWeatherMap API keys can take up to 2 hours to activate after creation. Use the format `City,State,Country` (e.g., `Palo Alto,CA,US`).
 

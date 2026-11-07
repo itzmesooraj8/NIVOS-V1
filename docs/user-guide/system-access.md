@@ -99,9 +99,9 @@ What that translates to depends entirely on how you launched the agent:
 
 | Entry point | Behaviour |
 |-------------|-----------|
-| `jarvis chat` | Prompts before each call. |
-| `jarvis ask` | Auto-approves. |
-| `jarvis agent ask` | Auto-approves. Pass `--no-yes` if you want prompts. |
+| `nivos chat` | Prompts before each call. |
+| `nivos ask` | Auto-approves. |
+| `nivos agent ask` | Auto-approves. Pass `--no-yes` if you want prompts. |
 | HTTP server, desktop app | Auto-approves. Tools you added to an agent's toolkit count as pre-approved. |
 | Embedded via `SystemBuilder` | No callback is wired, so these tools fail closed. |
 
@@ -126,16 +126,16 @@ and Calendar all stay locked, and no config key will change that.
 Grant Full Disk Access to whichever process hosts the backend. Child processes
 inherit it:
 
-| How you run OpenJarvis | Grant access to |
+| How you run Nivos | Grant access to |
 |------------------------|-----------------|
-| CLI (`jarvis ask`, `jarvis chat`) | Your terminal (Terminal, iTerm, Warp) |
-| Desktop app | `OpenJarvis.app`, which spawns `jarvis serve` beneath it |
-| launchd (`deploy/launchd/com.openjarvis.plist`) | The `jarvis` binary, as its own entry |
+| CLI (`nivos ask`, `nivos chat`) | Your terminal (Terminal, iTerm, Warp) |
+| Desktop app | `Nivos.app`, which spawns `nivos serve` beneath it |
+| launchd (`deploy/launchd/com.openjarvis.plist`) | The `nivos` binary, as its own entry |
 
 System Settings, then Privacy & Security, then Full Disk Access, then **+**.
 
 A launchd daemon gets its own TCC context, so granting access to Terminal does
-nothing for it. Add `/usr/local/bin/jarvis` separately.
+nothing for it. Add `/usr/local/bin/nivos` separately.
 
 To check whether the grant took:
 
@@ -161,7 +161,7 @@ touch it.
 
 ## What you can't do
 
-There's no computer use. OpenJarvis can't see your screen, move the pointer or
+There's no computer use. Nivos can't see your screen, move the pointer or
 send keystrokes. No tool for it is registered and no input automation library
 appears anywhere in the codebase, so granting Accessibility or Screen Recording
 buys you nothing on its own.
@@ -209,4 +209,4 @@ For anything untrusted, reach for `docker_shell_exec` and
 - [Security](security.md) for scanners, the audit log and guardrails
 - [Tools](tools.md) for the full registry
 - [Code Assistant](code-assistant.md) for a narrower shell-enabled setup
-- [External MCP Servers](mcp-external-servers.md) for capabilities OpenJarvis doesn't ship
+- [External MCP Servers](mcp-external-servers.md) for capabilities Nivos doesn't ship

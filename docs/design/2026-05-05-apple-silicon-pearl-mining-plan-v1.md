@@ -4,7 +4,7 @@
 
 **Goal:** Implement the v1 `cpu-pearl` mining provider — decoupled CPU mining for Apple Silicon (and any non-CUDA host where Pearl's pure-Rust miner builds), wrapping upstream `pearl_mining.mine()` and Pearl's `pearl-gateway` as subprocess.
 
-**Architecture:** New provider `CpuPearlProvider` in `src/openjarvis/mining/cpu_pearl.py`, registered as `"cpu-pearl"` via `MinerRegistry`. The provider's `start()` launches two subprocesses: (1) Pearl's `pearl-gateway` Python service (talks to user's `pearld`), and (2) a small Python miner-loop that polls gateway for `getMiningInfo`, calls `pearl_mining.mine()`, and submits via `submitPlainProof`. Reuses Spec A's `MiningProvider` ABC, `MinerRegistry`, sidecar at `~/.openjarvis/runtime/mining.json`, telemetry adapter, and CLI surface (`jarvis mine init|start|stop|status|doctor`) — all unchanged.
+**Architecture:** New provider `CpuPearlProvider` in `src/openjarvis/mining/cpu_pearl.py`, registered as `"cpu-pearl"` via `MinerRegistry`. The provider's `start()` launches two subprocesses: (1) Pearl's `pearl-gateway` Python service (talks to user's `pearld`), and (2) a small Python miner-loop that polls gateway for `getMiningInfo`, calls `pearl_mining.mine()`, and submits via `submitPlainProof`. Reuses Spec A's `MiningProvider` ABC, `MinerRegistry`, sidecar at `~/.openjarvis/runtime/mining.json`, telemetry adapter, and CLI surface (`nivos mine init|start|stop|status|doctor`) — all unchanged.
 
 **Tech Stack:** Python 3.10+, `py-pearl-mining` (Rust+PyO3), `miner-base` (PyTorch), `pearl-gateway` (Python+JSON-RPC), `subprocess.Popen`, pytest with `unittest.mock`, ruff. References Pearl repo (`pearl-research-labs/pearl`) at a pinned commit/tag stored in `mining/_constants.py`.
 
@@ -1473,7 +1473,7 @@ Create `docs/user-guide/mining-apple-silicon.md`:
 ````markdown
 # Mining Pearl on Apple Silicon (and other CPU hosts)
 
-OpenJarvis can mine the [Pearl](https://github.com/pearl-research-labs/pearl) chain
+Nivos can mine the [Pearl](https://github.com/pearl-research-labs/pearl) chain
 on Apple Silicon Macs (M1/M2/M3/M4) using the `cpu-pearl` provider. **This is
 v1**: decoupled CPU mining. Your existing local LLM workflow (Ollama, MLX-LM,
 llama.cpp, vLLM) is untouched; mining runs in the background as a separate
@@ -1508,7 +1508,7 @@ plugin. v3 may add a native Metal kernel. **Neither is shipped today.**
 ## Install
 
 ```bash
-# from your OpenJarvis repo
+# from your Nivos repo
 uv sync --extra mining-pearl-cpu
 ```
 
@@ -1517,7 +1517,7 @@ will fail because none of the packages exist there. Until publication, build
 locally:
 
 ```bash
-jarvis mine init    # OJ will detect the missing wheels and offer to build
+nivos mine init    # OJ will detect the missing wheels and offer to build
                     # via the build-from-pin path; takes ~3-5 minutes on
                     # first run, mostly compiling Rust
 ```
@@ -1533,19 +1533,19 @@ jarvis mine init    # OJ will detect the missing wheels and offer to build
 
 ```bash
 # start mining
-jarvis mine start
+nivos mine start
 
 # check live status
-jarvis mine status
+nivos mine status
 
 # capability matrix (great when something goes wrong)
-jarvis mine doctor
+nivos mine doctor
 
 # stop mining
-jarvis mine stop
+nivos mine stop
 
 # tail logs
-jarvis mine logs -f
+nivos mine logs -f
 ```
 
 ## Reading `mine doctor`
@@ -1553,7 +1553,7 @@ jarvis mine logs -f
 Each row is one check. `✓` means the check passed; `✗` shows the actionable fix.
 
 ```
-$ jarvis mine doctor
+$ nivos mine doctor
 Hardware
   GPU vendor          apple                            ✓
   Apple chip          M2 Max                           ✓
@@ -1592,14 +1592,14 @@ Session
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `mine doctor` says `Pearl Python packages not installed` | Wheels not built yet | Run `jarvis mine init` |
+| `mine doctor` says `Pearl Python packages not installed` | Wheels not built yet | Run `nivos mine init` |
 | `pearl-gateway` log shows `connection refused` to `http://localhost:44107` | `pearld` not running | Start `pearld` per Pearl's README |
 | `mine status` shows `last_error: gateway metrics unreachable` | `pearl-gateway` crashed | Check `~/.openjarvis/logs/mining/pearl-gateway.log` |
 | Build fails with `error: linker 'cc' not found` | Xcode CLT not installed | `xcode-select --install` |
 | `maturin build` complains about `tikv-jemallocator` | macOS SDK too old | Update macOS / Xcode |
 
 For anything not on this list, capture `~/.openjarvis/logs/mining/` and open
-an issue at https://github.com/open-jarvis/OpenJarvis/issues.
+an issue at https://github.com/nivos/nivos/issues.
 
 ## What changes in v2 / v3
 

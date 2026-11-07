@@ -4,9 +4,9 @@
 |---|---|
 | **Date** | 2026-05-05 |
 | **Status** | Design — pending implementation plan |
-| **Owner** | OpenJarvis team |
+| **Owner** | Nivos team |
 | **Companion spec** | [Spec B — Apple Silicon enablement](2026-05-05-apple-silicon-pearl-mining-design.md) (separate effort, runs in parallel) |
-| **Repos referenced** | `OpenJarvis` (this repo), `pearl-research-labs/pearl` |
+| **Repos referenced** | `Nivos` (this repo), `pearl-research-labs/pearl` |
 
 ## 1. Summary
 
@@ -20,7 +20,7 @@ The narrative thesis: Pearl's `vllm-miner` is a vLLM plugin that swaps quantized
 - New `openjarvis.mining` subsystem with `MiningProvider` ABC, `MinerRegistry`, `MiningCapabilities` / `MiningConfig` / `MiningStats` dataclasses
 - `vllm-pearl` provider implementation: orchestrate Pearl's published `vllm-miner` Docker container
 - `[mining]` TOML section in OJ config; `MiningConfig` field in `JarvisConfig`
-- New CLI namespace: `jarvis mine init|start|stop|status|doctor|attach|logs`
+- New CLI namespace: `nivos mine init|start|stop|status|doctor|attach|logs`
 - Runtime sidecar at `~/.openjarvis/runtime/mining.json` for engine ↔ mining handoff
 - Hybrid Docker image acquisition: pull-if-published, otherwise build from a pinned Pearl ref
 - On-demand telemetry via Pearl gateway `:8339/metrics`; `mining_session_id` nullable column on telemetry inference rows
@@ -74,7 +74,7 @@ src/openjarvis/mining/
     pools/               # RESERVED for v2. Empty in v1 except for an __init__.py with a docstring saying so.
 
 src/openjarvis/cli/
-    mine_cmd.py          # jarvis mine init|start|stop|status|doctor|attach|logs
+    mine_cmd.py          # nivos mine init|start|stop|status|doctor|attach|logs
 
 tests/mining/
     __init__.py
@@ -238,16 +238,16 @@ Sidecar deliberately omits all secrets and process IDs. `container_id` is the au
 
 ### 5.4 Engine handoff flow
 
-1. `jarvis mine start` → `MinerRegistry.get("vllm-pearl").start(config)`.
+1. `nivos mine start` → `MinerRegistry.get("vllm-pearl").start(config)`.
 2. `VllmPearlProvider.start()` calls `_docker.PearlDockerLauncher.start(config)` and writes the sidecar.
 3. `engine/_discovery.py` checks for `mining.json` on every engine lookup. When present, it auto-registers a `vllm` engine instance pointing at `vllm_endpoint`, named `vllm-pearl-mining`, marked default for mining-aware operations.
-4. `jarvis ask` and the SDK route to that endpoint transparently. The user's normal inference is the mining work.
+4. `nivos ask` and the SDK route to that endpoint transparently. The user's normal inference is the mining work.
 
 The vLLM engine class itself (`engine/openai_compat_engines.py`) is **not modified**. The change to `engine/_discovery.py` is small and additive: it inspects for `mining.json` and registers a derived `vllm` instance pointing at the mining endpoint when the sidecar is present. Absent sidecar → unchanged discovery behavior.
 
 ### 5.5 Manual mode
 
-Power users running their own Pearl container skip `jarvis mine start` and write the sidecar themselves via `jarvis mine attach --vllm-endpoint=... --gateway-url=...`. Decouples lifecycle from wiring.
+Power users running their own Pearl container skip `nivos mine start` and write the sidecar themselves via `nivos mine attach --vllm-endpoint=... --gateway-url=...`. Decouples lifecycle from wiring.
 
 ## 6. CLI surface, lifecycle & daemon integration
 
@@ -255,18 +255,18 @@ Power users running their own Pearl container skip `jarvis mine start` and write
 
 | Command | Purpose |
 |---|---|
-| `jarvis mine init` | Interactive: hardware/Docker checks, prompt for wallet + pearld credentials, write `[mining]`, pull/build image. Does NOT start mining. Pre-checks `>=200 GB` free disk. |
-| `jarvis mine start` | Launch container via the registered provider, write sidecar, print endpoint info. Idempotent if running. |
-| `jarvis mine stop` | Stop container, remove sidecar. Idempotent if not running. |
-| `jarvis mine status` | Read sidecar + query gateway `:8339/metrics`. Print `MiningStats`. |
-| `jarvis mine doctor` | Capability matrix; every check ✓/✗ with reason. Works in any state. |
-| `jarvis mine attach` | Manual mode: write sidecar without launching. |
-| `jarvis mine logs [-f]` | Tail container logs through Docker SDK. |
+| `nivos mine init` | Interactive: hardware/Docker checks, prompt for wallet + pearld credentials, write `[mining]`, pull/build image. Does NOT start mining. Pre-checks `>=200 GB` free disk. |
+| `nivos mine start` | Launch container via the registered provider, write sidecar, print endpoint info. Idempotent if running. |
+| `nivos mine stop` | Stop container, remove sidecar. Idempotent if not running. |
+| `nivos mine status` | Read sidecar + query gateway `:8339/metrics`. Print `MiningStats`. |
+| `nivos mine doctor` | Capability matrix; every check ✓/✗ with reason. Works in any state. |
+| `nivos mine attach` | Manual mode: write sidecar without launching. |
+| `nivos mine logs [-f]` | Tail container logs through Docker SDK. |
 
 ### 6.2 Doctor output (canonical example)
 
 ```
-$ jarvis mine doctor
+$ nivos mine doctor
 Hardware
   GPU vendor          nvidia                           ✓
   Compute capability  sm_90a                           ✓
@@ -316,15 +316,15 @@ State derivation rules (no separate state file — derived from config + sidecar
 - Docker handles container restart via `--restart=unless-stopped`. OJ does not babysit.
 - Existing `com.openjarvis.gateway` daemon is unchanged.
 - v1.x hook: `MiningTelemetryCollector` (already shipped in v1, unwired) can be added to the gateway as a 30-second-tick async task.
-- launchd/systemd installation surface (`jarvis daemon install`) untouched.
+- launchd/systemd installation surface (`nivos daemon install`) untouched.
 
 ### 6.5 Concurrency
 
 POSIX `flock` on `~/.openjarvis/runtime/mining.lock` prevents racing `mine start` invocations.
 
-### 6.6 `jarvis ask` UX hint
+### 6.6 `nivos ask` UX hint
 
-When `[mining]` is configured but no sidecar exists, `cli/hints.py` emits one line: `"mining configured but not running — start it with \`jarvis mine start\`"`. One-line UX nudge, no new infrastructure.
+When `[mining]` is configured but no sidecar exists, `cli/hints.py` emits one line: `"mining configured but not running — start it with \`nivos mine start\`"`. One-line UX nudge, no new infrastructure.
 
 ## 7. Pearl Docker integration
 
@@ -404,7 +404,7 @@ container = client.containers.run(
 ### 7.5 Trade-offs called out
 
 - **`network_mode="host"`** because pearld's RPC at `http://localhost:44107` lives on the host. A user-defined Docker network adds setup steps with no real isolation benefit on a single-tenant miner box. Pragmatism > purity. Note: host networking has Linux semantics; macOS/Windows Docker handle it differently. Acceptable for v1 since H100/H200 + nvidia-container-toolkit constrains the deployment to Linux anyway.
-- **`auto_remove=False`** so a crashed container stays around for `jarvis mine logs` post-mortem.
+- **`auto_remove=False`** so a crashed container stays around for `nivos mine logs` post-mortem.
 - **HF cache mounted from host.** 140 GB weight download is one-time, survives container restarts, visible to other tools.
 - **Secrets via env-var names**, never persisted in the container image, the sidecar, or Docker labels.
 
@@ -414,9 +414,9 @@ OJ never sees Pearl mnemonic seeds, never imports Oyster keys, never signs Pearl
 
 ### 7.7 Image lifecycle UX
 
-- `jarvis mine init` triggers `ensure_image()`, streams build/pull output through the CLI with a clear time estimate (`"Building Pearl miner image — first run takes ~45 min on a fast machine"`).
-- `jarvis mine doctor` reports `image: present (tag, age, sha)` or `image: missing (run mine init)`.
-- `jarvis mine prune` (v1.x) cleans old `openjarvis/pearl-miner:*` tags. Manual `docker image rm` works in v1.
+- `nivos mine init` triggers `ensure_image()`, streams build/pull output through the CLI with a clear time estimate (`"Building Pearl miner image — first run takes ~45 min on a fast machine"`).
+- `nivos mine doctor` reports `image: present (tag, age, sha)` or `image: missing (run mine init)`.
+- `nivos mine prune` (v1.x) cleans old `openjarvis/pearl-miner:*` tags. Manual `docker image rm` works in v1.
 
 ## 8. Telemetry hooks & v2 fee/pool seams
 
@@ -440,7 +440,7 @@ Pearl's container exposes `:8339/metrics` (Prometheus exposition format). v1 rea
 
 ### 8.3 Collection cadence
 
-- **v1: on-demand only.** `jarvis mine status` makes one HTTP GET per call (~10 ms). No background polling.
+- **v1: on-demand only.** `nivos mine status` makes one HTTP GET per call (~10 ms). No background polling.
 - **v1.x: `MiningTelemetryCollector` lit up in the gateway daemon.** The class is shipped in v1 but unwired. v1.x adds a periodic asyncio task; same `MiningStats` schema, same gateway endpoint. Zero API churn.
 
 ### 8.4 Intelligence-Per-Watt extension
@@ -449,7 +449,7 @@ The `telemetry/store.py` schema gains a nullable `mining_session_id` column on i
 
 - Tagged when an inference goes through the Pearl-mining endpoint; null otherwise.
 - Untagged rows behave exactly as today — zero impact on the non-mining path.
-- `jarvis telemetry stats --mining` (v1.x) joins to the latest `MiningStats` snapshot and reports `tokens / share`, `joules / share`, `est. PRL / kWh`.
+- `nivos telemetry stats --mining` (v1.x) joins to the latest `MiningStats` snapshot and reports `tokens / share`, `joules / share`, `est. PRL / kWh`.
 
 v1 ships the column and the no-op join path. v1.x lights up the reporting. This is the metric the IPW thesis genuinely cares about.
 

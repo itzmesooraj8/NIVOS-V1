@@ -1,15 +1,15 @@
 ---
 title: Architecture Overview
-description: The five-primitive architecture behind OpenJarvis — Intelligence, Engine, Agents, Tools, and Learning
+description: The five-primitive architecture behind Nivos — Intelligence, Engine, Agents, Tools, and Learning
 search:
   boost: 2
 ---
 
 # Architecture Overview
 
-OpenJarvis is a research framework for studying on-device AI systems. Its architecture is organized around **five core abstractions** -- Intelligence, Engine, Agentic Logic, Memory, and Learning -- that work together through trace-driven feedback.
+Nivos is a research framework for studying on-device AI systems. Its architecture is organized around **five core abstractions** -- Intelligence, Engine, Agentic Logic, Memory, and Learning -- that work together through trace-driven feedback.
 
-![OpenJarvis Architecture](../assets/OpenJarvis_Architecture.png)
+![Nivos Architecture](../assets/Nivos_Architecture.png)
 
 ---
 
@@ -51,7 +51,7 @@ The learning system is configured through nested sub-sections in `config.toml`: 
 
 ## The Registry Pattern
 
-All extensible components in OpenJarvis use a **decorator-based registry** for runtime discovery. The pattern is implemented in `RegistryBase[T]`, a generic base class that provides isolated storage per typed subclass.
+All extensible components in Nivos use a **decorator-based registry** for runtime discovery. The pattern is implemented in `RegistryBase[T]`, a generic base class that provides isolated storage per typed subclass.
 
 ```python
 from openjarvis.core.registry import EngineRegistry
@@ -200,8 +200,8 @@ src/openjarvis/
         tools.py            MCP scheduler tools (schedule_task, list, pause, resume, cancel)
 
     cli/                CLI commands (Click-based)
-        ask.py              jarvis ask -- query the assistant
-        serve.py            jarvis serve -- start API server
+        ask.py              nivos ask -- query the assistant
+        serve.py            nivos serve -- start API server
 
     sdk.py              Jarvis class -- high-level Python SDK
     mcp/                MCP (Model Context Protocol) layer

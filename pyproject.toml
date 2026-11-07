@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "OpenJarvis"
 dynamic = ["version"]
-description = "OpenJarvis — modular AI assistant backend with composable intelligence primitives"
+description = "Nivos — modular AI assistant backend with composable intelligence primitives"
 readme = "README.md"
 # Upper bound: numpy 2.2.x (pinned transitively via datasets/pandas) ships no
 # cp314 Windows wheel, so under Python 3.14 uv would compile numpy from source
@@ -14,7 +14,7 @@ readme = "README.md"
 requires-python = ">=3.10,<3.14"
 license = {text = "Apache-2.0"}
 authors = [
-    {name = "Open Jarvis Contributors"},
+    {name = "Nivos Contributors"},
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -207,13 +207,13 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/open-jarvis/OpenJarvis"
-Documentation = "https://open-jarvis.github.io/OpenJarvis/"
-Repository = "https://github.com/open-jarvis/OpenJarvis"
-Issues = "https://github.com/open-jarvis/OpenJarvis/issues"
+Homepage = "https://github.com/nivos/nivos"
+Documentation = "https://nivos.github.io/nivos/"
+Repository = "https://github.com/nivos/nivos"
+Issues = "https://github.com/nivos/nivos/issues"
 
 [project.scripts]
-jarvis = "openjarvis.cli:main"
+nivos = "openjarvis.cli:main"
 openjarvis-eval = "openjarvis.evals.cli:main"
 
 # Version is derived from git tags by hatch-vcs (see #526). For source/editable

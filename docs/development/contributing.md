@@ -1,7 +1,7 @@
 # Contributing Guide
 
 This guide covers how to set up a development environment, run tests, and
-contribute code to OpenJarvis.
+contribute code to Nivos.
 
 ---
 
@@ -18,8 +18,8 @@ contribute code to OpenJarvis.
 ### Clone and Install
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis
+git clone https://github.com/nivos/nivos.git
+cd Nivos
 uv sync --extra dev
 ```
 
@@ -46,15 +46,15 @@ dependencies (pytest, ruff, respx, pytest-asyncio, pytest-cov).
 ### Verify Installation
 
 ```bash
-uv run jarvis --version   # Should print 0.1.0
-uv run jarvis --help      # Show all subcommands
+uv run nivos --version   # Should print 0.1.0
+uv run nivos --help      # Show all subcommands
 ```
 
 ---
 
 ## Running Tests
 
-OpenJarvis uses [pytest](https://docs.pytest.org/) with approximately 1,000+
+Nivos uses [pytest](https://docs.pytest.org/) with approximately 1,000+
 tests organized by module.
 
 ### Full Test Suite
@@ -125,7 +125,7 @@ uv run pytest tests/ -m "not cloud" -v   # Skip cloud tests
 
 ## Linting
 
-OpenJarvis uses [Ruff](https://docs.astral.sh/ruff/) for linting, configured
+Nivos uses [Ruff](https://docs.astral.sh/ruff/) for linting, configured
 in `pyproject.toml`:
 
 ```bash
@@ -259,13 +259,13 @@ src/openjarvis/
 
     cli/                        # Click CLI commands
         __init__.py             # main group
-        ask.py                  # jarvis ask
-        init_cmd.py             # jarvis init
-        model.py                # jarvis model list/info
-        memory_cmd.py           # jarvis memory index/search/stats
-        telemetry_cmd.py        # jarvis telemetry stats/export/clear
-        bench_cmd.py            # jarvis bench run
-        serve.py                # jarvis serve
+        ask.py                  # nivos ask
+        init_cmd.py             # nivos init
+        model.py                # nivos model list/info
+        memory_cmd.py           # nivos memory index/search/stats
+        telemetry_cmd.py        # nivos telemetry stats/export/clear
+        bench_cmd.py            # nivos bench run
+        serve.py                # nivos serve
 ```
 
 ---

@@ -1,12 +1,12 @@
-"""Bare-`jarvis` first-run guard.
+"""Bare-`nivos` first-run guard.
 
-When the user types ``jarvis`` with no subcommand, route them to the
+When the user types ``nivos`` with no subcommand, route them to the
 chat command if a config exists, otherwise into the init wizard with
 the ``--from-bare-jarvis`` flag (which lets init suppress the
 launch-chat prompt and auto-confirm downstream questions).
 
-On an interactive terminal, bare ``jarvis`` opens the model picker first
-(unless ``JARVIS_SKIP_MODEL_PICK=1``). Use ``jarvis --pick-model`` to
+On an interactive terminal, bare ``nivos`` opens the model picker first
+(unless ``NIVOS_SKIP_MODEL_PICK=1`` or ``JARVIS_SKIP_MODEL_PICK=1``). Use ``nivos --pick-model`` to
 force the picker even when that env is set.
 """
 

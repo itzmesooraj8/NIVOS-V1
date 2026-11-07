@@ -1,12 +1,12 @@
 # Design Principles
 
-OpenJarvis follows a set of design principles that guide every architectural decision. These principles ensure the framework remains extensible, portable, and easy to work with.
+Nivos follows a set of design principles that guide every architectural decision. These principles ensure the framework remains extensible, portable, and easy to work with.
 
 ---
 
 ## 1. Pluggable Everything
 
-Every major component in OpenJarvis is defined as an **abstract base class** (ABC) with concrete implementations registered at runtime. This means you can swap, extend, or replace any part of the system without modifying existing code.
+Every major component in Nivos is defined as an **abstract base class** (ABC) with concrete implementations registered at runtime. This means you can swap, extend, or replace any part of the system without modifying existing code.
 
 ```mermaid
 graph LR
@@ -83,7 +83,7 @@ The `RegistryBase[T]` generic base class provides:
 
 ## 3. Offline-First
 
-OpenJarvis is designed to work **entirely without network access**. All core functionality -- inference, memory, agents, tools, telemetry -- operates locally. Cloud APIs are optional extensions, never requirements.
+Nivos is designed to work **entirely without network access**. All core functionality -- inference, memory, agents, tools, telemetry -- operates locally. Cloud APIs are optional extensions, never requirements.
 
 | Feature | Offline Behavior |
 |---------|-----------------|
@@ -113,7 +113,7 @@ response = j.ask("Hello")
 
 ## 4. Hardware-Aware
 
-OpenJarvis **auto-detects system hardware** at startup and recommends the optimal inference engine. The `detect_hardware()` function probes:
+Nivos **auto-detects system hardware** at startup and recommends the optimal inference engine. The `detect_hardware()` function probes:
 
 | Hardware | Detection Method |
 |----------|-----------------|
@@ -134,10 +134,10 @@ The `recommend_engine()` function maps hardware to engines:
 | AMD datacenter (MI300, MI325, MI350, MI355) | `vllm` (high throughput) |
 | AMD consumer | `lemonade` (AMD GPU/NPU support) |
 
-This recommendation is written to `config.toml` during `jarvis init` and used as the default engine:
+This recommendation is written to `config.toml` during `nivos init` and used as the default engine:
 
 ```bash
-jarvis init --force
+nivos init --force
 # Detects hardware, writes ~/.openjarvis/config.toml with:
 # [engine]
 # default = "vllm"  # (for A100)
@@ -177,8 +177,8 @@ The `instrumented_generate()` wrapper handles all telemetry transparently:
 The `TelemetryAggregator` provides read-only queries over stored records:
 
 ```bash
-jarvis telemetry stats          # Aggregated statistics
-jarvis telemetry export --json  # Export all records
+nivos telemetry stats          # Aggregated statistics
+nivos telemetry export --json  # Export all records
 ```
 
 !!! note "Telemetry is best-effort"
@@ -190,7 +190,7 @@ jarvis telemetry export --json  # Export all records
 
 ## 6. Python-First
 
-OpenJarvis provides a **clean Python API** through the `Jarvis` class. There is no framework lock-in -- the SDK is a standard Python package with dataclass-based types and no required web framework.
+Nivos provides a **clean Python API** through the `Jarvis` class. There is no framework lock-in -- the SDK is a standard Python package with dataclass-based types and no required web framework.
 
 ```python
 from openjarvis import Jarvis
@@ -221,14 +221,14 @@ Design choices that support this principle:
 - **Dataclasses** for all structured types (`Message`, `ModelSpec`, `Trace`, etc.)
 - **Type hints** throughout the codebase
 - **No magic** -- explicit initialization, clear method signatures
-- **Optional dependencies** via extras (`openjarvis[server]`, `openjarvis[memory-colbert]`, etc.)
+- **Optional dependencies** via extras (`nivos[server]`, `nivos[memory-colbert]`, etc.)
 - **Standard packaging** with `hatchling` build backend and `uv` package manager
 
 ---
 
 ## 7. OpenAI-Compatible
 
-The API server (`jarvis serve`) implements the **OpenAI chat completions API format**, making OpenJarvis a drop-in replacement for OpenAI in existing applications.
+The API server (`nivos serve`) implements the **OpenAI chat completions API format**, making Nivos a drop-in replacement for OpenAI in existing applications.
 
 Supported endpoints:
 
@@ -254,7 +254,7 @@ curl http://localhost:8000/v1/chat/completions \
 
 Streaming responses use Server-Sent Events (SSE) with `data: [DONE]` termination, matching the OpenAI streaming protocol.
 
-Any OpenAI client library can connect to OpenJarvis:
+Any OpenAI client library can connect to Nivos:
 
 ```python
 from openai import OpenAI
@@ -270,7 +270,7 @@ response = client.chat.completions.create(
 
 ## 8. Standalone
 
-OpenJarvis requires **no external services** for core functionality. Everything needed to run the system is included or uses standard system libraries.
+Nivos requires **no external services** for core functionality. Everything needed to run the system is included or uses standard system libraries.
 
 | Component | Dependency |
 |-----------|-----------|
@@ -282,19 +282,19 @@ OpenJarvis requires **no external services** for core functionality. Everything 
 | CLI | `click` + `rich` |
 | Event bus | Built-in `threading` module |
 
-The only external requirement is a running inference engine (Ollama, vLLM, etc.), which is the model server itself -- not a dependency of OpenJarvis.
+The only external requirement is a running inference engine (Ollama, vLLM, etc.), which is the model server itself -- not a dependency of Nivos.
 
 Optional features that require additional packages:
 
 | Feature | Extra | Packages |
 |---------|-------|----------|
-| FAISS memory | `openjarvis[memory-faiss]` | `faiss-cpu`, `sentence-transformers` |
-| ColBERT memory | `openjarvis[memory-colbert]` | `colbert-ai`, `torch` |
-| BM25 memory | `openjarvis[memory-bm25]` | `rank-bm25` |
-| API server | `openjarvis[server]` | `fastapi`, `uvicorn` |
-| Cloud inference | `openjarvis[inference-cloud]` | `openai`, `anthropic`, `google-genai` |
-| vLLM engine | `openjarvis[inference-vllm]` | `vllm` |
-| PDF ingestion | `openjarvis[memory-pdf]` | `pdfplumber` |
-| WhatsApp Baileys | `openjarvis[channel-whatsapp-baileys]` | Node.js 22+ |
+| FAISS memory | `nivos[memory-faiss]` | `faiss-cpu`, `sentence-transformers` |
+| ColBERT memory | `nivos[memory-colbert]` | `colbert-ai`, `torch` |
+| BM25 memory | `nivos[memory-bm25]` | `rank-bm25` |
+| API server | `nivos[server]` | `fastapi`, `uvicorn` |
+| Cloud inference | `nivos[inference-cloud]` | `openai`, `anthropic`, `google-genai` |
+| vLLM engine | `nivos[inference-vllm]` | `vllm` |
+| PDF ingestion | `nivos[memory-pdf]` | `pdfplumber` |
+| WhatsApp Baileys | `nivos[channel-whatsapp-baileys]` | Node.js 22+ |
 
 This design ensures that a minimal installation (`uv sync`) gives you a fully functional system with SQLite memory, local inference, and the complete CLI -- no Docker, no external databases, no cloud accounts required.

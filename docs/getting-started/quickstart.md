@@ -1,42 +1,42 @@
 ---
 title: Quick Start
-description: Get up and running with OpenJarvis in minutes
+description: Get up and running with Nivos in minutes
 search:
   boost: 3
 ---
 
 # Quick Start
 
-!!! tip "Running `jarvis` commands"
+!!! tip "Running `nivos` commands"
     Every `jarvis ...` example below assumes you have either activated the project venv
     (`source .venv/bin/activate`) or are prefixing each command with `uv run`. A bare
-    `jarvis init --preset ...` from a fresh clone will fail with `command not found`.
+    `nivos init --preset ...` from a fresh clone will fail with `command not found`.
 
 ## What You Can Build
 
-OpenJarvis is a modular AI assistant framework. Here's what developers build with it:
+Nivos is a modular AI assistant framework. Here's what developers build with it:
 
 === "Chat with Any Model"
 
     ```bash
-    jarvis ask "Explain quantum entanglement" -m qwen3.5:4b   # use qwen3.5:9b or larger on GPU
+    nivos ask "Explain quantum entanglement" -m qwen3.5:4b   # use qwen3.5:9b or larger on GPU
     ```
 
 === "Agent + Tools"
 
     ```bash
-    jarvis ask --agent orchestrator --tools calculator,web_search "What is the GDP of France in USD?"
+    nivos ask --agent orchestrator --tools calculator,web_search "What is the GDP of France in USD?"
     ```
 
 === "Index Docs & Ask"
 
     ```bash
-    jarvis memory index ./docs/
-    jarvis ask "How do I configure the engine?"
+    nivos memory index ./docs/
+    nivos ask "How do I configure the engine?"
     ```
 
     !!! warning "Requires the Rust extension"
-        `jarvis memory index` and `jarvis memory search` import `openjarvis_rust`. If you
+        `nivos memory index` and `nivos memory search` import `openjarvis_rust`. If you
         skipped the `uv run maturin develop -m rust/crates/openjarvis-python/Cargo.toml`
         step in [Installation](installation.md), these commands fail with
         `ModuleNotFoundError: No module named 'openjarvis_rust'`. Build the extension
@@ -53,7 +53,7 @@ OpenJarvis is a modular AI assistant framework. Here's what developers build wit
 === "API Server"
 
     ```bash
-    jarvis serve --port 8000
+    nivos serve --port 8000
     # Now use any OpenAI-compatible client
     ```
 
@@ -61,35 +61,35 @@ OpenJarvis is a modular AI assistant framework. Here's what developers build wit
 
     ```bash
     cp configs/openjarvis/examples/morning-digest-mac.toml ~/.openjarvis/config.toml
-    jarvis connect gdrive       # one OAuth flow for Gmail, Calendar, Tasks
-    CARTESIA_API_KEY="..." jarvis digest --fresh
+    nivos connect gdrive       # one OAuth flow for Gmail, Calendar, Tasks
+    CARTESIA_API_KEY="..." nivos digest --fresh
     # Plays a spoken daily briefing with your email, calendar, health, and news
     ```
 
 === "Deep Research"
 
     ```bash
-    jarvis init --preset deep-research --force
-    jarvis memory index ~/Documents/papers/
-    jarvis ask "Summarize all documents about transformer architectures"
+    nivos init --preset deep-research --force
+    nivos memory index ~/Documents/papers/
+    nivos ask "Summarize all documents about transformer architectures"
     # Multi-hop search across your indexed docs with citations
     ```
 
 === "Code Assistant"
 
     ```bash
-    jarvis init --preset code-assistant --force
-    jarvis ask "Write a Python script that parses CSV files"
+    nivos init --preset code-assistant --force
+    nivos ask "Write a Python script that parses CSV files"
     # Orchestrator agent with code execution, file I/O, and shell access
     ```
 
 === "Scheduled Monitor"
 
     ```bash
-    jarvis init --preset scheduled-monitor --force
-    jarvis memory index ~/Documents/
-    jarvis scheduler start
-    jarvis scheduler create \
+    nivos init --preset scheduled-monitor --force
+    nivos memory index ~/Documents/
+    nivos scheduler start
+    nivos scheduler create \
       --prompt "Check for new emails about Project X" \
       --schedule "0 9 * * 1-5" --agent operative
     # Persistent agent that runs on a cron schedule
@@ -103,32 +103,32 @@ Copy one of these to `~/.openjarvis/config.toml` to get a pre-configured setup:
 
 | Config | For | What it does |
 |--------|-----|-------------|
-| [`chat-simple.toml`](https://github.com/open-jarvis/OpenJarvis/blob/main/configs/openjarvis/examples/chat-simple.toml) | Any machine | Lightweight chat, no tools -- simplest setup |
-| [`code-assistant.toml`](https://github.com/open-jarvis/OpenJarvis/blob/main/configs/openjarvis/examples/code-assistant.toml) | Any machine | Orchestrator agent with code execution, file I/O, shell |
-| [`deep-research.toml`](https://github.com/open-jarvis/OpenJarvis/blob/main/configs/openjarvis/examples/deep-research.toml) | Any machine | Multi-hop research across indexed documents with citations |
-| [`scheduled-monitor.toml`](https://github.com/open-jarvis/OpenJarvis/blob/main/configs/openjarvis/examples/scheduled-monitor.toml) | Any machine | Persistent operative agent on a cron schedule |
-| [`morning-digest-mac.toml`](https://github.com/open-jarvis/OpenJarvis/blob/main/configs/openjarvis/examples/morning-digest-mac.toml) | Mac (Apple Silicon) | Daily spoken briefing from email, calendar, health, news |
-| [`morning-digest-linux.toml`](https://github.com/open-jarvis/OpenJarvis/blob/main/configs/openjarvis/examples/morning-digest-linux.toml) | Linux / GPU server | Same, with vLLM support |
-| [`morning-digest-minimal.toml`](https://github.com/open-jarvis/OpenJarvis/blob/main/configs/openjarvis/examples/morning-digest-minimal.toml) | Any machine | Just Gmail + Calendar |
+| [`chat-simple.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/chat-simple.toml) | Any machine | Lightweight chat, no tools -- simplest setup |
+| [`code-assistant.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/code-assistant.toml) | Any machine | Orchestrator agent with code execution, file I/O, shell |
+| [`deep-research.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/deep-research.toml) | Any machine | Multi-hop research across indexed documents with citations |
+| [`scheduled-monitor.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/scheduled-monitor.toml) | Any machine | Persistent operative agent on a cron schedule |
+| [`morning-digest-mac.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/morning-digest-mac.toml) | Mac (Apple Silicon) | Daily spoken briefing from email, calendar, health, news |
+| [`morning-digest-linux.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/morning-digest-linux.toml) | Linux / GPU server | Same, with vLLM support |
+| [`morning-digest-minimal.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/morning-digest-minimal.toml) | Any machine | Just Gmail + Calendar |
 
 Or generate a config with digest included:
 
 ```bash
-jarvis init --digest
+nivos init --digest
 ```
 
-This guide walks through the core workflows of OpenJarvis: the browser app, CLI, Python SDK, agents with tools, memory, benchmarks, and the API server.
+This guide walks through the core workflows of Nivos: the browser app, CLI, Python SDK, agents with tools, memory, benchmarks, and the API server.
 
 !!! info "Prerequisites"
-    Make sure you have [installed OpenJarvis](installation.md) and have at least one inference backend running (e.g., `ollama serve`).
+    Make sure you have [installed Nivos](installation.md) and have at least one inference backend running (e.g., `ollama serve`).
 
 ## Browser App
 
-The quickest way to experience OpenJarvis is the full chat UI running in your browser:
+The quickest way to experience Nivos is the full chat UI running in your browser:
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis
+git clone https://github.com/nivos/nivos.git
+cd Nivos
 ./scripts/quickstart.sh
 ```
 
@@ -174,7 +174,7 @@ search backend it is configured with. Keys:
 [firecrawl.dev](https://www.firecrawl.dev/app/api-keys?utm_source=openjarvis&utm_medium=integration).
 
 The script does not automatically source `.env` files. Run `source .env`
-first if that is where you keep the key. Stop any existing OpenJarvis server
+first if that is where you keep the key. Stop any existing Nivos server
 before restarting so it inherits the updated environment.
 
 To stop all services, press ++ctrl+c++ in the terminal.
@@ -187,7 +187,7 @@ To stop all services, press ++ctrl+c++ in the terminal.
 Start by detecting your hardware and generating a configuration file:
 
 ```bash
-jarvis init
+nivos init
 ```
 
 This runs hardware auto-detection (GPU vendor, VRAM, CPU, RAM) and writes a config file to `~/.openjarvis/config.toml` with sensible defaults for your system. It also selects the recommended inference engine.
@@ -205,7 +205,7 @@ Config written successfully.
 To overwrite an existing config:
 
 ```bash
-jarvis init --force
+nivos init --force
 ```
 
 See [Configuration](configuration.md) for the full config reference.
@@ -214,28 +214,28 @@ See [Configuration](configuration.md) for the full config reference.
 
 ### Via CLI
 
-The simplest way to interact with OpenJarvis is the `ask` command:
+The simplest way to interact with Nivos is the `ask` command:
 
 ```bash
-jarvis ask "What is the capital of France?"
+nivos ask "What is the capital of France?"
 ```
 
-OpenJarvis will auto-detect a running engine, select a model using the configured router policy, and return the response.
+Nivos will auto-detect a running engine, select a model using the configured router policy, and return the response.
 
 #### CLI Options
 
 | Option | Description | Example |
 |--------|-------------|---------|
-| `-m`, `--model` | Override model selection | `jarvis ask -m qwen3:8b "Hello"` |
-| `-e`, `--engine` | Force a specific engine | `jarvis ask -e ollama "Hello"` |
-| `-t`, `--temperature` | Sampling temperature (default: 0.7) | `jarvis ask -t 0.2 "Hello"` |
-| `--max-tokens` | Max tokens to generate (default: 1024) | `jarvis ask --max-tokens 2048 "Hello"` |
-| `--json` | Output raw JSON result | `jarvis ask --json "Hello"` |
-| `--no-stream` | Disable streaming | `jarvis ask --no-stream "Hello"` |
-| `--no-context` | Disable memory context injection | `jarvis ask --no-context "Hello"` |
-| `-a`, `--agent` | Use an agent | `jarvis ask -a orchestrator "Hello"` |
-| `--tools` | Comma-separated tools | `jarvis ask --tools calculator,think "2+2"` |
-| `--router` | Router policy for model selection | `jarvis ask --router heuristic "Hello"` |
+| `-m`, `--model` | Override model selection | `nivos ask -m qwen3:8b "Hello"` |
+| `-e`, `--engine` | Force a specific engine | `nivos ask -e ollama "Hello"` |
+| `-t`, `--temperature` | Sampling temperature (default: 0.7) | `nivos ask -t 0.2 "Hello"` |
+| `--max-tokens` | Max tokens to generate (default: 1024) | `nivos ask --max-tokens 2048 "Hello"` |
+| `--json` | Output raw JSON result | `nivos ask --json "Hello"` |
+| `--no-stream` | Disable streaming | `nivos ask --no-stream "Hello"` |
+| `--no-context` | Disable memory context injection | `nivos ask --no-context "Hello"` |
+| `-a`, `--agent` | Use an agent | `nivos ask -a orchestrator "Hello"` |
+| `--tools` | Comma-separated tools | `nivos ask --tools calculator,think "2+2"` |
+| `--router` | Router policy for model selection | `nivos ask --router heuristic "Hello"` |
 
 ### Via Python SDK
 
@@ -306,7 +306,7 @@ Agents add multi-turn reasoning and tool-calling capabilities. The `orchestrator
 ### CLI Example
 
 ```bash
-jarvis ask --agent orchestrator --tools calculator,think "What is 137 * 42?"
+nivos ask --agent orchestrator --tools calculator,think "What is 137 * 42?"
 ```
 
 ### SDK Example
@@ -332,16 +332,16 @@ The memory system lets you index documents and inject relevant context into quer
 
 ### Index Documents
 
-Index a file or directory. OpenJarvis chunks the content and stores it in the configured memory backend (SQLite/FTS5 by default).
+Index a file or directory. Nivos chunks the content and stores it in the configured memory backend (SQLite/FTS5 by default).
 
 === "CLI"
 
     ```bash
     # Index a directory
-    jarvis memory index ./docs/
+    nivos memory index ./docs/
 
     # Index a single file with custom chunk size
-    jarvis memory index ./paper.txt --chunk-size 256 --chunk-overlap 32
+    nivos memory index ./paper.txt --chunk-size 256 --chunk-overlap 32
     ```
 
 === "Python SDK"
@@ -362,8 +362,8 @@ Query the memory store to find relevant chunks:
 === "CLI"
 
     ```bash
-    jarvis memory search "configuration options"
-    jarvis memory search -k 10 "how to deploy"
+    nivos memory search "configuration options"
+    nivos memory search -k 10 "how to deploy"
     ```
 
 === "Python SDK"
@@ -379,7 +379,7 @@ Query the memory store to find relevant chunks:
 === "CLI"
 
     ```bash
-    jarvis memory stats
+    nivos memory stats
     ```
 
 === "Python SDK"
@@ -391,14 +391,14 @@ Query the memory store to find relevant chunks:
 
 ### Automatic Context Injection
 
-When you have indexed documents, OpenJarvis automatically injects relevant context into your queries. The memory system searches for chunks matching your query and prepends them as system context before sending to the model.
+When you have indexed documents, Nivos automatically injects relevant context into your queries. The memory system searches for chunks matching your query and prepends them as system context before sending to the model.
 
 To disable this behavior:
 
 === "CLI"
 
     ```bash
-    jarvis ask --no-context "Hello"
+    nivos ask --no-context "Hello"
     ```
 
 === "Python SDK"
@@ -416,7 +416,7 @@ Context injection is controlled by `agent.context_from_memory` in `config.toml`.
 See all models available on running engines:
 
 ```bash
-jarvis model list
+nivos model list
 ```
 
 This produces a table showing each model, its engine, parameter count, context length, and VRAM requirements.
@@ -424,13 +424,13 @@ This produces a table showing each model, its engine, parameter count, context l
 ### Get Model Details
 
 ```bash
-jarvis model info qwen3:8b
+nivos model info qwen3:8b
 ```
 
 ### Pull a Model (Ollama)
 
 ```bash
-jarvis model pull qwen3:8b
+nivos model pull qwen3:8b
 ```
 
 ### SDK Model Listing
@@ -453,24 +453,24 @@ The benchmarking framework measures inference latency and throughput against you
 === "All benchmarks"
 
     ```bash
-    jarvis bench run
+    nivos bench run
     ```
 
 === "Specific benchmark"
 
     ```bash
-    jarvis bench run -b latency
-    jarvis bench run -b throughput
+    nivos bench run -b latency
+    nivos bench run -b throughput
     ```
 
 === "Custom options"
 
     ```bash
     # 20 samples, JSON output
-    jarvis bench run -n 20 --json
+    nivos bench run -n 20 --json
 
     # Specific model and engine, write to file
-    jarvis bench run -m qwen3:8b -e ollama -o results.jsonl
+    nivos bench run -m qwen3:8b -e ollama -o results.jsonl
     ```
 
 Example output:
@@ -493,7 +493,7 @@ throughput (10 samples, 0 errors)
 
 ## Starting the API Server
 
-OpenJarvis provides an OpenAI-compatible API server for integration with existing tools and frontends.
+Nivos provides an OpenAI-compatible API server for integration with existing tools and frontends.
 
 !!! note "Requires the `server` extra"
     ```bash
@@ -503,13 +503,13 @@ OpenJarvis provides an OpenAI-compatible API server for integration with existin
 ### Start the Server
 
 ```bash
-jarvis serve --port 8000
+nivos serve --port 8000
 ```
 
 With custom options:
 
 ```bash
-jarvis serve --host 0.0.0.0 --port 8000 --engine ollama --model qwen3:8b --agent orchestrator
+nivos serve --host 0.0.0.0 --port 8000 --engine ollama --model qwen3:8b --agent orchestrator
 ```
 
 ### API Endpoints
@@ -548,23 +548,23 @@ curl http://localhost:8000/v1/chat/completions \
 
 ## Telemetry
 
-OpenJarvis records telemetry for every inference call (timing, tokens, cost). View aggregated statistics:
+Nivos records telemetry for every inference call (timing, tokens, cost). View aggregated statistics:
 
 ```bash
-jarvis telemetry stats
+nivos telemetry stats
 ```
 
 Export telemetry data:
 
 ```bash
-jarvis telemetry export --format json
-jarvis telemetry export --format csv -o telemetry.csv
+nivos telemetry export --format json
+nivos telemetry export --format csv -o telemetry.csv
 ```
 
 Clear all telemetry records:
 
 ```bash
-jarvis telemetry clear --yes
+nivos telemetry clear --yes
 ```
 
 ## Complete Working Example

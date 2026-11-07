@@ -55,9 +55,9 @@ class DashboardApp:
             )
 
         class JarvisDashboard(App):
-            """OpenJarvis TUI Dashboard."""
+            """Nivos TUI Dashboard."""
 
-            TITLE = "OpenJarvis Dashboard"
+            TITLE = "Nivos Dashboard"
             CSS_PATH = None
             CSS = """
             Screen {

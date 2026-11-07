@@ -37,7 +37,7 @@
 | `src/openjarvis/mining/_collector.py` | `MiningTelemetryCollector` — full impl, shipped unwired in v1; v1.x lights it up in the gateway daemon |
 | `src/openjarvis/mining/vllm_pearl.py` | `VllmPearlProvider` (`MiningProvider` impl); `_parse_gateway_metrics()`; `ensure_registered()` |
 | `src/openjarvis/mining/pools/__init__.py` | Reserved location for v2 `PoolClient` work — empty except for a docstring saying so |
-| `src/openjarvis/cli/mine_cmd.py` | `jarvis mine` Click group: `init`, `start`, `stop`, `status`, `doctor`, `attach`, `logs` |
+| `src/openjarvis/cli/mine_cmd.py` | `nivos mine` Click group: `init`, `start`, `stop`, `status`, `doctor`, `attach`, `logs` |
 | `tests/mining/__init__.py` | Empty test package init |
 | `tests/mining/conftest.py` | Mining-specific fixtures: synthetic `HardwareInfo`, mock Docker client factory, sample sidecar tmp_path |
 | `tests/mining/fixtures/gateway_metrics_sample.txt` | Real Prometheus output captured from a Pearl gateway run (one snapshot, committed) |
@@ -61,7 +61,7 @@
 | `src/openjarvis/engine/_discovery.py` | Add sidecar-aware engine resolution: when `~/.openjarvis/runtime/mining.json` exists, register a derived `vllm` engine pointing at `vllm_endpoint` |
 | `src/openjarvis/telemetry/store.py` | Add nullable `mining_session_id` column to inference rows; bump `PRAGMA user_version`; helper to tag rows when sidecar is present |
 | `src/openjarvis/cli/__init__.py` | Register the `mine` Click group |
-| `src/openjarvis/cli/hints.py` | Add hint: "mining configured but not running — start it with `jarvis mine start`" |
+| `src/openjarvis/cli/hints.py` | Add hint: "mining configured but not running — start it with `nivos mine start`" |
 | `tests/conftest.py` | Add `MinerRegistry.clear()` to autouse `_clean_registries` fixture |
 | `pyproject.toml` | Add `mining-pearl` extra; add `docker` pytest marker |
 | `CLAUDE.md` | Add paragraph under Architecture pointing future-Claude at `mining/` as a sibling subsystem |
@@ -439,7 +439,7 @@ from openjarvis.core.config import HardwareInfo
 class MiningCapabilities:
     """Result of a provider's ``detect()`` call.
 
-    ``reason`` is human-readable and surfaced verbatim by ``jarvis mine doctor``
+    ``reason`` is human-readable and surfaced verbatim by ``nivos mine doctor``
     when ``supported=False``.
     """
 
@@ -530,7 +530,7 @@ class MiningProvider(ABC):
         """Return whether this provider can run on the given combo.
 
         Must be a pure inspection — no subprocess, no network, no Docker. Used
-        by ``jarvis mine doctor`` and ``jarvis mine init`` for fast capability
+        by ``nivos mine doctor`` and ``nivos mine init`` for fast capability
         reporting.
         """
 
@@ -1024,7 +1024,7 @@ Expected: ALL fail with `ImportError`.
 
 Each function answers a single yes/no question and returns ``(ok: bool,
 info: str)`` where ``info`` is a short human-readable explanation surfaced
-verbatim by ``jarvis mine doctor``.
+verbatim by ``nivos mine doctor``.
 """
 
 from __future__ import annotations
@@ -1057,7 +1057,7 @@ def detect_for_engine_model(
     """Capability matrix for the ``vllm-pearl`` provider.
 
     Pure inspection. No subprocess, no Docker, no network. Used by
-    ``jarvis mine doctor`` and ``jarvis mine init``.
+    ``nivos mine doctor`` and ``nivos mine init``.
     """
     if provider_id != "vllm-pearl":
         return MiningCapabilities(
@@ -1105,7 +1105,7 @@ def detect_for_engine_model(
 
 
 # ---------------------------------------------------------------------------
-# Doctor checks (one per row of `jarvis mine doctor` output)
+# Doctor checks (one per row of `nivos mine doctor` output)
 # ---------------------------------------------------------------------------
 
 
@@ -1567,7 +1567,7 @@ class ConfigurationError(RuntimeError):
         if password is None:
             raise ConfigurationError(
                 f"environment variable {password_env!r} is not set; "
-                f"set it before running `jarvis mine start`"
+                f"set it before running `nivos mine start`"
             )
 
         hf_token_env = extra.get("hf_token_env", "HF_TOKEN")
@@ -2620,7 +2620,7 @@ git commit -m "feat(telemetry): add mining_session_id + mining_stats table"
 
 ---
 
-## Task 12 — `jarvis mine doctor` (highest user-facing value, build first)
+## Task 12 — `nivos mine doctor` (highest user-facing value, build first)
 
 **Files:**
 - Create: `src/openjarvis/cli/mine_cmd.py`
@@ -2698,7 +2698,7 @@ Expected: FAIL.
 
 ```python
 # src/openjarvis/cli/mine_cmd.py
-"""``jarvis mine`` command group.
+"""``nivos mine`` command group.
 
 See spec ``docs/design/2026-05-05-vllm-pearl-mining-integration-design.md``
 section 6 for the full CLI surface.
@@ -2740,7 +2740,7 @@ def _detect_hardware() -> HardwareInfo:
 def mine() -> None:
     """Pearl PoUW mining commands.
 
-    See https://open-jarvis.github.io/OpenJarvis/user-guide/mining/ for the
+    See https://nivos.github.io/nivos/user-guide/mining/ for the
     full guide.
     """
 
@@ -2784,7 +2784,7 @@ def doctor() -> None:
         ok, info = check_pearld_reachable(url, user, password)
         row("pearld", "RPC", ok, info)
     else:
-        row("pearld", "RPC", False, "no [mining] config — run `jarvis mine init`")
+        row("pearld", "RPC", False, "no [mining] config — run `nivos mine init`")
 
     click.echo("Wallet")
     if mining_cfg is not None:
@@ -2821,12 +2821,12 @@ Expected: 2 PASS.
 
 ```bash
 git add src/openjarvis/cli/mine_cmd.py tests/mining/test_cli.py
-git commit -m "feat(mining-cli): jarvis mine doctor"
+git commit -m "feat(mining-cli): nivos mine doctor"
 ```
 
 ---
 
-## Task 13 — `jarvis mine init / start / stop`
+## Task 13 — `nivos mine init / start / stop`
 
 **Files:**
 - Modify: `src/openjarvis/cli/mine_cmd.py`
@@ -2927,7 +2927,7 @@ def init(
     if not cap.supported:
         raise click.ClickException(
             f"vllm-pearl not supported on this host: {cap.reason}\n"
-            f"See `jarvis mine doctor` for details."
+            f"See `nivos mine doctor` for details."
         )
 
     ok, info = check_docker_available()
@@ -2941,7 +2941,7 @@ def init(
     if pearld_password_env not in os.environ:
         click.echo(
             f"Warning: ${pearld_password_env} is not set in your environment. "
-            f"Set it before `jarvis mine start`.",
+            f"Set it before `nivos mine start`.",
             err=True,
         )
 
@@ -2988,7 +2988,7 @@ hf_token_env             = "HF_TOKEN"
     from openjarvis.mining._docker import PearlDockerLauncher
     launcher = PearlDockerLauncher(client=docker.from_env())
     launcher.ensure_image(image)
-    click.echo(f"Done. Run `jarvis mine start` to begin mining.")
+    click.echo(f"Done. Run `nivos mine start` to begin mining.")
 
 
 @mine.command()
@@ -2996,14 +2996,14 @@ def start() -> None:
     """Launch the Pearl mining container and write the runtime sidecar."""
     cfg = load_config().mining
     if cfg is None:
-        raise click.ClickException("no [mining] section in config — run `jarvis mine init`")
+        raise click.ClickException("no [mining] section in config — run `nivos mine init`")
     provider_cls = MinerRegistry.get(cfg.provider)
     provider = provider_cls()
 
     async def _run():
         await provider.start(cfg)
     asyncio.run(_run())
-    click.echo(f"Mining started. Run `jarvis mine status` for live stats.")
+    click.echo(f"Mining started. Run `nivos mine status` for live stats.")
 
 
 @mine.command()
@@ -3033,12 +3033,12 @@ Expected: 5 PASS.
 
 ```bash
 git add src/openjarvis/cli/mine_cmd.py tests/mining/test_cli.py
-git commit -m "feat(mining-cli): jarvis mine init/start/stop"
+git commit -m "feat(mining-cli): nivos mine init/start/stop"
 ```
 
 ---
 
-## Task 14 — `jarvis mine status / attach / logs`
+## Task 14 — `nivos mine status / attach / logs`
 
 **Files:**
 - Modify: `src/openjarvis/cli/mine_cmd.py`
@@ -3118,7 +3118,7 @@ def status() -> None:
     """Print live mining stats from the gateway."""
     cfg = load_config().mining
     if cfg is None:
-        raise click.ClickException("no [mining] section — run `jarvis mine init`")
+        raise click.ClickException("no [mining] section — run `nivos mine init`")
     provider_cls = MinerRegistry.get(cfg.provider)
     provider = provider_cls()
     s = provider.stats()
@@ -3193,7 +3193,7 @@ Expected: 8 PASS (cumulative).
 
 ```bash
 git add src/openjarvis/cli/mine_cmd.py tests/mining/test_cli.py
-git commit -m "feat(mining-cli): jarvis mine status/attach/logs"
+git commit -m "feat(mining-cli): nivos mine status/attach/logs"
 ```
 
 ---
@@ -3254,7 +3254,7 @@ In `cli/hints.py`, add a function (or extend existing hint logic) that emits one
 def mining_not_running_hint(cfg, sidecar_present: bool) -> Optional[str]:
     if cfg is None or sidecar_present:
         return None
-    return "mining configured but not running — start it with `jarvis mine start`"
+    return "mining configured but not running — start it with `nivos mine start`"
 ```
 
 Wire it into wherever hints are surfaced (read existing hint integration points first; mirror the pattern).
@@ -3269,7 +3269,7 @@ def test_mining_not_running_hint_when_configured_no_sidecar():
     cfg = object()  # any truthy stand-in for MiningConfig
     msg = mining_not_running_hint(cfg, sidecar_present=False)
     assert msg is not None
-    assert "jarvis mine start" in msg
+    assert "nivos mine start" in msg
 
 
 def test_mining_not_running_hint_silent_when_running():
@@ -3359,7 +3359,7 @@ git commit -m "chore: add mining-pearl extra and docker pytest marker"
 ```markdown
 # Pearl mining
 
-OpenJarvis can mine the [Pearl](https://github.com/pearl-research-labs/pearl)
+Nivos can mine the [Pearl](https://github.com/pearl-research-labs/pearl)
 Proof-of-Useful-Work blockchain through your local LLM inference. v1
 supports H100/H200 hosts running vLLM. Apple Silicon, AMD, and other
 inference backends are tracked separately — see [Spec B](../design/2026-05-05-apple-silicon-pearl-mining-design.md).
@@ -3381,14 +3381,14 @@ inference backends are tracked separately — see [Spec B](../design/2026-05-05-
 uv sync --extra mining-pearl
 export PEARLD_RPC_PASSWORD=<your-pearld-password>
 export HF_TOKEN=<your-hf-token>
-uv run jarvis mine init    # writes [mining] config + builds Docker image (30-60 min first time)
-uv run jarvis mine start
-uv run jarvis mine status
+uv run nivos mine init    # writes [mining] config + builds Docker image (30-60 min first time)
+uv run nivos mine start
+uv run nivos mine status
 ```
 
 ## Diagnosing problems
 
-`jarvis mine doctor` prints one row per check with a clear ✓ or ✗ and reason.
+`nivos mine doctor` prints one row per check with a clear ✓ or ✗ and reason.
 Read top-down — fix what's failing before retrying `mine start`.
 
 ## What v1 does NOT support
@@ -3502,10 +3502,10 @@ uv run pytest tests/mining/ --cov=openjarvis.mining --cov-report=term-missing
 ```
 Expected: ≥ 80% coverage on the new `mining/` package.
 
-- [ ] **Step 4: Smoke `jarvis mine doctor` on a non-mining dev box**
+- [ ] **Step 4: Smoke `nivos mine doctor` on a non-mining dev box**
 
 ```bash
-uv run jarvis mine doctor
+uv run nivos mine doctor
 ```
 Expected: doctor runs, hardware/Docker/Pearl rows print honest ✗ where applicable, exit code 0.
 
@@ -3520,7 +3520,7 @@ Implements [Spec A](docs/design/2026-05-05-vllm-pearl-mining-integration-design.
 - `vllm-pearl` provider wrapping Pearl's Docker container
 - Runtime sidecar (`~/.openjarvis/runtime/mining.json`) for engine ↔ mining handoff
 - Telemetry: on-demand reads in v1; `MiningTelemetryCollector` shipped unwired for v1.x
-- New CLI: `jarvis mine init|start|stop|status|doctor|attach|logs`
+- New CLI: `nivos mine init|start|stop|status|doctor|attach|logs`
 - New optional extra: `mining-pearl`
 - New pytest marker: `docker`
 - Docs: user guide, contributor guide, REVIEW.md update
@@ -3530,7 +3530,7 @@ Implements [Spec A](docs/design/2026-05-05-vllm-pearl-mining-integration-design.
 - [x] `uv run ruff check src/ tests/`
 - [x] `uv run ruff format --check src/ tests/`
 - [x] `uv run mkdocs build`
-- [ ] Manual smoke: `uv run jarvis mine doctor` on a non-mining dev box prints honest output
+- [ ] Manual smoke: `uv run nivos mine doctor` on a non-mining dev box prints honest output
 - [ ] Manual smoke (release-gate): full mine init → start → status → stop on a real H100 host
 EOF
 )"

@@ -428,10 +428,10 @@ def build_data_boundary_report(
         builder.add(
             finding_id="config-root-error",
             status="fail",
-            title="OpenJarvis home directory could not be resolved",
+            title="Nivos home directory could not be resolved",
             potential_data_path="runtime state root -> local store checks",
             evidence=(
-                f"{error_type} while resolving OpenJarvis home; "
+                f"{error_type} while resolving Nivos home; "
                 "path details were redacted"
             ),
             recommendation=(

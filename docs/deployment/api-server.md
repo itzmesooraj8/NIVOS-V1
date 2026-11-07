@@ -1,31 +1,31 @@
 # API Server
 
-OpenJarvis includes an OpenAI-compatible API server built on FastAPI and uvicorn. It exposes chat completion, model listing, and health check endpoints, making it a drop-in replacement for the OpenAI API when working with local models.
+Nivos includes an OpenAI-compatible API server built on FastAPI and uvicorn. It exposes chat completion, model listing, and health check endpoints, making it a drop-in replacement for the OpenAI API when working with local models.
 
 ## Starting the Server
 
 The server requires the `[server]` extra (FastAPI + uvicorn):
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis
+git clone https://github.com/nivos/nivos.git
+cd Nivos
 uv sync --extra server
 ```
 
 Start with default settings:
 
 ```bash
-jarvis serve
+nivos serve
 ```
 
 For a cloud-hosted example, see [Deploy on Render](render.md). Its free-tier
-Blueprint is intended for evaluation only because local OpenJarvis state is
+Blueprint is intended for evaluation only because local Nivos state is
 ephemeral.
 
 The server reads defaults from `~/.openjarvis/config.toml` and auto-detects available engines and models. Override any option via CLI flags:
 
 ```bash
-jarvis serve --host 0.0.0.0 --port 8000 --engine ollama --model qwen3:8b --agent orchestrator
+nivos serve --host 0.0.0.0 --port 8000 --engine ollama --model qwen3:8b --agent orchestrator
 ```
 
 ### CLI Options
@@ -41,7 +41,7 @@ jarvis serve --host 0.0.0.0 --port 8000 --engine ollama --model qwen3:8b --agent
 On startup, the server prints a summary:
 
 ```
-Starting OpenJarvis API server
+Starting Nivos API server
   Engine: ollama
   Model:  qwen3:8b
   Agent:  orchestrator
@@ -49,7 +49,7 @@ Starting OpenJarvis API server
 ```
 
 !!! warning "Server dependency check"
-    If the `[server]` extra is not installed, `jarvis serve` exits with a clear error message explaining how to install the required dependencies.
+    If the `[server]` extra is not installed, `nivos serve` exits with a clear error message explaining how to install the required dependencies.
 
 ## Endpoints
 
@@ -472,7 +472,7 @@ workers = 1
 | `model`   | `string`  | `""`            | Default model name. When empty, falls back to `[intelligence] default_model` or the first model discovered on the engine. |
 | `workers` | `integer` | `1`             | Number of uvicorn workers (for future use).                                |
 
-CLI flags override config file values. For example, `jarvis serve --port 9000` overrides the `port` setting in the config file.
+CLI flags override config file values. For example, `nivos serve --port 9000` overrides the `port` setting in the config file.
 
 The server also reads from other config sections at startup:
 
@@ -482,7 +482,7 @@ The server also reads from other config sections at startup:
 
 ## Running Behind a Reverse Proxy
 
-For production deployments, run OpenJarvis behind a reverse proxy like Nginx or Caddy for TLS termination, rate limiting, and authentication.
+For production deployments, run Nivos behind a reverse proxy like Nginx or Caddy for TLS termination, rate limiting, and authentication.
 
 ### Nginx
 
@@ -539,7 +539,7 @@ The `flush_interval -1` setting disables response buffering, which is required f
 When running behind a reverse proxy, bind the server to `127.0.0.1` so it only accepts connections from the proxy:
 
 ```bash
-jarvis serve --host 127.0.0.1 --port 8000
+nivos serve --host 127.0.0.1 --port 8000
 ```
 
 Or in `config.toml`:

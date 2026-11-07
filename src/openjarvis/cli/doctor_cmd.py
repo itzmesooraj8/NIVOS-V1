@@ -1,4 +1,4 @@
-"""``jarvis doctor`` — run diagnostic checks on the OpenJarvis installation."""
+"""``nivos doctor`` — run diagnostic checks on the Nivos installation."""
 
 from __future__ import annotations
 
@@ -56,7 +56,7 @@ def _check_config_exists() -> CheckResult:
         "Config file",
         "warn",
         f"Not found at {DEFAULT_CONFIG_PATH}",
-        details="Run `jarvis init` to generate a config file.",
+        details="Run `nivos init` to generate a config file.",
     )
 
 
@@ -226,17 +226,17 @@ def _check_optional_deps() -> List[CheckResult]:
     """Check availability of optional dependency packages."""
     results: List[CheckResult] = []
     optional_packages = [
-        ("fastapi", "openjarvis[server]", "REST API server"),
+        ("fastapi", "nivos[server]", "REST API server"),
         ("torch", "pip install torch", "SFT/GRPO training"),
-        ("pynvml", "openjarvis[gpu-metrics]", "NVIDIA energy monitoring"),
-        ("amdsmi", "openjarvis[energy-amd]", "AMD energy monitoring"),
-        ("colbert", "openjarvis[memory-colbert]", "ColBERT memory backend"),
+        ("pynvml", "nivos[gpu-metrics]", "NVIDIA energy monitoring"),
+        ("amdsmi", "nivos[energy-amd]", "AMD energy monitoring"),
+        ("colbert", "nivos[memory-colbert]", "ColBERT memory backend"),
         (
             "zeus_apple_silicon",
-            "openjarvis[energy-apple]",
+            "nivos[energy-apple]",
             "Apple Silicon energy monitoring",
         ),
-        ("apple_fm_sdk", "openjarvis[afm]", "Apple Foundation Models (AFM 3)"),
+        ("apple_fm_sdk", "nivos[afm]", "Apple Foundation Models (AFM 3)"),
     ]
     for pkg, install_hint, description in optional_packages:
         try:
@@ -392,7 +392,7 @@ def _results_to_dicts(checks: List[CheckResult]) -> List[Dict[str, Any]]:
 @click.command()
 @click.option("--json", "as_json", is_flag=True, help="Output results as JSON.")
 def doctor(as_json: bool) -> None:
-    """Run diagnostic checks on your OpenJarvis installation."""
+    """Run diagnostic checks on your Nivos installation."""
     checks = _run_all_checks()
 
     if as_json:
@@ -401,7 +401,7 @@ def doctor(as_json: bool) -> None:
 
     console = Console()
     console.print()
-    console.print("[bold]OpenJarvis Doctor[/bold]")
+    console.print("[bold]Nivos Doctor[/bold]")
     console.print()
 
     table = Table(show_header=True, header_style="bold")

@@ -1,6 +1,6 @@
 # Inference Engine Primitive
 
-The Engine primitive provides the **inference runtime** -- the layer that connects OpenJarvis to language model servers. All backends implement a uniform interface, making it straightforward to swap between local and cloud inference without changing application code.
+The Engine primitive provides the **inference runtime** -- the layer that connects Nivos to language model servers. All backends implement a uniform interface, making it straightforward to swap between local and cloud inference without changing application code.
 
 ---
 
@@ -237,8 +237,8 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
 `>=0.2.1` is the floor: that release added `SystemLanguageModel.token_count` and `.context_size`, which both backends use for token accounting.
 
 ```bash
-jarvis ask --engine afm --model afm-3-core "..."   # in-process
-jarvis host afm-3 --backend apple_fm               # launch the shim
+nivos ask --engine afm --model afm-3-core "..."   # in-process
+nivos host afm-3 --backend apple_fm               # launch the shim
 ```
 
 - **Model labels:** `afm-3`, `afm-3-core`, `afm-3-core-advanced`
@@ -267,7 +267,7 @@ The LiteLLM backend connects to a LiteLLM proxy server, which provides a unified
 
 ## Hardware Auto-Detection
 
-OpenJarvis automatically detects system hardware to recommend the best engine. Detection runs at config load time via `detect_hardware()`:
+Nivos automatically detects system hardware to recommend the best engine. Detection runs at config load time via `detect_hardware()`:
 
 | Detection | Method | Information Extracted |
 |-----------|--------|---------------------|

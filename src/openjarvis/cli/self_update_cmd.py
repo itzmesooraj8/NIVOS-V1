@@ -54,7 +54,7 @@ def _update_git_checkout(repo_root: Path) -> int:
     # Version metadata is baked at install time, so an up-to-date checkout also
     # needs a rebuild after history repair. The Unix installer keeps its venv
     # beside src/, not inside it: target the running venv, never a new src/.venv.
-    click.echo("Rebuilding OpenJarvis in the running Python environment...")
+    click.echo("Rebuilding Nivos in the running Python environment...")
     if sys.prefix != sys.base_prefix:
         result = subprocess.run(
             [
@@ -92,7 +92,7 @@ def _update_git_checkout(repo_root: Path) -> int:
 @click.command(
     "self-update",
     help=(
-        "Upgrade OpenJarvis to the latest release. Detects how you "
+        "Upgrade Nivos to the latest release. Detects how you "
         "installed (pip, uv tool, editable git) and runs the right "
         "command. Use --check to only print the upgrade command "
         "without running it."
@@ -113,13 +113,13 @@ def self_update(check: bool, yes: bool) -> None:
     info = detect_install()
     current = openjarvis.__version__
 
-    click.echo(f"Current OpenJarvis version: v{current}")
+    click.echo(f"Current Nivos version: v{current}")
     click.echo(f"Install method: {info.kind}")
     if info.kind == "editable-git":
         click.echo(f"Repository: {info.repo_root}")
         click.echo(
             "Upgrade plan: restore release-tag history, git pull --ff-only, "
-            "then rebuild OpenJarvis while preserving installed extras."
+            "then rebuild Nivos while preserving installed extras."
         )
     else:
         click.echo(f"Upgrade command: {info.upgrade_command}")

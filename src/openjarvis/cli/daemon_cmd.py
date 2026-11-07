@@ -367,7 +367,7 @@ def clear_server_state(pid: int) -> None:
 
 @click.group()
 def daemon() -> None:
-    """Manage the OpenJarvis server daemon."""
+    """Manage the Nivos server daemon."""
 
 
 @daemon.command()
@@ -383,13 +383,13 @@ def start(
     model_name: str | None,
     agent_name: str | None,
 ) -> None:
-    """Start the OpenJarvis server as a background daemon."""
+    """Start the Nivos server as a background daemon."""
     console = Console(stderr=True)
 
     existing = _read_pid()
     if existing is not None:
         console.print(f"[yellow]Server already running (PID {existing}).[/yellow]")
-        console.print("Use 'jarvis stop' to stop it first, or 'jarvis restart'.")
+        console.print("Use 'nivos stop' to stop it first, or 'nivos restart'.")
         sys.exit(1)
 
     config = load_config()
@@ -459,7 +459,7 @@ def start(
 
     if existing is not None:
         console.print(f"[yellow]Server already running (PID {existing}).[/yellow]")
-        console.print("Use 'jarvis stop' to stop it first, or 'jarvis restart'.")
+        console.print("Use 'nivos stop' to stop it first, or 'nivos restart'.")
         sys.exit(1)
     assert proc is not None
     if registration_error is not None:
@@ -468,7 +468,7 @@ def start(
         raise click.ClickException(str(registration_error)) from registration_error
 
     console.print(
-        f"[green]OpenJarvis server starting[/green] (launch PID {proc.pid})\n"
+        f"[green]Nivos server starting[/green] (launch PID {proc.pid})\n"
         f"  Requested URL: {_server_url(bind_host, bind_port)}\n"
         f"  Log: {_LOG_FILE}"
     )
@@ -476,12 +476,12 @@ def start(
 
 @daemon.command()
 def stop() -> None:
-    """Stop the running OpenJarvis server daemon."""
+    """Stop the running Nivos server daemon."""
     console = Console(stderr=True)
     # Stop the graphical frontend too. It is a sibling process, not a child of
     # the daemon, so it otherwise outlives `stop` and keeps holding its port —
     # leaving both a GUI that serves pages but fails every request, and a next
-    # `jarvis gui` that dies on "Frontend port 5173 is unavailable".
+    # `nivos gui` that dies on "Frontend port 5173 is unavailable".
     # Imported here rather than at module scope: gui_cmd is a sibling CLI
     # module and only `stop` needs it.
     from openjarvis.cli.gui_cmd import stop_frontend
@@ -506,7 +506,7 @@ def stop() -> None:
 @daemon.command()
 @click.pass_context
 def restart(ctx: click.Context) -> None:
-    """Restart the OpenJarvis server daemon."""
+    """Restart the Nivos server daemon."""
     console = Console(stderr=True)
     pid = _read_pid()
     previous = _read_state() if pid is not None else {}
@@ -526,7 +526,7 @@ def restart(ctx: click.Context) -> None:
 
 @daemon.command()
 def status() -> None:
-    """Show status of the OpenJarvis server daemon."""
+    """Show status of the Nivos server daemon."""
     console = Console(stderr=True)
     pid = _read_pid()
     if pid is None:

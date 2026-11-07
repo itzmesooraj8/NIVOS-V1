@@ -1,6 +1,6 @@
 # Agents
 
-Agents are the agentic logic layer of OpenJarvis. They determine how a query is processed -- whether it goes directly to a model, through a tool-calling loop, via ReAct reasoning, CodeAct code execution, recursive decomposition, or an external agent runtime. All agents implement the `BaseAgent` ABC and are registered via the `AgentRegistry`.
+Agents are the agentic logic layer of Nivos. They determine how a query is processed -- whether it goes directly to a model, through a tool-calling loop, via ReAct reasoning, CodeAct code execution, recursive decomposition, or an external agent runtime. All agents implement the `BaseAgent` ABC and are registered via the `AgentRegistry`.
 
 ## Overview
 
@@ -72,8 +72,8 @@ A single install can answer as different personas without changing global config
 Select one per invocation, or opt out entirely:
 
 ```bash
-jarvis ask --persona work  "summarize my open PRs"
-jarvis ask --persona none  "what is 2 + 2?"     # inject no persona
+nivos ask --persona work  "summarize my open PRs"
+nivos ask --persona none  "what is 2 + 2?"     # inject no persona
 ```
 
 Set `persona_name` under `[memory_files]` to make a named persona the default. `persona_name = "none"` (equivalently `--persona none`) disables persona injection for that run.
@@ -334,25 +334,25 @@ The `OpenHandsAgent` wraps the real `openhands-sdk` package for AI-driven softwa
 
 ```bash
 # Simple agent
-jarvis ask --agent simple "What is the capital of France?"
+nivos ask --agent simple "What is the capital of France?"
 
 # Orchestrator with tools
-jarvis ask --agent orchestrator --tools calculator,think "What is sqrt(256)?"
+nivos ask --agent orchestrator --tools calculator,think "What is sqrt(256)?"
 
 # NativeReActAgent
-jarvis ask --agent native_react --tools calculator "What is 2+2?"
+nivos ask --agent native_react --tools calculator "What is 2+2?"
 
 # ReAct alias (same as native_react)
-jarvis ask --agent react --tools calculator,think "Solve step by step: 15% of 340"
+nivos ask --agent react --tools calculator,think "Solve step by step: 15% of 340"
 
 # NativeOpenHandsAgent
-jarvis ask --agent native_openhands --tools calculator,web_search "Summarize example.com"
+nivos ask --agent native_openhands --tools calculator,web_search "Summarize example.com"
 
 # RLMAgent
-jarvis ask --agent rlm "Summarize this long document"
+nivos ask --agent rlm "Summarize this long document"
 
 # OpenHands SDK agent
-jarvis ask --agent openhands "Fix the bug in test_utils.py"
+nivos ask --agent openhands "Fix the bug in test_utils.py"
 ```
 
 ### Via Python SDK
@@ -425,7 +425,7 @@ The `ClaudeCodeAgent` wraps the `@anthropic-ai/claude-agent-sdk` package via a b
 | `system_prompt`  | `str`             | `""`                | Additional system prompt for the agent           |
 | `timeout`        | `int`             | `300`               | Subprocess timeout in seconds                    |
 
-**When to use:** For software engineering tasks where the Claude Agent SDK's built-in tools (code editing, bash execution, file operations) provide capabilities beyond what OpenJarvis tool-calling agents support.
+**When to use:** For software engineering tasks where the Claude Agent SDK's built-in tools (code editing, bash execution, file operations) provide capabilities beyond what Nivos tool-calling agents support.
 
 ```python
 from openjarvis.agents.claude_code import ClaudeCodeAgent
@@ -443,20 +443,20 @@ print(result.content)
 
 ```bash
 # Via CLI
-jarvis ask --agent claude_code "Refactor the tests to use pytest fixtures"
+nivos ask --agent claude_code "Refactor the tests to use pytest fixtures"
 ```
 
 !!! info "accepts_tools = False"
-    `ClaudeCodeAgent` does not accept OpenJarvis tools via `--tools`. Tool access for the Claude agent is configured separately via the `allowed_tools` constructor parameter, which passes tool names understood by the Claude Agent SDK itself.
+    `ClaudeCodeAgent` does not accept Nivos tools via `--tools`. Tool access for the Claude agent is configured separately via the `allowed_tools` constructor parameter, which passes tool names understood by the Claude Agent SDK itself.
 
 ---
 
 ## OpenCodeAgent
 
-The `OpenCodeAgent` delegates coding tasks to [opencode](https://opencode.ai), the open-source coding agent, running it **on your local engine**. opencode handles the agentic loop, file edits, and tool use; OpenJarvis supplies the model — keeping coding-agent work local-first.
+The `OpenCodeAgent` delegates coding tasks to [opencode](https://opencode.ai), the open-source coding agent, running it **on your local engine**. opencode handles the agentic loop, file edits, and tool use; Nivos supplies the model — keeping coding-agent work local-first.
 
 !!! warning "Requirements"
-    Requires the `opencode` binary on `PATH` (`npm i -g opencode-ai` or `brew install anomalyco/tap/opencode`). It is **not** bundled; `run()` returns a clear error if it is missing. No `ANTHROPIC_API_KEY` needed — inference goes through your OpenJarvis engine.
+    Requires the `opencode` binary on `PATH` (`npm i -g opencode-ai` or `brew install anomalyco/tap/opencode`). It is **not** bundled; `run()` returns a clear error if it is missing. No `ANTHROPIC_API_KEY` needed — inference goes through your Nivos engine.
 
 **How it works:**
 
@@ -491,7 +491,7 @@ agent.close()
 
 ```bash
 # Via CLI (opencode must be installed)
-jarvis ask --agent opencode "Refactor the parser to use a state machine"
+nivos ask --agent opencode "Refactor the parser to use a state machine"
 ```
 
 !!! tip "Pass-through providers"
@@ -557,7 +557,7 @@ result = agent.run("Generate today's report")
 
 ```bash
 # Via CLI
-jarvis ask --agent operative "Check system status"
+nivos ask --agent operative "Check system status"
 ```
 
 ---
@@ -627,7 +627,7 @@ result = agent.run("Investigate the root cause of the production outage")
 
 ```bash
 # Via CLI
-jarvis ask --agent monitor_operative "Analyze the security audit findings"
+nivos ask --agent monitor_operative "Analyze the security audit findings"
 ```
 
 ---

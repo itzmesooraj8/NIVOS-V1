@@ -25,8 +25,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'OpenJarvis',
-        short_name: 'Jarvis',
+        name: 'Nivos',
+        short_name: 'Nivos',
         description: 'On-device AI assistant',
         theme_color: '#161618',
         background_color: '#161618',

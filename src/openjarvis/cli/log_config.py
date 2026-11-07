@@ -1,4 +1,4 @@
-"""Global logging configuration for the OpenJarvis CLI."""
+"""Global logging configuration for the Nivos CLI."""
 
 from __future__ import annotations
 

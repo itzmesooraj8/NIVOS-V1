@@ -1,8 +1,8 @@
 # NVIDIA Pearl Mining Validation Runbook
 
 This runbook is the release gate for the v1 `vllm-pearl` provider. Unit tests
-prove OpenJarvis wiring; this validates that a real H100/H200 host can mine
-through Pearl and serve inference through OpenJarvis.
+prove Nivos wiring; this validates that a real H100/H200 host can mine
+through Pearl and serve inference through Nivos.
 
 ## Required Host
 
@@ -96,7 +96,7 @@ Expected:
 On shared hosts, select only idle GPUs during `mine init`:
 
 ```bash
-uv run jarvis mine init --cuda-visible-devices 0
+uv run nivos mine init --cuda-visible-devices 0
 ```
 
 This writes `[mining.extra].cuda_visible_devices`. `mine start` passes that
@@ -109,7 +109,7 @@ dedicated host where the miner may use all GPUs.
 Run:
 
 ```bash
-uv run jarvis mine doctor
+uv run nivos mine doctor
 ```
 
 Before config exists, `doctor` should show hardware and Docker as OK, and
@@ -118,7 +118,7 @@ Pearl node / wallet as unconfigured.
 Then initialize:
 
 ```bash
-uv run jarvis mine init
+uv run nivos mine init
 ```
 
 Use:
@@ -140,7 +140,7 @@ Expected:
 Run `doctor` again:
 
 ```bash
-uv run jarvis mine doctor
+uv run nivos mine doctor
 ```
 
 Expected:
@@ -156,7 +156,7 @@ Expected:
 ## Start Mining
 
 ```bash
-uv run jarvis mine start
+uv run nivos mine start
 ```
 
 Expected:
@@ -171,8 +171,8 @@ Inspect:
 ```bash
 docker ps --filter name=openjarvis-pearl-miner
 cat ~/.openjarvis/runtime/mining.json
-uv run jarvis mine logs --tail 200
-uv run jarvis mine status
+uv run nivos mine logs --tail 200
+uv run nivos mine status
 ```
 
 Expected:
@@ -183,13 +183,13 @@ Expected:
   `8339`.
 - `mine status` exits 0 and prints `provider: vllm-pearl`.
 
-## Verify OpenJarvis Inference Uses Mining Endpoint
+## Verify Nivos Inference Uses Mining Endpoint
 
 Run:
 
 ```bash
-uv run jarvis mine doctor
-uv run jarvis ask "Say hello in one sentence."
+uv run nivos mine doctor
+uv run nivos ask "Say hello in one sentence."
 ```
 
 Expected:
@@ -208,7 +208,7 @@ Check gateway metrics directly:
 
 ```bash
 curl -fsS http://127.0.0.1:8339/metrics | tee /tmp/pearl-gateway-metrics.txt
-uv run jarvis mine status
+uv run nivos mine status
 ```
 
 Expected:
@@ -245,7 +245,7 @@ smoke test window. Record:
 ## Stop And Cleanup
 
 ```bash
-uv run jarvis mine stop
+uv run nivos mine stop
 docker ps --filter name=openjarvis-pearl-miner
 test ! -e ~/.openjarvis/runtime/mining.json
 ```
@@ -254,7 +254,7 @@ Expected:
 
 - Container stops.
 - Sidecar is removed.
-- `jarvis ask` no longer routes through `vllm-pearl-mining` unless another
+- `nivos ask` no longer routes through `vllm-pearl-mining` unless another
   mining sidecar is attached.
 
 ## Pass Criteria
@@ -264,7 +264,7 @@ The NVIDIA provider is considered proven when all are true:
 - `mine doctor` reports supported on H100/H200.
 - `mine init` resolves/builds the Pearl image.
 - `mine start` launches the container and writes the sidecar.
-- OpenJarvis inference succeeds through `vllm-pearl-mining`.
+- Nivos inference succeeds through `vllm-pearl-mining`.
 - Pearl gateway metrics are reachable and `mine status` parses them.
 - `pearld` accepts the miner's network path.
 - At least one accepted share/block is observed, or a documented Pearl
@@ -276,9 +276,9 @@ The NVIDIA provider is considered proven when all are true:
 For any failure, collect:
 
 ```bash
-uv run jarvis mine doctor
-uv run jarvis mine status || true
-uv run jarvis mine logs --tail 300 || true
+uv run nivos mine doctor
+uv run nivos mine status || true
+uv run nivos mine logs --tail 300 || true
 docker inspect openjarvis-pearl-miner || true
 curl -fsS http://127.0.0.1:8339/metrics || true
 nvidia-smi

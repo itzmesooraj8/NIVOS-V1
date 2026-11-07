@@ -82,7 +82,7 @@ policy = "heuristic"
 ```
 
 ```bash
-jarvis ask --router learned "What is the capital of France?"
+nivos ask --router learned "What is the capital of France?"
 ```
 
 ### The `ensure_registered()` Pattern
@@ -532,7 +532,7 @@ Trace
 ## Optimization Framework
 
 The optimization subsystem (`learning/optimize/`) provides LLM-guided search
-over OpenJarvis's 5-primitive configuration space. It automates finding optimal
+over Nivos's 5-primitive configuration space. It automates finding optimal
 configurations for accuracy, latency, cost, and energy consumption.
 
 ### Components

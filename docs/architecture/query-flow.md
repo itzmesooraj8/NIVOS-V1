@@ -1,6 +1,6 @@
 # Query Flow
 
-This page traces the end-to-end journey of a user query through the OpenJarvis system, from the moment it enters the CLI or SDK to the final response and telemetry recording.
+This page traces the end-to-end journey of a user query through the Nivos system, from the moment it enters the CLI or SDK to the final response and telemetry recording.
 
 ---
 
@@ -19,7 +19,7 @@ sequenceDiagram
     participant TEL as Telemetry
     participant TRC as Trace Collector
 
-    User->>CLI: jarvis ask "query" / j.ask("query")
+    User->>CLI: nivos ask "query" / j.ask("query")
     CLI->>CFG: load_config()
     CFG-->>CLI: JarvisConfig (hardware, engine defaults)
 
@@ -70,7 +70,7 @@ sequenceDiagram
 
 ## Direct Mode vs Agent Mode
 
-OpenJarvis supports two query processing paths, selected by the `--agent` CLI flag or the `agent` parameter in the SDK.
+Nivos supports two query processing paths, selected by the `--agent` CLI flag or the `agent` parameter in the SDK.
 
 The CLI and SDK have different defaults:
 
@@ -83,7 +83,7 @@ In direct mode, the query goes straight to the inference engine with optional me
 
 ```bash
 # CLI
-jarvis ask --agent "" "What is the capital of France?"
+nivos ask --agent "" "What is the capital of France?"
 ```
 
 ```python
@@ -100,8 +100,8 @@ In agent mode, the query is handled by a named agent. The CLI's default `SimpleA
 
 ```bash
 # CLI
-jarvis ask "Hello"  # Uses SimpleAgent with the default configuration
-jarvis ask --agent orchestrator --tools calculator,think "What is 2^10 + 3^5?"
+nivos ask "Hello"  # Uses SimpleAgent with the default configuration
+nivos ask --agent orchestrator --tools calculator,think "What is 2^10 + 3^5?"
 ```
 
 ```python

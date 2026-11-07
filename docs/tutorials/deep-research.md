@@ -9,7 +9,7 @@ This tutorial walks through `examples/deep_research/research.py` — a standalon
 
 !!! tip "Prerequisites"
     - Python 3.10 or later
-    - OpenJarvis installed: run `uv sync --extra dev` from the repository root
+    - Nivos installed: run `uv sync --extra dev` from the repository root
     - An inference engine running — either Ollama locally (see below) or a cloud API key in your `.env` file
 
 ## Quick Start
@@ -159,7 +159,7 @@ response = system.ask("quantum computing advances 2026")
 system.close()
 ```
 
-This is useful when you want to version-control the research configuration, share it with collaborators, or feed it to the `jarvis eval` runner for benchmarking.
+This is useful when you want to version-control the research configuration, share it with collaborators, or feed it to the `nivos eval` runner for benchmarking.
 
 ## Customization
 
@@ -180,7 +180,7 @@ tools = ["web_search", "think", "file_write",
          "memory_store", "memory_search", "knowledge_graph_query"]
 ```
 
-Run `jarvis agent info orchestrator` to see the full tool catalog.
+Run `nivos agent info orchestrator` to see the full tool catalog.
 
 ### Adjust temperature
 

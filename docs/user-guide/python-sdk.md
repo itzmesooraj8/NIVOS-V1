@@ -7,13 +7,13 @@ search:
 
 # Python SDK
 
-The OpenJarvis Python SDK provides a high-level interface for interacting with local inference engines, managing memory, and running agent workflows. The primary entry point is the `Jarvis` class.
+The Nivos Python SDK provides a high-level interface for interacting with local inference engines, managing memory, and running agent workflows. The primary entry point is the `Jarvis` class.
 
 ## Installation
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis
+git clone https://github.com/nivos/nivos.git
+cd Nivos
 uv sync
 ```
 
@@ -74,7 +74,7 @@ j = Jarvis(config_path="/path/to/config.toml")
 | Property  | Type           | Description                       |
 |-----------|----------------|-----------------------------------|
 | `config`  | `JarvisConfig` | The active configuration object   |
-| `version` | `str`          | The OpenJarvis version string     |
+| `version` | `str`          | The Nivos version string     |
 | `memory`  | `MemoryHandle` | Proxy for memory operations       |
 
 ---
