@@ -93,9 +93,9 @@ _RECORDS = [
         "answer": "Sessions are managed via SessionStore using SQLite with SessionIdentity for canonical user identification across channels. Storage is reduced through the consolidate() method which summarizes old messages.",
     },
     {
-        "documents": "Desktop Application Guide:\nThe OpenJarvis desktop app uses Tauri 2.0. It includes 5 dashboard panels: EnergyDashboard (real-time power monitoring with recharts), TraceDebugger (timeline inspection with step-type color coding), LearningCurve (policy visualization for GRPO/bandit stats), MemoryBrowser (search and stats), and AdminPanel (health, agents, server control). Tauri commands proxy to the OpenJarvis REST API.",
+        "documents": "Desktop Application Guide:\nThe Nivos desktop app uses Tauri 2.0. It includes 5 dashboard panels: EnergyDashboard (real-time power monitoring with recharts), Activity (timeline inspection with step-type color coding), LearningCurve (policy visualization for GRPO/bandit stats), MemoryBrowser (search and stats), and AdminPanel (health, agents, server control). Tauri commands proxy to the Nivos REST API.",
         "question": "What framework does the desktop app use and what are the 5 dashboard panels?",
-        "answer": "The desktop app uses Tauri 2.0. The 5 panels are EnergyDashboard, TraceDebugger, LearningCurve, MemoryBrowser, and AdminPanel.",
+        "answer": "The desktop app uses Tauri 2.0. The 5 panels are EnergyDashboard, Activity, LearningCurve, MemoryBrowser, and AdminPanel.",
     },
     {
         "documents": "API Server Reference:\nThe OpenAI-compatible server is started via 'jarvis serve'. Core endpoints: POST /v1/chat/completions, GET /v1/models, GET /health. Extended endpoints cover agents, memory, traces, telemetry, learning, skills, sessions, budget, and metrics. SSE streaming is supported on /v1/chat/completions with stream=true. WebSocket streaming is available at WS /v1/chat/stream.",

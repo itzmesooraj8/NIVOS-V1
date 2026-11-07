@@ -415,22 +415,66 @@ def _serialise_trace(trace) -> dict:
         if started
         else None
     )
-    dur = d.pop("total_latency_seconds", 0.0)
+    dur = d.pop("total_latency_seconds", 0.0) or 0.0
     d["duration_ms"] = round(dur * 1000)
     for step in d.get("steps", []):
         st = step.get("step_type")
         if hasattr(st, "value"):
             step["step_type"] = st.value
+        sec = step.get("duration_seconds", 0.0) or 0.0
+        step["duration_ms"] = round(sec * 1000)
+        inp = step.get("input") if isinstance(step.get("input"), dict) else {}
+        meta = step.get("metadata") if isinstance(step.get("metadata"), dict) else {}
+        outp = step.get("output")
+        tool_name = inp.get("tool") or meta.get("tool")
+        step["data"] = {
+            **meta,
+            "tool": tool_name,
+            "input": inp.get("input") if "input" in inp else inp,
+            "output": outp,
+            "model": meta.get("model") or inp.get("model"),
+        }
     return d
 
 
+@traces_router.get("/recording")
+async def get_recording_status(request: Request):
+    """Get whether activity recording is paused."""
+    store = getattr(request.app.state, "trace_store", None)
+    if store is not None:
+        return {"paused": getattr(store, "recording_paused", False)}
+    return {"paused": getattr(request.app.state, "trace_recording_paused", False)}
+
+
+@traces_router.post("/recording")
+async def set_recording_status(request: Request):
+    """Pause or resume activity recording."""
+    data = await request.json()
+    paused = bool(data.get("paused", False))
+    store = getattr(request.app.state, "trace_store", None)
+    if store is not None:
+        store.recording_paused = paused
+    request.app.state.trace_recording_paused = paused
+    return {"paused": paused}
+
+
+@traces_router.delete("")
+async def clear_traces(request: Request):
+    """Clear all recorded activity history."""
+    store = getattr(request.app.state, "trace_store", None)
+    if store is not None:
+        store.clear()
+    return {"status": "cleared"}
+
+
 @traces_router.get("")
-async def list_traces(request: Request, limit: int = 20):
+async def list_traces(request: Request, limit: int = 50):
     """List recent traces."""
     try:
         store = getattr(request.app.state, "trace_store", None)
         if store is None:
             return {"traces": []}
+        store.delete_older_than(30)
         traces = store.list_traces(limit=limit)
         items = [_serialise_trace(t) for t in traces]
         return {"traces": items}

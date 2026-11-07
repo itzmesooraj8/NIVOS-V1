@@ -64,6 +64,7 @@ class TestTraceStore:
         cwd = tmp_path / "cwd"
         cwd.mkdir()
         monkeypatch.setenv("HOME", str(home))
+        monkeypatch.setenv("USERPROFILE", str(home))
         monkeypatch.chdir(cwd)
 
         store = TraceStore("~/.openjarvis/traces.db")
@@ -226,4 +227,45 @@ class TestTraceStore:
         assert retrieved is not None
         assert retrieved.metadata["key"] == "value"
         assert retrieved.metadata["nested"] == [1, 2, 3]
+        store.close()
+
+    def test_clear(self, tmp_path: Path) -> None:
+        store = TraceStore(tmp_path / "test.db")
+        store.save(_make_trace())
+        assert store.count() == 1
+        store.clear()
+        assert store.count() == 0
+        store.close()
+
+    def test_delete_older_than(self, tmp_path: Path) -> None:
+        import time
+        store = TraceStore(tmp_path / "test.db")
+        t_old = _make_trace()
+        t_old.trace_id = "old-1"
+        t_old.started_at = time.time() - (40 * 86400)
+        store.save(t_old)
+
+        t_new = _make_trace()
+        t_new.trace_id = "new-1"
+        t_new.started_at = time.time()
+        store.save(t_new)
+
+        assert store.count() == 2
+        deleted = store.delete_older_than(30)
+        assert deleted == 1
+        assert store.count() == 1
+        assert store.get("new-1") is not None
+        assert store.get("old-1") is None
+        store.close()
+
+    def test_recording_paused(self, tmp_path: Path) -> None:
+        store = TraceStore(tmp_path / "test.db")
+        store.recording_paused = True
+        store.save(_make_trace())
+        assert store.count() == 0
+        store.recording_paused = False
+        store.save(_make_trace())
+        assert store.count() == 1
+        store.close()
+
         store.close()

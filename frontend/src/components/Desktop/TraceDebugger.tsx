@@ -486,8 +486,8 @@ export function TraceDebugger({ apiUrl }: { apiUrl: string }) {
         <div style={styles.emptyState}>
           <div style={styles.emptyIcon}>&#x1F50D;</div>
           <div style={styles.emptyText}>
-            No traces available.<br />
-            Traces are recorded when queries are processed through the system.
+            No activity recorded yet.<br />
+            Activity is recorded when requests are processed through the system.
           </div>
         </div>
       </div>
@@ -499,8 +499,8 @@ export function TraceDebugger({ apiUrl }: { apiUrl: string }) {
       {/* Left panel - trace list */}
       <div style={styles.listPanel}>
         <div style={styles.listHeader}>
-          <h2 style={styles.listTitle}>Traces</h2>
-          <p style={styles.listSubtitle}>{traces.length} recent traces</p>
+          <h2 style={styles.listTitle}>Activity</h2>
+          <p style={styles.listSubtitle}>{traces.length} recent activity items</p>
         </div>
 
         {error && <div style={styles.errorBanner}>{error}</div>}
@@ -544,7 +544,7 @@ export function TraceDebugger({ apiUrl }: { apiUrl: string }) {
       <div style={styles.detailPanel}>
         {!selectedId && (
           <div style={styles.placeholder}>
-            Select a trace from the list to inspect its steps.
+            Select an activity item from the list to inspect its steps.
           </div>
         )}
 

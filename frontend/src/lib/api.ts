@@ -329,7 +329,7 @@ export async function fetchTelemetry(): Promise<unknown> {
   return res.json();
 }
 
-export async function fetchTraces(limit: number = 50): Promise<unknown> {
+export async function fetchTraces(limit: number = 50): Promise<any> {
   if (isTauri()) {
     try {
       return await tauriInvoke('fetch_traces', { apiUrl: getBase(), limit });
@@ -338,6 +338,37 @@ export async function fetchTraces(limit: number = 50): Promise<unknown> {
   const res = await apiFetch(`/v1/traces?limit=${limit}`);
   if (!res.ok) throw new Error(`Failed: ${res.status}`);
   return res.json();
+}
+
+export async function fetchRecordingStatus(): Promise<boolean> {
+  try {
+    const res = await apiFetch('/v1/traces/recording');
+    if (!res.ok) return false;
+    const data = await res.json();
+    return !!data.paused;
+  } catch {
+    return false;
+  }
+}
+
+export async function setRecordingStatus(paused: boolean): Promise<boolean> {
+  try {
+    const res = await apiFetch('/v1/traces/recording', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paused }),
+    });
+    if (!res.ok) return paused;
+    const data = await res.json();
+    return !!data.paused;
+  } catch {
+    return paused;
+  }
+}
+
+export async function clearTraces(): Promise<void> {
+  const res = await apiFetch('/v1/traces', { method: 'DELETE' });
+  if (!res.ok) throw new Error(`Failed to clear traces: ${res.status}`);
 }
 
 // ---------------------------------------------------------------------------

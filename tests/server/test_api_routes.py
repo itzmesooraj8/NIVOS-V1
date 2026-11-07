@@ -386,3 +386,48 @@ class TestTraceRoutes:
         client = TestClient(_make_app())
         resp = client.get("/v1/traces")
         assert resp.status_code == 200
+        assert "traces" in resp.json()
+
+    def test_recording_status(self):
+        client = TestClient(_make_app())
+        resp = client.get("/v1/traces/recording")
+        assert resp.status_code == 200
+        assert "paused" in resp.json()
+
+        resp2 = client.post("/v1/traces/recording", json={"paused": True})
+        assert resp2.status_code == 200
+        assert resp2.json()["paused"] is True
+
+        resp3 = client.get("/v1/traces/recording")
+        assert resp3.json()["paused"] is True
+
+        resp4 = client.post("/v1/traces/recording", json={"paused": False})
+        assert resp4.json()["paused"] is False
+
+    def test_clear_traces(self):
+        client = TestClient(_make_app())
+        resp = client.delete("/v1/traces")
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "cleared"
+
+    def test_serialise_trace_has_duration_ms(self):
+        from openjarvis.core.types import StepType, Trace, TraceStep
+        from openjarvis.server.api_routes import _serialise_trace
+
+        trace = Trace(query="test query")
+        step = TraceStep(
+            step_type=StepType.TOOL_CALL,
+            timestamp=100.0,
+            duration_seconds=0.45,
+            input={"tool": "web_search", "input": {"query": "AI news"}},
+            output={"result": "done"},
+        )
+        trace.add_step(step)
+
+        d = _serialise_trace(trace)
+        assert "duration_ms" in d
+        assert d["duration_ms"] == 450
+        assert len(d["steps"]) == 1
+        assert d["steps"][0]["duration_ms"] == 450
+        assert d["steps"][0]["data"]["tool"] == "web_search"
+

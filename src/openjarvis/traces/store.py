@@ -6,6 +6,7 @@ import json
 import re
 import sqlite3
 import threading
+import time
 from functools import wraps
 from pathlib import Path
 from typing import Any, List, Optional
@@ -123,7 +124,55 @@ class TraceStore:
             )
         except sqlite3.OperationalError:
             pass  # Column already exists
+        self._recording_paused = False
         self._conn.commit()
+        # Auto-delete entries older than 30 days
+        self.delete_older_than(30)
+
+    @property
+    def recording_paused(self) -> bool:
+        """Return whether recording is paused."""
+        return self._recording_paused
+
+    @recording_paused.setter
+    def recording_paused(self, value: bool) -> None:
+        """Pause or resume trace recording."""
+        self._recording_paused = bool(value)
+
+    @_db_locked
+    def clear(self) -> None:
+        """Clear all stored traces and steps."""
+        self._conn.execute("DELETE FROM trace_steps")
+        self._conn.execute("DELETE FROM traces")
+        try:
+            self._conn.execute("DELETE FROM traces_fts")
+        except Exception:
+            pass
+        self._conn.commit()
+
+    @_db_locked
+    def delete_older_than(self, days: int = 30) -> int:
+        """Delete traces and their steps older than *days* days.
+
+        Returns the number of deleted traces.
+        """
+        cutoff = time.time() - (days * 86400)
+        self._conn.execute(
+            "DELETE FROM trace_steps WHERE trace_id IN (SELECT trace_id FROM traces WHERE started_at > 0 AND started_at < ?)",
+            (cutoff,),
+        )
+        cursor = self._conn.execute(
+            "DELETE FROM traces WHERE started_at > 0 AND started_at < ?",
+            (cutoff,),
+        )
+        deleted = cursor.rowcount
+        if deleted > 0:
+            try:
+                self._conn.execute("INSERT INTO traces_fts(traces_fts) VALUES('rebuild')")
+            except Exception:
+                pass
+        self._conn.commit()
+        return deleted
 
     @_db_locked
     def save(self, trace: Trace) -> None:
@@ -136,6 +185,8 @@ class TraceStore:
         single writer — see ``server/app.py`` — rather than swallowing
         collisions here.
         """
+        if self._recording_paused:
+            return
         self._conn.execute(
             _INSERT_TRACE,
             (
@@ -276,6 +327,8 @@ class TraceStore:
         bus.subscribe(EventType.TRACE_COMPLETE, self._on_event)
 
     def _on_event(self, event: Event) -> None:
+        if self._recording_paused:
+            return
         trace = event.data.get("trace")
         if isinstance(trace, Trace):
             self.save(trace)

@@ -242,8 +242,8 @@ def create_app(
     )
 
     app = FastAPI(
-        title="OpenJarvis API",
-        description="OpenAI-compatible API server for OpenJarvis",
+        title="Nivos API",
+        description="OpenAI-compatible API server for Nivos",
         version="0.1.0",
     )
 
