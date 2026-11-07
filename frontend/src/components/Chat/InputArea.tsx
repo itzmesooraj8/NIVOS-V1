@@ -1,9 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Send, Square, Paperclip, Search } from 'lucide-react';
+import { Send, Square, Paperclip, Search, Plus, FolderPlus, FilePlus, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppStore, generateId } from '../../lib/store';
 import { streamChat, streamResearch } from '../../lib/sse';
-import { fetchSavings, getBase } from '../../lib/api';
+import { fetchSavings, getBase, uploadToWorkspace } from '../../lib/api';
 import { listConnectors, getSyncStatus } from '../../lib/connectors-api';
 import { serializeToolCallArguments } from '../../lib/tool-call';
 import {
@@ -111,6 +111,63 @@ export function InputArea() {
     stopRecording,
   } = useSpeech();
 
+  const [showUploadMenu, setShowUploadMenu] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [stagedFiles, setStagedFiles] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  const uploadMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showUploadMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (uploadMenuRef.current && !uploadMenuRef.current.contains(e.target as Node)) {
+        setShowUploadMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUploadMenu]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    setShowUploadMenu(false);
+    try {
+      const fileList = Array.from(files);
+      const res = await uploadToWorkspace(fileList, fileList.map((f) => f.name));
+      const paths = res.uploaded.map((u) => u.path);
+      setStagedFiles((prev) => Array.from(new Set([...prev, ...paths])));
+      toast.success(`Uploaded ${paths.length} file${paths.length === 1 ? '' : 's'} to workspace/`);
+    } catch (err: any) {
+      toast.error(`Upload failed: ${err.message || err}`);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleFolderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    setShowUploadMenu(false);
+    try {
+      const fileList = Array.from(files);
+      const relPaths = fileList.map((f) => (f as any).webkitRelativePath || f.name);
+      const res = await uploadToWorkspace(fileList, relPaths);
+      const paths = res.uploaded.map((u) => u.path);
+      setStagedFiles((prev) => Array.from(new Set([...prev, ...paths])));
+      toast.success(`Uploaded folder with ${paths.length} file${paths.length === 1 ? '' : 's'} to workspace/`);
+    } catch (err: any) {
+      toast.error(`Folder upload failed: ${err.message || err}`);
+    } finally {
+      setIsUploading(false);
+      if (folderInputRef.current) folderInputRef.current.value = '';
+    }
+  };
+
   // Abort in-flight stream when the user switches models mid-generation.
   // This prevents errors from trying to continue a stream with a stale model.
   const prevModelRef = useRef(selectedModel);
@@ -172,11 +229,19 @@ export function InputArea() {
   }, [resetStream]);
 
   const sendMessage = useCallback(async () => {
-    const content = input.trim();
-    if (!content || streamState.isStreaming) return;
+    const rawContent = input.trim();
+    if ((!rawContent && stagedFiles.length === 0) || streamState.isStreaming) return;
     if (!selectedModel) {
       toast.error('Pick a model first (⌘K)');
       return;
+    }
+
+    let content = rawContent;
+    if (stagedFiles.length > 0) {
+      const fileListStr = stagedFiles.map((f) => `- workspace/${f}`).join('\n');
+      const prefix = `[Files uploaded to workspace/:\n${fileListStr}\nYou can read or edit these workspace files using the file_read and file_write tools.]\n\n`;
+      content = rawContent ? `${prefix}${rawContent}` : `${prefix}Please inspect the files uploaded into workspace/.`;
+      setStagedFiles([]);
     }
 
     setInput('');
@@ -541,6 +606,7 @@ export function InputArea() {
     }
   }, [
     input,
+    stagedFiles,
     activeId,
     selectedModel,
     streamState.isStreaming,
@@ -595,6 +661,50 @@ export function InputArea() {
           </div>
         )}
       </div>
+
+      {stagedFiles.length > 0 && (
+        <div
+          className="mb-2 flex flex-wrap items-center gap-1.5 px-3 py-2 rounded-xl text-xs"
+          style={{
+            background: 'var(--color-bg-secondary)',
+            border: '1px solid var(--color-border)',
+          }}
+        >
+          <span className="font-medium flex items-center gap-1" style={{ color: 'var(--color-text-secondary)' }}>
+            Workspace files ({stagedFiles.length}):
+          </span>
+          {stagedFiles.map((f) => (
+            <span
+              key={f}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px]"
+              style={{
+                background: 'var(--color-surface)',
+                color: 'var(--color-text)',
+                border: '1px solid var(--color-border)',
+              }}
+            >
+              <span className="truncate max-w-[160px] font-mono">{f}</span>
+              <button
+                type="button"
+                onClick={() => setStagedFiles((prev) => prev.filter((p) => p !== f))}
+                className="hover:text-red-400 cursor-pointer"
+                title="Remove"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={() => setStagedFiles([])}
+            className="text-[11px] underline ml-auto cursor-pointer"
+            style={{ color: 'var(--color-text-tertiary)' }}
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
       <div
         className="flex items-center gap-2 rounded-2xl px-4 py-3 transition-shadow"
         style={{
@@ -603,6 +713,75 @@ export function InputArea() {
           boxShadow: 'var(--shadow-sm)',
         }}
       >
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          multiple
+          onChange={handleFileUpload}
+        />
+        <input
+          type="file"
+          ref={folderInputRef}
+          className="hidden"
+          multiple
+          {...({ webkitdirectory: '', directory: '' } as any)}
+          onChange={handleFolderUpload}
+        />
+
+        <div className="relative shrink-0" ref={uploadMenuRef}>
+          <button
+            type="button"
+            onClick={() => setShowUploadMenu(!showUploadMenu)}
+            disabled={streamState.isStreaming || isUploading}
+            aria-label="Upload files or folders to workspace"
+            title="Upload to workspace/"
+            className="p-1.5 rounded-xl transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default"
+            style={{
+              background: showUploadMenu ? 'var(--color-bg-secondary)' : 'transparent',
+              color: 'var(--color-text-secondary)',
+            }}
+          >
+            {isUploading ? <Loader2 size={18} className="animate-spin text-accent" /> : <Plus size={18} />}
+          </button>
+
+          {showUploadMenu && (
+            <div
+              className="absolute bottom-full left-0 mb-2 w-44 py-1 rounded-xl shadow-lg flex flex-col z-50 text-xs"
+              style={{
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                boxShadow: 'var(--shadow-md)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUploadMenu(false);
+                  fileInputRef.current?.click();
+                }}
+                className="flex items-center gap-2 px-3 py-2 text-left hover:bg-[var(--color-bg-secondary)] transition-colors cursor-pointer"
+                style={{ color: 'var(--color-text)' }}
+              >
+                <FilePlus size={14} />
+                <span>Upload File(s)...</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUploadMenu(false);
+                  folderInputRef.current?.click();
+                }}
+                className="flex items-center gap-2 px-3 py-2 text-left hover:bg-[var(--color-bg-secondary)] transition-colors cursor-pointer"
+                style={{ color: 'var(--color-text)' }}
+              >
+                <FolderPlus size={14} />
+                <span>Upload Folder...</span>
+              </button>
+            </div>
+          )}
+        </div>
+
         <textarea
           ref={textareaRef}
           value={input}

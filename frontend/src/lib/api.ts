@@ -1198,3 +1198,54 @@ export async function setInferenceSource(
 export const stageInferenceSource = (
   src: InferenceSource & { apiKey?: string },
 ): Promise<void> => setInferenceSource(src, { pending: true });
+
+export interface WorkspaceFile {
+  path: string;
+  name: string;
+  is_dir: boolean;
+  size: number;
+  modified: number;
+}
+
+export interface WorkspaceUploadResult {
+  success: boolean;
+  workspace: string;
+  uploaded: Array<{ path: string; size: number }>;
+  count: number;
+}
+
+export async function fetchWorkspaceFiles(): Promise<{ workspace: string; files: WorkspaceFile[]; count: number }> {
+  const res = await apiFetch('/v1/workspace/files');
+  if (!res.ok) throw new Error(`Failed to list workspace files: ${res.status}`);
+  return res.json();
+}
+
+export async function uploadToWorkspace(
+  files: File[],
+  relativePaths?: string[],
+): Promise<WorkspaceUploadResult> {
+  const formData = new FormData();
+  for (const file of files) {
+    formData.append('files', file);
+  }
+  if (relativePaths && relativePaths.length > 0) {
+    formData.append('relative_paths', JSON.stringify(relativePaths));
+  }
+  const base = getBase();
+  const res = await fetch(`${base}/v1/workspace/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Upload failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function deleteWorkspaceFile(path: string): Promise<void> {
+  const res = await apiFetch(`/v1/workspace/files?path=${encodeURIComponent(path)}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error(`Failed to delete workspace file: ${res.status}`);
+}
