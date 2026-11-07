@@ -11,29 +11,11 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
+from openjarvis.core.paths import get_workspace_dir
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1/workspace", tags=["workspace"])
-
-
-def get_workspace_dir() -> Path:
-    """Return the absolute path to the workspace directory.
-
-    Respects NIVOS_WORKSPACE or OPENJARVIS_WORKSPACE environment variables,
-    otherwise resolves to '<repo_root>/workspace' or 'Path.cwd() / "workspace"'.
-    """
-    env_dir = os.environ.get("NIVOS_WORKSPACE") or os.environ.get("OPENJARVIS_WORKSPACE")
-    if env_dir:
-        ws = Path(env_dir).expanduser().resolve()
-    else:
-        # Check repo root
-        repo_root = Path(__file__).resolve().parents[3]
-        if (repo_root / "pyproject.toml").exists():
-            ws = (repo_root / "workspace").resolve()
-        else:
-            ws = (Path.cwd() / "workspace").resolve()
-    ws.mkdir(parents=True, exist_ok=True)
-    return ws
 
 
 def _validate_safe_path(base_dir: Path, rel_path: str) -> Path:

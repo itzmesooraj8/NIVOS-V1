@@ -120,3 +120,18 @@ def get_cache_dir() -> Path:
     directory instead of scattering across ``~/.cache``.
     """
     return get_config_dir() / "cache"
+
+
+def get_workspace_dir() -> Path:
+    """Resolve the workspace directory for user files and sandboxed tools."""
+    env_ws = os.environ.get("NIVOS_WORKSPACE") or os.environ.get("OPENJARVIS_WORKSPACE")
+    if env_ws:
+        ws = Path(env_ws).expanduser().resolve()
+    else:
+        source_root = _find_source_root()
+        if source_root is not None:
+            ws = (source_root / "workspace").resolve()
+        else:
+            ws = (Path.cwd() / "workspace").resolve()
+    ws.mkdir(parents=True, exist_ok=True)
+    return ws
