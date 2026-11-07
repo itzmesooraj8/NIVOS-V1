@@ -131,3 +131,8 @@ learning.db
 minion_logs/
 *.oj-debug.json
 oj-debug.*.json
+
+# Obsidian vault & notes
+obsidian second brain/
+.obsidian/
+
