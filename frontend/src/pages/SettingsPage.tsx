@@ -32,6 +32,7 @@ import {
   saveToolCredentials,
   deleteToolCredential,
   isTauri,
+  fetchOllamaModels,
   type InferenceSource,
   type MemoryStats,
 } from '../lib/api';
@@ -42,9 +43,8 @@ const CLOUD_KEY_STATUS_CHANGED = 'openjarvis-cloud-key-status-changed';
 function OllamaModelList() {
   const [models, setModels] = useState<Array<{ name: string; size: number }>>([]);
   useEffect(() => {
-    fetch('http://localhost:11434/api/tags')
-      .then(r => r.json())
-      .then(data => setModels((data.models || []).map((m: any) => ({ name: m.name, size: m.size }))))
+    fetchOllamaModels()
+      .then(setModels)
       .catch(() => setModels([]));
   }, []);
   if (models.length === 0) return <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>No models loaded</span>;
@@ -958,18 +958,7 @@ export function SettingsPage() {
               <p className="mb-2">
                 <span className="font-semibold" style={{ color: 'var(--color-text)' }}>Nivos</span> — Programming abstractions for on-device AI.
               </p>
-              <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                Part of Intelligence Per Watt, a research initiative at Stanford SAIL.
-              </p>
               <div className="flex gap-3 mt-3 text-xs">
-                <a
-                  href="https://nivos.stanford.edu/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: 'var(--color-accent)' }}
-                >
-                  Project site
-                </a>
                 <a
                   href="https://nivos.github.io/nivos/"
                   target="_blank"

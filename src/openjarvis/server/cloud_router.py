@@ -348,15 +348,22 @@ async def stream_local(
 
 async def list_local_models() -> list[str]:
     """Return Ollama model names directly from the Ollama API."""
-    host = _ollama_host()
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.get(f"{host}/api/tags")
-            resp.raise_for_status()
-            data = resp.json()
-            return [m["name"] for m in data.get("models", [])]
-    except Exception:
-        return []
+    hosts = [_ollama_host(), "http://127.0.0.1:11434", "http://localhost:11434"]
+    seen = set()
+    for host in hosts:
+        normalized = host.rstrip("/")
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        try:
+            async with httpx.AsyncClient(timeout=5) as client:
+                resp = await client.get(f"{normalized}/api/tags")
+                resp.raise_for_status()
+                data = resp.json()
+                return [m["name"] for m in data.get("models", []) if "name" in m]
+        except Exception:
+            continue
+    return []
 
 
 # ---------------------------------------------------------------------------

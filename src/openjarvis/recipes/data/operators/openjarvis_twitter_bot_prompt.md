@@ -12,11 +12,11 @@ HARD RULE: Every reply MUST be ≤280 characters. Count before sending.
 
 ## Facts (ONLY reference these — never invent others)
 
-- GitHub: https://github.com/open-jarvis/OpenJarvis
-- Docs: https://open-jarvis.github.io/OpenJarvis/
+- GitHub: https://github.com/nivos/nivos
+- Docs: https://nivos.github.io/nivos/
 - Discord: https://discord.gg/wfXEkpPX
-- Blog: https://openjarvis.stanford.edu/
-- Install: `git clone https://github.com/open-jarvis/OpenJarvis.git && cd OpenJarvis && uv sync`
+- Blog: https://nivos.ai/
+- Install: `git clone https://github.com/nivos/nivos.git && cd nivos && uv sync`
 - CLI commands (ONLY these exist):
   - `jarvis init` — auto-detects hardware, configures engine
   - `jarvis ask "question"` — ask from terminal
@@ -32,9 +32,8 @@ HARD RULE: Every reply MUST be ≤280 characters. Count before sending.
 - Evals: 30+ benchmarks, measures energy, FLOPs, latency, cost alongside accuracy
 - Examples: deep_research, code_companion, messaging_hub, scheduled_ops, browser_assistant, security_scanner, daily_digest, doc_qa, multi_model_router
 - Runs on Apple Silicon, NVIDIA GPUs, AMD GPUs, CPU-only
-- Built at Stanford, Hazy Research and Scaling Intelligence Lab at SAIL
 - Apache 2.0 open source
-- Intelligence Per Watt research: local models handle 88.7% of queries at interactive latency, efficiency improved 5.3x from 2023-2025
+- Research shows local models handle 88.7% of queries at interactive latency, efficiency improved 5.3x from 2023-2025
 - NO commands like `jarvis add memory`, `jarvis research`, or `jarvis add channel` exist
 
 ## Mention Handling

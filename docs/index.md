@@ -30,7 +30,7 @@ Build personal AI that runs on your hardware. Cloud APIs are optional.
 
 ## Why Nivos?
 
-Personal AI agents are exploding in popularity, but nearly all of them still route intelligence through cloud APIs. Your "personal" AI continues to depend on someone else's server. At the same time, our [Intelligence Per Watt](https://www.intelligence-per-watt.ai/) research showed that local language models already handle 88.7% of single-turn chat and reasoning queries, with intelligence efficiency improving 5.3× from 2023 to 2025. The models and hardware are increasingly ready. What has been missing is the software stack to make local-first personal AI practical.
+Personal AI agents are exploding in popularity, but nearly all of them still route intelligence through cloud APIs. Your "personal" AI continues to depend on someone else's server. At the same time, recent research showed that local language models already handle 88.7% of single-turn chat and reasoning queries, with intelligence efficiency improving 5.3× from 2023 to 2025. The models and hardware are increasingly ready. What has been missing is the software stack to make local-first personal AI practical.
 
 Nivos is that stack. It is a framework for local-first personal AI, built around three core ideas: shared primitives for building on-device agents; evaluations that treat energy, FLOPs, latency, and dollar cost as first-class constraints alongside accuracy; and a learning loop that improves models using local trace data. The goal is simple: make it possible to build personal AI agents that run locally by default, calling the cloud only when truly necessary. Nivos aims to be both a research platform and a production foundation for local AI, in the spirit of PyTorch.
 
@@ -213,9 +213,9 @@ Nivos is built around five composable layers. Each has a clean interface and can
 
 ## Research
 
-Nivos is part of [Intelligence Per Watt](https://www.intelligence-per-watt.ai/), a research initiative studying the efficiency of on-device AI systems. Developed at [Hazy Research](https://hazyresearch.stanford.edu/) and the [Scaling Intelligence Lab](https://scalingintelligence.stanford.edu/) at [Stanford SAIL](https://ai.stanford.edu/).
+Nivos is an open-source project studying the efficiency of on-device AI systems.
 
-Read the [blog post](https://nivos.ai/) for the full research motivation, architecture details, and experimental results.
+Read the [blog post](https://nivos.ai/) for the architecture details and experimental results.
 
 ## Citation
 
@@ -235,12 +235,10 @@ Read the [blog post](https://nivos.ai/) for the full research motivation, archit
 
 <p>
   <a href="https://www.laude.org/">Laude Institute</a> &bull;
-  <a href="https://datascience.stanford.edu/marlowe">Stanford Marlowe</a> &bull;
   <a href="https://cloud.google.com/">Google Cloud Platform</a> &bull;
   <a href="https://lambda.ai/">Lambda Labs</a> &bull;
   <a href="https://ollama.com/">Ollama</a> &bull;
-  <a href="https://research.ibm.com/">IBM Research</a> &bull;
-  <a href="https://hai.stanford.edu/">Stanford HAI</a>
+  <a href="https://research.ibm.com/">IBM Research</a>
 </p>
 
 Follow [@NivosAI](https://x.com/NivosAI) on X for updates.

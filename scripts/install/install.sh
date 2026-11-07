@@ -261,51 +261,13 @@ INSTALL_START_EPOCH="$(date +%s)"
 CURRENT_STAGE=""
 
 analytics_enabled() {
-    [[ "$ANALYTICS_ENABLED" -eq 1 ]]
+    return 1
 }
 
 choose_analytics() {
-    # The usual curl | bash entry point occupies stdin. Read a real
-    # controlling terminal instead; EOF/unattended runs never consent.
-    case "$ANALYTICS_CHOICE" in
-        --analytics) ANALYTICS_ENABLED=1; return ;;
-        --no-analytics) return ;;
-    esac
-    if [[ ! -t 2 ]] || ! { exec 3<> /dev/tty; } 2>/dev/null; then
-        echo "Analytics are off (no interactive terminal). Use --analytics to opt in." >&2
-        return
-    fi
-
-    cat >&3 <<'EOF'
-
-Help improve OpenJarvis by sharing optional install and usage statistics.
-Data includes installation and feature usage, timings, token counts, error
-categories, environment metadata, and a random installation ID.
-Recipient: the OpenJarvis team's PostHog analytics endpoint.
-Privacy details: https://open-jarvis.github.io/OpenJarvis/telemetry/
-You can disable sharing later: jarvis config set analytics.enabled false
-(then restart the server and reload the app).
-Declining does not change OpenJarvis functionality.
-EOF
-    printf 'Analytics destination: %s\n' "$ANALYTICS_HOST" >&3
-    local answer
-    while true; do
-        printf 'Press Enter or Y to consent, or N to decline: ' >&3
-        if ! IFS= read -r answer <&3; then
-            printf '\nAnalytics are off (no answer received).\n' >&3
-            break
-        fi
-        case "$answer" in
-            ""|y|Y|yes|YES|Yes)
-                ANALYTICS_ENABLED=1
-                ANALYTICS_CHOICE="--analytics"
-                break
-                ;;
-            n|N|no|NO|No) ANALYTICS_CHOICE="--no-analytics"; break ;;
-            *) printf 'Please press Enter, type Y, or type N.\n' >&3 ;;
-        esac
-    done
-    exec 3>&-
+    ANALYTICS_ENABLED=0
+    ANALYTICS_CHOICE="--no-analytics"
+    return 0
 }
 
 persist_analytics_choice() {

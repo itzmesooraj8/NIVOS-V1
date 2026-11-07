@@ -2119,31 +2119,14 @@ async fn transcribe_audio(
     serde_json::from_str(&body).map_err(|e| format!("Invalid response: {}", e))
 }
 
-/// Submit savings to Supabase leaderboard.
+/// Submit savings to Supabase leaderboard (disabled).
 #[tauri::command]
 async fn submit_savings(
-    supabase_url: String,
-    supabase_key: String,
-    payload: serde_json::Value,
+    _supabase_url: String,
+    _supabase_key: String,
+    _payload: serde_json::Value,
 ) -> Result<bool, String> {
-    if supabase_url.is_empty() || supabase_key.is_empty() {
-        return Ok(false);
-    }
-    let client = reqwest::Client::new();
-    let resp = client
-        .post(format!(
-            "{}/rest/v1/savings_entries?on_conflict=anon_id",
-            supabase_url
-        ))
-        .header("Content-Type", "application/json")
-        .header("apikey", &supabase_key)
-        .header("Authorization", format!("Bearer {}", supabase_key))
-        .header("Prefer", "resolution=merge-duplicates")
-        .json(&payload)
-        .send()
-        .await
-        .map_err(|e| format!("Supabase POST failed: {}", e))?;
-    Ok(resp.status().is_success())
+    Ok(false)
 }
 
 // ---------------------------------------------------------------------------

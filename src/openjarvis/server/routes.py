@@ -1103,6 +1103,50 @@ async def _handle_stream(
     )
 
 
+async def _fetch_ollama_tags() -> list[dict[str, Any]]:
+    """Fetch raw model tags from Ollama, trying configured host then IPv4 loopback."""
+    from openjarvis.server.cloud_router import _ollama_host
+    import httpx as _httpx
+
+    hosts = [_ollama_host(), "http://127.0.0.1:11434", "http://localhost:11434"]
+    seen = set()
+    deduped_hosts = []
+    for h in hosts:
+        normalized = h.rstrip("/")
+        if normalized not in seen:
+            seen.add(normalized)
+            deduped_hosts.append(normalized)
+
+    for host in deduped_hosts:
+        try:
+            async with _httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(f"{host}/api/tags")
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return data.get("models", [])
+        except Exception:
+            continue
+    return []
+
+
+@router.get("/v1/models/ollama")
+async def list_ollama_models() -> dict[str, Any]:
+    """Return installed Ollama models directly for settings / management."""
+    tags = await _fetch_ollama_tags()
+    return {
+        "models": [
+            {
+                "name": m.get("name", ""),
+                "size": m.get("size", 0),
+                "modified_at": m.get("modified_at", ""),
+                "details": m.get("details", {}),
+            }
+            for m in tags
+            if m.get("name")
+        ]
+    }
+
+
 @router.get("/v1/models")
 async def list_models(request: Request) -> ModelListResponse:
     """List selectable engine models for the installed-model picker.
@@ -1114,9 +1158,6 @@ async def list_models(request: Request) -> ModelListResponse:
     from openjarvis.server.cloud_router import is_cloud_model, list_local_models
 
     # Prefer engine.list_models() so mock engines work in tests.
-    # Filter out direct-cloud model IDs that may appear via MultiEngine, but
-    # retain provider-qualified IDs owned by the configured LiteLLM engine.
-    # Fall back to direct Ollama query only when the engine returns nothing.
     engine = request.app.state.engine
     all_ids = await asyncio.to_thread(engine.list_models)
     model_ids = [
@@ -1124,8 +1165,15 @@ async def list_models(request: Request) -> ModelListResponse:
         for m in all_ids
         if not is_cloud_model(m) or _engine_key_for_model(engine, m) == "litellm"
     ]
-    if not model_ids:
-        model_ids = await list_local_models()
+
+    # Always ensure installed local Ollama models are included in the picker
+    ollama_tags = await _fetch_ollama_tags()
+    ollama_names = [m.get("name") for m in ollama_tags if m.get("name")]
+    if not ollama_names:
+        ollama_names = await list_local_models()
+    for name in ollama_names:
+        if name and name not in model_ids:
+            model_ids.append(name)
 
     # Keep embed-only models out of the chat model picker. They still work for
     # memory/retrieval via the embedder path; putting them in /v1/models made
@@ -1139,7 +1187,7 @@ async def list_models(request: Request) -> ModelListResponse:
                 owned_by=(
                     "litellm"
                     if _engine_key_for_model(engine, mid) == "litellm"
-                    else "openjarvis"
+                    else "nivos"
                 ),
             )
             for mid in model_ids
