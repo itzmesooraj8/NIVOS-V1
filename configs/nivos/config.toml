@@ -22,7 +22,7 @@ repetition_penalty = 1.0
 [agent]
 default_agent = "native_openhands"        # CodeAct-style agent
 max_turns = 10                            # Up to 10 tool-calling turns
-tools = "code_interpreter,web_search,file_read,calculator,think"
+tools = "code_interpreter,web_search,file_read,calculator,think,sandboxed_shell,get_weather"
 objective = "Answer questions accurately using available tools"
 context_from_memory = false               # No memory injection during eval
 
