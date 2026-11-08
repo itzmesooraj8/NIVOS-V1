@@ -320,12 +320,14 @@ async def stream_local(
         "model": model,
         "messages": _to_openai_msgs(messages),
         "stream": True,
+        "keep_alive": "30m",
         # Disable extended thinking (Qwen3.5 etc.) — when enabled all tokens
         # go into the 'thinking' field and 'content' stays empty.
         "think": False,
         "options": {
             "temperature": temperature,
             "num_predict": max_tokens,
+            "num_ctx": 8192,
         },
     }
     host = _ollama_host()

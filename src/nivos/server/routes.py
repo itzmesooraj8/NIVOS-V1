@@ -202,6 +202,77 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
             user_query = m.content
             break
 
+    # 0. Instant model-free clock answer for pure date/time/day questions
+    from nivos.prompt.realtime_context import is_direct_datetime_query, format_direct_datetime_response
+    if is_direct_datetime_query(user_query):
+        tz_name = getattr(getattr(config, "user", None), "timezone", "Asia/Kolkata")
+        user_loc = getattr(getattr(config, "user", None), "location", "Palakkad, Kerala, India")
+        clock_reply = format_direct_datetime_response(
+            user_query,
+            timezone_name=tz_name,
+            location=user_loc,
+        )
+        if request_body.stream:
+            async def _stream_clock_response():
+                chunk_id = f"chatcmpl-clock-{uuid.uuid4().hex[:12]}"
+                role_chunk = ChatCompletionChunk(
+                    id=chunk_id,
+                    model="server-clock",
+                    choices=[
+                        StreamChoice(
+                            delta=DeltaMessage(role="assistant"),
+                        )
+                    ],
+                    routing_reason="Instant server clock (no model call)",
+                )
+                yield f"data: {role_chunk.model_dump_json()}\n\n"
+
+                content_chunk = ChatCompletionChunk(
+                    id=chunk_id,
+                    model="server-clock",
+                    choices=[
+                        StreamChoice(
+                            delta=DeltaMessage(content=clock_reply),
+                        )
+                    ],
+                    routing_reason="Instant server clock (no model call)",
+                )
+                yield f"data: {content_chunk.model_dump_json()}\n\n"
+
+                stop_chunk = ChatCompletionChunk(
+                    id=chunk_id,
+                    model="server-clock",
+                    choices=[
+                        StreamChoice(
+                            delta=DeltaMessage(),
+                            finish_reason="stop",
+                        )
+                    ],
+                    routing_reason="Instant server clock (no model call)",
+                )
+                yield f"data: {stop_chunk.model_dump_json()}\n\n"
+                yield "data: [DONE]\n\n"
+
+            return StreamingResponse(_stream_clock_response(), media_type="text/event-stream")
+        else:
+            return ChatCompletionResponse(
+                id=f"chatcmpl-clock-{uuid.uuid4().hex[:12]}",
+                model="server-clock",
+                choices=[
+                    Choice(
+                        index=0,
+                        message=ChoiceMessage(role="assistant", content=clock_reply),
+                        finish_reason="stop",
+                    )
+                ],
+                usage=UsageInfo(
+                    prompt_tokens=0,
+                    completion_tokens=len(clock_reply.split()),
+                    total_tokens=len(clock_reply.split()),
+                ),
+                routing_reason="Instant server clock (no model call)",
+            )
+
     # 1. Search Policy & Pre-fetching for current-info and weather
     from nivos.server.search_policy import prefetch_current_info
     user_loc = getattr(getattr(config, "user", None), "location", "Palakkad, Kerala, India")
@@ -234,7 +305,9 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
     if not should_send_tools and request_body.tools:
         request_body.tools = None
 
-    enforce_resident_memory_budget(model)
+    fast_m = getattr(getattr(config, "routing", None), "fast", "qwen3.5:2b")
+    main_m = getattr(getattr(config, "routing", None), "main", "qwen3.5:4b")
+    enforce_resident_memory_budget(model, fast_model=fast_m, main_model=main_m)
 
     from nivos.server.cloud_router import get_provider, _load_keys, is_cloud_model, stream_cloud
 
