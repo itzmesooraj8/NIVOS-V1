@@ -25,7 +25,11 @@ export function XRayFooter({ usage, telemetry, isResearch = false }: Props) {
     if (telemetry?.engine) parts.push(telemetry.engine);
     if (telemetry?.model_id) parts.push(telemetry.model_id);
   }
-  if (telemetry?.complexity_tier) parts.push(telemetry.complexity_tier);
+  if (telemetry?.routing_reason) {
+    parts.push(telemetry.routing_reason);
+  } else if (telemetry?.complexity_tier) {
+    parts.push(telemetry.complexity_tier);
+  }
   if (telemetry?.total_ms) parts.push(formatMs(telemetry.total_ms));
   if (usage && (usage.prompt_tokens || usage.completion_tokens)) {
     parts.push(`${usage.prompt_tokens} input tokens`);
@@ -44,6 +48,9 @@ export function XRayFooter({ usage, telemetry, isResearch = false }: Props) {
   } else if (telemetry?.engine) {
     const modelDetail = telemetry.model_id || '';
     rows.push({ label: 'Engine', value: `${telemetry.engine}${modelDetail ? ` (${modelDetail})` : ''}` });
+  }
+  if (telemetry?.routing_reason) {
+    rows.push({ label: 'Routing', value: telemetry.routing_reason });
   }
   if (usage) {
     const tokenParts = [`${usage.completion_tokens} generated`, `${usage.prompt_tokens} prompt`];

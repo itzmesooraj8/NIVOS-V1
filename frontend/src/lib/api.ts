@@ -1,4 +1,4 @@
-import type { ModelInfo, SavingsData, ServerInfo } from '../types';
+import type { ModelInfo, SavingsData, ServerInfo, RoutingSettings, ContextSettings } from '../types';
 import { serializeToolCallArguments } from './tool-call';
 
 declare global {
@@ -70,6 +70,70 @@ export async function savePrivacySettings(settings: Partial<PrivacySettings>): P
     body: JSON.stringify(settings),
   });
   if (!res.ok) throw new Error(`Failed to save privacy settings: ${res.status}`);
+  return await res.json();
+}
+
+export async function getRoutingSettings(): Promise<RoutingSettings> {
+  try {
+    const res = await apiFetch('/v1/settings/routing');
+    if (!res.ok) {
+      return {
+        enabled: true,
+        fast: 'qwen3.5:2b',
+        main: 'qwen3.5:4b',
+        code: 'qwen2.5-coder:7b',
+        embeddings: 'bge-m3:latest',
+        deep: 'qwen3.5:9b',
+        always_search: false,
+      };
+    }
+    return await res.json();
+  } catch {
+    return {
+      enabled: true,
+      fast: 'qwen3.5:2b',
+      main: 'qwen3.5:4b',
+      code: 'qwen2.5-coder:7b',
+      embeddings: 'bge-m3:latest',
+      deep: 'qwen3.5:9b',
+      always_search: false,
+    };
+  }
+}
+
+export async function saveRoutingSettings(settings: Partial<RoutingSettings>): Promise<RoutingSettings> {
+  const res = await apiFetch('/v1/settings/routing', {
+    method: 'POST',
+    body: JSON.stringify(settings),
+  });
+  if (!res.ok) throw new Error(`Failed to save routing settings: ${res.status}`);
+  return await res.json();
+}
+
+export async function getContextSettings(): Promise<ContextSettings> {
+  try {
+    const res = await apiFetch('/v1/settings/context');
+    if (!res.ok) {
+      return {
+        location: 'Palakkad, Kerala, India',
+        timezone: 'Asia/Kolkata',
+      };
+    }
+    return await res.json();
+  } catch {
+    return {
+      location: 'Palakkad, Kerala, India',
+      timezone: 'Asia/Kolkata',
+    };
+  }
+}
+
+export async function saveContextSettings(settings: Partial<ContextSettings>): Promise<ContextSettings> {
+  const res = await apiFetch('/v1/settings/context', {
+    method: 'POST',
+    body: JSON.stringify(settings),
+  });
+  if (!res.ok) throw new Error(`Failed to save context settings: ${res.status}`);
   return await res.json();
 }
 

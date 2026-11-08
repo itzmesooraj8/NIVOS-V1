@@ -1252,6 +1252,28 @@ class ProactiveConfig:
 
 
 @dataclass(slots=True)
+class LocationConfig:
+    """User location and timezone context for real-time prompts."""
+
+    location: str = "Palakkad, Kerala, India"
+    timezone: str = "Asia/Kolkata"
+
+
+@dataclass(slots=True)
+class RoutingTiersConfig:
+    """Model routing tiers settings."""
+
+    enabled: bool = True
+    fast: str = "qwen3.5:2b"
+    main: str = "qwen3.5:4b"
+    code: str = "qwen2.5-coder:7b"
+    embeddings: str = "bge-m3:latest"
+    deep: str = "qwen3.5:9b"
+    max_resident_gb: float = 6.0
+    always_search: bool = False
+
+
+@dataclass(slots=True)
 class TelegramChannelConfig:
     """Per-channel config for Telegram."""
 
@@ -1801,6 +1823,8 @@ class NivosConfig:
     skills: SkillsConfig = field(default_factory=SkillsConfig)
     digest: DigestConfig = field(default_factory=DigestConfig)
     proactive: ProactiveConfig = field(default_factory=ProactiveConfig)
+    user: LocationConfig = field(default_factory=LocationConfig)
+    routing: RoutingTiersConfig = field(default_factory=RoutingTiersConfig)
     mining: Optional["MiningConfig"] = None
 
     @property
@@ -2127,6 +2151,8 @@ def load_config(path: Optional[Path] = None) -> NivosConfig:
             "agent_manager",
             "digest",
             "proactive",
+            "user",
+            "routing",
             "memory_files",
             "system_prompt",
             "compression",

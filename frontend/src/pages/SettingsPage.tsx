@@ -46,11 +46,16 @@ import {
   deleteMcpServer,
   fetchPlugins,
   reloadPlugins,
+  getRoutingSettings,
+  saveRoutingSettings,
+  getContextSettings,
+  saveContextSettings,
   type InferenceSource,
   type MemoryStats,
   type McpServerConfig,
   type PluginInfo,
 } from '../lib/api';
+import type { RoutingSettings, ContextSettings } from '../types';
 import { isAutoUpdateDisabled, setAutoUpdateDisabled } from '../components/Desktop/UpdateChecker';
 
 const CLOUD_KEY_STATUS_CHANGED = 'nivos-cloud-key-status-changed';
@@ -637,6 +642,164 @@ function McpServersSection() {
   );
 }
 
+function ModelRoutingSection() {
+  const [routing, setRouting] = useState<RoutingSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getRoutingSettings()
+      .then(setRouting)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const update = async (patch: Partial<RoutingSettings>) => {
+    if (!routing) return;
+    const next = { ...routing, ...patch };
+    setRouting(next);
+    try {
+      await saveRoutingSettings(patch);
+      toast.success('Routing settings updated');
+    } catch (e: any) {
+      toast.error('Failed to update routing: ' + e.message);
+    }
+  };
+
+  if (loading || !routing) return null;
+
+  return (
+    <Section title="Model Routing Tiers">
+      <SettingRow label="Fast tier (Greetings & Casual Chat)" description="Smallest model for fast replies without tool overhead">
+        <input
+          type="text"
+          value={routing.fast}
+          onChange={(e) => update({ fast: e.target.value })}
+          className="px-2 py-1 rounded text-xs w-48 font-mono border"
+          style={{ background: 'var(--color-bg-secondary)', color: 'var(--color-text)', borderColor: 'var(--color-border)' }}
+        />
+      </SettingRow>
+      <SettingRow label="Main tier (General & Complex)" description="Main assistant model with tools and pre-fetched live data">
+        <input
+          type="text"
+          value={routing.main}
+          onChange={(e) => update({ main: e.target.value })}
+          className="px-2 py-1 rounded text-xs w-48 font-mono border"
+          style={{ background: 'var(--color-bg-secondary)', color: 'var(--color-text)', borderColor: 'var(--color-border)' }}
+        />
+      </SettingRow>
+      <SettingRow label="Code tier (Programming)" description="Specialized model for code, syntax, scripts, and debugging">
+        <input
+          type="text"
+          value={routing.code}
+          onChange={(e) => update({ code: e.target.value })}
+          className="px-2 py-1 rounded text-xs w-48 font-mono border"
+          style={{ background: 'var(--color-bg-secondary)', color: 'var(--color-text)', borderColor: 'var(--color-border)' }}
+        />
+      </SettingRow>
+      <SettingRow label="Deep tier (Heavy Reasoning)" description="Optional larger model for manual selection (e.g. qwen3.5:9b)">
+        <input
+          type="text"
+          value={routing.deep}
+          onChange={(e) => update({ deep: e.target.value })}
+          className="px-2 py-1 rounded text-xs w-48 font-mono border"
+          style={{ background: 'var(--color-bg-secondary)', color: 'var(--color-text)', borderColor: 'var(--color-border)' }}
+        />
+      </SettingRow>
+      <SettingRow label="Embeddings model" description="Local embedding model for semantic memory and indexing">
+        <input
+          type="text"
+          value={routing.embeddings}
+          onChange={(e) => update({ embeddings: e.target.value })}
+          className="px-2 py-1 rounded text-xs w-48 font-mono border"
+          style={{ background: 'var(--color-bg-secondary)', color: 'var(--color-text)', borderColor: 'var(--color-border)' }}
+        />
+      </SettingRow>
+      <SettingRow label="Always search the web" description="Search the web for every question (pre-fetches results)">
+        <button
+          onClick={() => update({ always_search: !routing.always_search })}
+          className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
+            routing.always_search ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-bg-tertiary)]'
+          }`}
+        >
+          <div
+            className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+              routing.always_search ? 'translate-x-5' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </SettingRow>
+    </Section>
+  );
+}
+
+function LocationContextSection() {
+  const [locInput, setLocInput] = useState('');
+  const [tzInput, setTzInput] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getContextSettings()
+      .then((c) => {
+        setLocInput(c.location);
+        setTzInput(c.timezone);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const save = async () => {
+    try {
+      await saveContextSettings({ location: locInput, timezone: tzInput });
+      toast.success('Location & Timezone saved');
+    } catch (e: any) {
+      toast.error('Failed to save context: ' + e.message);
+    }
+  };
+
+  if (loading) return null;
+
+  return (
+    <Section title="Location & Real-Time Context">
+      <SettingRow label="My location" description="Default location for weather and local queries (no IP lookup is performed)">
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={locInput}
+            onChange={(e) => setLocInput(e.target.value)}
+            className="px-2 py-1 rounded text-xs w-56 border"
+            style={{ background: 'var(--color-bg-secondary)', color: 'var(--color-text)', borderColor: 'var(--color-border)' }}
+            placeholder="City, State, Country"
+          />
+          <button
+            onClick={save}
+            className="px-2.5 py-1 rounded text-xs font-medium cursor-pointer"
+            style={{ background: 'var(--color-accent)', color: '#fff' }}
+          >
+            Save
+          </button>
+        </div>
+      </SettingRow>
+      <SettingRow label="Timezone" description="Timezone used to compute the local date/time injected into the system prompt">
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={tzInput}
+            onChange={(e) => setTzInput(e.target.value)}
+            className="px-2 py-1 rounded text-xs w-56 border font-mono"
+            style={{ background: 'var(--color-bg-secondary)', color: 'var(--color-text)', borderColor: 'var(--color-border)' }}
+            placeholder="e.g. Asia/Kolkata"
+          />
+          <button
+            onClick={save}
+            className="px-2.5 py-1 rounded text-xs font-medium cursor-pointer"
+            style={{ background: 'var(--color-accent)', color: '#fff' }}
+          >
+            Save
+          </button>
+        </div>
+      </SettingRow>
+    </Section>
+  );
+}
+
 const themeOptions: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
   { value: 'light', label: 'Light', icon: Sun },
   { value: 'dark', label: 'Dark', icon: Moon },
@@ -997,6 +1160,12 @@ export function SettingsPage() {
               </div>
             </SettingRow>
           </Section>
+
+          {/* Model Routing Tiers */}
+          <ModelRoutingSection />
+
+          {/* Location & Time */}
+          <LocationContextSection />
 
           {/* Cloud models */}
           <Section title="Cloud models">

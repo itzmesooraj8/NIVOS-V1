@@ -53,12 +53,28 @@ export interface TokenUsage {
 export interface MessageTelemetry {
   engine?: string;
   model_id?: string;
+  routing_reason?: string;
   tokens_per_sec?: number;
   ttft_ms?: number;
   total_ms?: number;
   complexity_score?: number;
   complexity_tier?: string;
   suggested_max_tokens?: number;
+}
+
+export interface RoutingSettings {
+  enabled: boolean;
+  fast: string;
+  main: string;
+  code: string;
+  embeddings: string;
+  deep: string;
+  always_search: boolean;
+}
+
+export interface ContextSettings {
+  location: string;
+  timezone: string;
 }
 
 export interface TimeRange {

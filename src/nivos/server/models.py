@@ -62,6 +62,7 @@ class ComplexityInfo(BaseModel):
     score: float
     tier: str
     suggested_max_tokens: int
+    routing_reason: Optional[str] = None
 
 
 class ChatCompletionResponse(BaseModel):
@@ -72,6 +73,7 @@ class ChatCompletionResponse(BaseModel):
     choices: List[Choice] = Field(default_factory=list)
     usage: UsageInfo = Field(default_factory=UsageInfo)
     complexity: Optional[ComplexityInfo] = None
+    routing_reason: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -99,6 +101,7 @@ class ChatCompletionChunk(BaseModel):
     created: int = Field(default_factory=lambda: int(time.time()))
     model: str = ""
     choices: List[StreamChoice] = Field(default_factory=list)
+    routing_reason: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

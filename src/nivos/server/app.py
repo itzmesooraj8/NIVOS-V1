@@ -313,6 +313,14 @@ def create_app(
     # AuthMiddleware never sees WS upgrade requests). Empty = auth disabled.
     app.state.api_key = api_key
 
+    @app.on_event("startup")
+    async def _startup_runtime() -> None:
+        try:
+            from nivos.server.tier_router import warmup_fast_model
+            asyncio.create_task(asyncio.to_thread(warmup_fast_model))
+        except Exception as exc:
+            logger.debug("Fast model startup warmup failed: %s", exc)
+
     @app.on_event("shutdown")
     async def _shutdown_managed_runtime() -> None:
         # Quiesce every producer before touching the shared MCP pool. Route

@@ -289,8 +289,10 @@ export function InputArea() {
 
     let accumulatedContent = '';
     let usage: TokenUsage | undefined;
-    let complexity: { score: number; tier: string; suggested_max_tokens: number } | undefined;
+    let complexity: { score: number; tier: string; suggested_max_tokens: number; routing_reason?: string } | undefined;
     let routedEngine: string | undefined;
+    let routedModel: string | undefined;
+    let routedReason: string | undefined;
     const toolCalls: ToolCallInfo[] = [];
     const researchTraces: ResearchSearchTrace[] = [];
     const researchSourcesByRef = new Map<number, ResearchSource>();
@@ -497,8 +499,12 @@ export function InputArea() {
           try {
             const data = JSON.parse(sseEvent.data);
             const delta = data.choices?.[0]?.delta;
+            if (data.model) routedModel = data.model;
+            if (data.routing_reason) routedReason = data.routing_reason;
+            if (data.telemetry?.routing_reason) routedReason = data.telemetry.routing_reason;
             if (data.usage) usage = data.usage;
             if (data.complexity) complexity = data.complexity;
+            if (data.complexity?.routing_reason) routedReason = data.complexity.routing_reason;
             routedEngine = engineFromCompletionChunk(data) ?? routedEngine;
             if (delta?.content) {
               if (!ttftMs) ttftMs = Date.now() - startTime;
@@ -551,7 +557,8 @@ export function InputArea() {
       });
       const telemetry: MessageTelemetry = {
         engine: engineLabel,
-        model_id: selectedModel,
+        model_id: routedModel || selectedModel,
+        routing_reason: routedReason || complexity?.routing_reason,
         total_ms: totalMs,
         ttft_ms: ttftMs,
         tokens_per_sec: usage?.completion_tokens

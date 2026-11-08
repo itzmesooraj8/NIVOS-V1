@@ -118,9 +118,20 @@ export function CommandPalette() {
     }
   }, []);
 
-  const localModels = query
+  const autoOption = {
+    id: 'auto',
+    name: 'Auto (Model Router) — dynamic tier selection',
+    size: 0,
+    owned_by: 'nivos',
+    modified_at: '',
+  };
+
+  const localMatches = query
     ? models.filter((m) => m.id.toLowerCase().includes(query.toLowerCase()))
     : models;
+
+  const showAuto = !query || 'auto'.includes(query.toLowerCase()) || 'router'.includes(query.toLowerCase());
+  const localModels = showAuto ? [autoOption, ...localMatches] : localMatches;
 
   const allCloudModels = CLOUD_PROVIDERS.flatMap((provider) =>
     provider.models.map((m) => ({
@@ -171,7 +182,7 @@ export function CommandPalette() {
     setSelectedModel(modelId);
     setCommandPaletteOpen(false);
 
-    if (modelId !== previousModel) {
+    if (modelId !== previousModel && modelId !== 'auto') {
       const { setModelLoading, addLogEntry } = useAppStore.getState();
       setModelLoading(true);
       addLogEntry({ timestamp: Date.now(), level: 'info', category: 'model', message: `Switching to ${modelId}...` });

@@ -126,6 +126,35 @@ def _ensure_identity_prompt(messages: list[Message], app_config) -> list[Message
     if prompt:
         system_parts.append(prompt)
     system_parts.extend(message.text for message in system_messages if message.text)
+
+    # Inject real-time date, time, timezone, and location context when server identity grounding is active
+    if not caller_supplied_system and not identity_already_applied:
+        try:
+            cfg = app_config
+            if cfg is None:
+                from nivos.core.config import load_config
+
+                cfg = load_config()
+
+            loc_cfg = getattr(cfg, "user", None)
+            if loc_cfg is None or getattr(loc_cfg, "inject_realtime_context", True):
+                loc = getattr(loc_cfg, "location", "Palakkad, Kerala, India") if loc_cfg else "Palakkad, Kerala, India"
+                tz = getattr(loc_cfg, "timezone", "Asia/Kolkata") if loc_cfg else "Asia/Kolkata"
+
+                user_query = ""
+                for m in reversed(messages):
+                    if m.role == Role.USER and m.content:
+                        user_query = m.content
+                        break
+
+                from nivos.prompt.realtime_context import build_realtime_prompt_context
+
+                rt_context = build_realtime_prompt_context(user_query, location=loc, timezone_name=tz)
+                if rt_context:
+                    system_parts.append(rt_context)
+        except Exception:
+            logging.getLogger("nivos.server").debug("Real-time context injection failed", exc_info=True)
+
     non_system_messages = [
         message for message in messages if message.role != Role.SYSTEM
     ]
@@ -149,7 +178,7 @@ def _ensure_identity_prompt(messages: list[Message], app_config) -> list[Message
     else:
         combined_system = Message(
             role=Role.SYSTEM,
-            content=prompt,
+            content="\n\n".join(system_parts),
             metadata={"nivos_identity_prompt": True},
         )
 
@@ -161,7 +190,52 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
     """Handle chat completion requests (streaming and non-streaming)."""
     engine = request.app.state.engine
     agent = getattr(request.app.state, "agent", None)
-    model = request_body.model or getattr(request.app.state, "model", "")
+    config = getattr(request.app.state, "config", None)
+    if config is None:
+        from nivos.core.config import load_config
+        config = load_config()
+
+    # Extract query from the last user message
+    user_query = ""
+    for m in reversed(request_body.messages):
+        if m.role == "user" and m.content:
+            user_query = m.content
+            break
+
+    # 1. Search Policy & Pre-fetching for current-info and weather
+    from nivos.server.search_policy import prefetch_current_info
+    user_loc = getattr(getattr(config, "user", None), "location", "Palakkad, Kerala, India")
+    always_search = getattr(getattr(config, "routing", None), "always_search", False)
+
+    prefetched_context, search_type = await asyncio.to_thread(
+        prefetch_current_info,
+        user_query,
+        default_location=user_loc,
+        always_search=always_search,
+    )
+    if prefetched_context:
+        for m in reversed(request_body.messages):
+            if m.role == "user":
+                m.content = f"{m.content}\n\n{prefetched_context}"
+                break
+
+    # 2. Model Routing Tiers
+    from nivos.server.tier_router import TierRouter, enforce_resident_memory_budget
+    tier_router = TierRouter(config)
+    selected_model, routing_reason, should_send_tools = tier_router.route_query(
+        user_query,
+        requested_model=request_body.model or getattr(request.app.state, "model", ""),
+        has_prefetched_data=bool(prefetched_context),
+    )
+    model = selected_model
+    request_body.model = model
+
+    # If the fast tier is chosen, omit tool descriptions to save prompt tokens
+    if not should_send_tools and request_body.tools:
+        request_body.tools = None
+
+    enforce_resident_memory_budget(model)
+
     from nivos.server.cloud_router import get_provider, _load_keys, is_cloud_model, stream_cloud
 
     if _uses_direct_cloud_router(engine, model):
@@ -185,12 +259,12 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
 
     use_server_agent = (
         agent is not None
+        and should_send_tools
         and not request_body.tools
         and (not request_body.stream or bool(getattr(agent, "_tools", None)))
     )
 
     # Inject memory context into messages before dispatching
-    config = getattr(request.app.state, "config", None)
     memory_backend = getattr(request.app.state, "memory_backend", None)
     if (
         config is not None
@@ -327,6 +401,7 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
                 score=cr.score,
                 tier=cr.tier,
                 suggested_max_tokens=suggested,
+                routing_reason=routing_reason,
             )
             # Bump max_tokens when complexity suggests more than what
             # the client requested — never reduce below the request value.
@@ -337,6 +412,16 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
                 "Complexity analysis failed",
                 exc_info=True,
             )
+
+    if complexity_info is None and routing_reason:
+        complexity_info = ComplexityInfo(
+            score=0.1,
+            tier="fast" if "fast" in routing_reason.lower() else "main",
+            suggested_max_tokens=request_body.max_tokens or 1024,
+            routing_reason=routing_reason,
+        )
+    elif complexity_info is not None:
+        complexity_info.routing_reason = routing_reason
 
     if request_body.stream:
         # When the client passes `tools`, stream the model's raw
@@ -478,6 +563,8 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
         bus=getattr(request.app.state, "bus", None),
         source="server.chat",
     )
+    if hasattr(response, "routing_reason") and not response.routing_reason:
+        response.routing_reason = routing_reason
     return response
 
 
@@ -871,6 +958,9 @@ async def _handle_agent_stream(
         finish_data["usage"] = response.usage.model_dump()
         if complexity_info is not None:
             finish_data["complexity"] = complexity_info.model_dump()
+            if getattr(complexity_info, "routing_reason", None):
+                finish_data["routing_reason"] = complexity_info.routing_reason
+                finish_data.setdefault("telemetry", {})["routing_reason"] = complexity_info.routing_reason
         yield f"data: {_json.dumps(finish_data)}\n\n"
 
         _record_completed_exchange(
@@ -1001,6 +1091,9 @@ async def _handle_stream_tools(
         finish_dict["telemetry"]["engine"] = telemetry_engine
         if complexity_info is not None:
             finish_dict["complexity"] = complexity_info.model_dump()
+            if getattr(complexity_info, "routing_reason", None):
+                finish_dict["routing_reason"] = complexity_info.routing_reason
+                finish_dict["telemetry"]["routing_reason"] = complexity_info.routing_reason
         yield f"data: {_json.dumps(finish_dict)}\n\n"
         if full_content:
             _record_completed_exchange(
@@ -1202,6 +1295,9 @@ async def _handle_stream(
 
         if complexity_info is not None:
             finish_dict["complexity"] = complexity_info.model_dump()
+            if getattr(complexity_info, "routing_reason", None):
+                finish_dict["routing_reason"] = complexity_info.routing_reason
+                finish_dict["telemetry"]["routing_reason"] = complexity_info.routing_reason
 
         yield f"data: {_json.dumps(finish_dict)}\n\n"
         yield "data: [DONE]\n\n"
@@ -1576,6 +1672,144 @@ async def set_privacy_settings(request: Request):
     if cfg and hasattr(cfg, "security"):
         cfg.security.allow_obsidian_to_cloud = allow
     return {"allow_obsidian_to_cloud": allow}
+
+
+def _persist_config_section(section_name: str, values: dict[str, Any]) -> None:
+    try:
+        import tomlkit
+        from nivos.core.paths import get_config_path
+
+        path = get_config_path()
+        if path.exists():
+            doc = tomlkit.parse(path.read_text(encoding="utf-8"))
+        else:
+            doc = tomlkit.document()
+        if section_name not in doc:
+            doc.add(section_name, tomlkit.table())
+        sec = doc[section_name]
+        for k, v in values.items():
+            sec[k] = v
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(tomlkit.dumps(doc), encoding="utf-8")
+    except Exception as exc:
+        logging.getLogger("nivos.server").warning(
+            "Failed to persist config section [%s]: %s", section_name, exc
+        )
+
+
+@router.get("/v1/settings/context")
+async def get_context_settings(request: Request):
+    cfg = getattr(request.app.state, "config", None)
+    if cfg is None:
+        from nivos.core.config import load_config
+
+        cfg = load_config()
+    user_cfg = getattr(cfg, "user", None)
+    return {
+        "location": (
+            getattr(user_cfg, "location", "Palakkad, Kerala, India")
+            if user_cfg
+            else "Palakkad, Kerala, India"
+        ),
+        "timezone": (
+            getattr(user_cfg, "timezone", "Asia/Kolkata")
+            if user_cfg
+            else "Asia/Kolkata"
+        ),
+    }
+
+
+@router.post("/v1/settings/context")
+async def save_context_settings(request: Request):
+    body = await request.json()
+    cfg = getattr(request.app.state, "config", None)
+    if cfg is None:
+        from nivos.core.config import load_config
+
+        cfg = load_config()
+    loc = str(body.get("location", "Palakkad, Kerala, India")).strip()
+    tz = str(body.get("timezone", "Asia/Kolkata")).strip()
+    if not hasattr(cfg, "user") or cfg.user is None:
+        from nivos.core.config import LocationConfig
+
+        cfg.user = LocationConfig()
+    cfg.user.location = loc
+    cfg.user.timezone = tz
+    _persist_config_section("user", {"location": loc, "timezone": tz})
+    return {"location": loc, "timezone": tz}
+
+
+@router.get("/v1/settings/routing")
+async def get_routing_settings(request: Request):
+    cfg = getattr(request.app.state, "config", None)
+    if cfg is None:
+        from nivos.core.config import load_config
+
+        cfg = load_config()
+    r = getattr(cfg, "routing", None)
+    return {
+        "enabled": getattr(r, "enabled", True) if r else True,
+        "fast": getattr(r, "fast", "qwen3.5:2b") if r else "qwen3.5:2b",
+        "main": getattr(r, "main", "qwen3.5:4b") if r else "qwen3.5:4b",
+        "code": (
+            getattr(r, "code", "qwen2.5-coder:7b") if r else "qwen2.5-coder:7b"
+        ),
+        "embeddings": (
+            getattr(r, "embeddings", "bge-m3:latest") if r else "bge-m3:latest"
+        ),
+        "deep": getattr(r, "deep", "qwen3.5:9b") if r else "qwen3.5:9b",
+        "always_search": getattr(r, "always_search", False) if r else False,
+    }
+
+
+@router.post("/v1/settings/routing")
+async def save_routing_settings(request: Request):
+    body = await request.json()
+    cfg = getattr(request.app.state, "config", None)
+    if cfg is None:
+        from nivos.core.config import load_config
+
+        cfg = load_config()
+    if not hasattr(cfg, "routing") or cfg.routing is None:
+        from nivos.core.config import RoutingTiersConfig
+
+        cfg.routing = RoutingTiersConfig()
+
+    r = cfg.routing
+    if "fast" in body:
+        r.fast = str(body["fast"])
+    if "main" in body:
+        r.main = str(body["main"])
+    if "code" in body:
+        r.code = str(body["code"])
+    if "embeddings" in body:
+        r.embeddings = str(body["embeddings"])
+    if "deep" in body:
+        r.deep = str(body["deep"])
+    if "always_search" in body:
+        r.always_search = bool(body["always_search"])
+    if "enabled" in body:
+        r.enabled = bool(body["enabled"])
+
+    persist_dict = {
+        "fast": r.fast,
+        "main": r.main,
+        "code": r.code,
+        "embeddings": r.embeddings,
+        "deep": r.deep,
+        "always_search": r.always_search,
+    }
+    _persist_config_section("routing", persist_dict)
+    return {
+        "enabled": r.enabled,
+        "fast": r.fast,
+        "main": r.main,
+        "code": r.code,
+        "embeddings": r.embeddings,
+        "deep": r.deep,
+        "always_search": r.always_search,
+    }
+
 
 
 @router.get("/v1/savings")

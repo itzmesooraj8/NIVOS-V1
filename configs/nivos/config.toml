@@ -122,3 +122,16 @@ db_path = "~/.nivos/traces.db"
 host = "127.0.0.1"
 port = 8000
 agent = "native_openhands"
+
+[user]
+location = "Palakkad, Kerala, India"
+timezone = "Asia/Kolkata"
+
+[routing]
+fast = "qwen3.5:2b"
+main = "qwen3.5:4b"
+code = "qwen2.5-coder:7b"
+embeddings = "bge-m3:latest"
+deep = "qwen3.5:9b"
+always_search = false
+
