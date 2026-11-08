@@ -34,6 +34,8 @@ import {
   setInferenceSource,
   getCloudKeyStatus,
   saveCloudKey,
+  getPrivacySettings,
+  savePrivacySettings,
   fetchToolCredentialStatus,
   saveToolCredentials,
   deleteToolCredential,
@@ -87,24 +89,17 @@ function ApiKeyInput({
   const [saved, setSaved] = useState(false);
   const [hasKey, setHasKey] = useState(false);
   const [error, setError] = useState('');
-  const desktopKeyStorage = isTauri();
-  const serverToolStorage = !desktopKeyStorage && !!toolName;
-  const canManage = desktopKeyStorage || serverToolStorage;
 
   const refresh = useCallback(async () => {
-    if (!canManage) {
-      setHasKey(false);
-      return;
-    }
     try {
-      const status = desktopKeyStorage
-        ? await getCloudKeyStatus()
-        : await fetchToolCredentialStatus(toolName!);
+      const status = toolName
+        ? await fetchToolCredentialStatus(toolName)
+        : await getCloudKeyStatus();
       setHasKey(!!status[keyName]);
     } catch {
       setHasKey(false);
     }
-  }, [canManage, desktopKeyStorage, keyName, toolName]);
+  }, [keyName, toolName]);
 
   useEffect(() => {
     void refresh();
@@ -117,12 +112,10 @@ function ApiKeyInput({
     if (!next) return;
     setError('');
     try {
-      if (desktopKeyStorage) {
-        await saveCloudKey(keyName, next);
-      } else if (toolName) {
+      if (toolName) {
         await saveToolCredentials(toolName, { [keyName]: next });
       } else {
-        return;
+        await saveCloudKey(keyName, next);
       }
       setValue('');
       setHasKey(true);
@@ -137,12 +130,10 @@ function ApiKeyInput({
   const remove = async () => {
     setError('');
     try {
-      if (desktopKeyStorage) {
-        await saveCloudKey(keyName, '');
-      } else if (toolName) {
+      if (toolName) {
         await deleteToolCredential(toolName, keyName);
       } else {
-        return;
+        await saveCloudKey(keyName, '');
       }
       setValue('');
       setHasKey(false);
@@ -161,8 +152,7 @@ function ApiKeyInput({
         value={value}
         onChange={e => setValue(e.target.value)}
         onBlur={() => { if (value.trim()) void save(value); }}
-        placeholder={hasKey ? (desktopKeyStorage ? 'Saved in secure storage' : 'Saved by local server') : placeholder}
-        disabled={!canManage}
+        placeholder={hasKey ? 'Saved locally' : placeholder}
         className="w-48 px-2 py-1 rounded text-xs"
         style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
       {hasKey && (
@@ -708,6 +698,13 @@ export function SettingsPage() {
   const [customEngine, setCustomEngine] = useState('lmstudio');
   const [customKey, setCustomKey] = useState('');
   const [srcMsg, setSrcMsg] = useState('');
+  const [allowObsidianToCloud, setAllowObsidianToCloud] = useState(false);
+
+  useEffect(() => {
+    getPrivacySettings().then((p) => {
+      setAllowObsidianToCloud(p.allow_obsidian_to_cloud);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     getInferenceSource().then((s) => {
@@ -1001,15 +998,15 @@ export function SettingsPage() {
             </SettingRow>
           </Section>
 
-          {/* API Keys */}
-          <Section title="API Keys">
-            <SettingRow label="OpenAI" description="GPT-4, GPT-3.5, etc.">
+          {/* Cloud models */}
+          <Section title="Cloud models">
+            <SettingRow label="OpenAI" description="GPT-4o, o3-mini, etc.">
               <ApiKeyInput keyName="OPENAI_API_KEY" placeholder="sk-..." />
             </SettingRow>
-            <SettingRow label="Anthropic" description="Claude models">
+            <SettingRow label="Anthropic" description="Claude 3.5/4 models">
               <ApiKeyInput keyName="ANTHROPIC_API_KEY" placeholder="sk-ant-..." />
             </SettingRow>
-            <SettingRow label="Google" description="Gemini models">
+            <SettingRow label="Google Gemini" description="Gemini models">
               <ApiKeyInput keyName="GEMINI_API_KEY" placeholder="AI..." />
             </SettingRow>
             <SettingRow label="OpenRouter" description="Multi-provider routing">
@@ -1017,6 +1014,29 @@ export function SettingsPage() {
             </SettingRow>
             <SettingRow label="Atlas Cloud" description="Models routed through Atlas Cloud">
               <ApiKeyInput keyName="ATLASCLOUD_API_KEY" placeholder="Atlas Cloud API key" />
+            </SettingRow>
+            <SettingRow
+              label="Allow Obsidian vault notes to cloud models"
+              description="By default, Obsidian vault note contents are never sent to cloud models for your privacy"
+            >
+              <button
+                type="button"
+                onClick={async () => {
+                  const next = !allowObsidianToCloud;
+                  setAllowObsidianToCloud(next);
+                  await savePrivacySettings({ allow_obsidian_to_cloud: next });
+                  showSaved();
+                }}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors ${
+                  allowObsidianToCloud ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-border)]'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform mt-0.5 ${
+                    allowObsidianToCloud ? 'translate-x-4 ml-0.5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
             </SettingRow>
           </Section>
 

@@ -107,37 +107,51 @@ export function CommandPalette() {
   const setCommandPaletteOpen = useAppStore((s) => s.setCommandPaletteOpen);
 
   const installedIds = new Set(models.map((m) => m.id));
-  const desktopKeyStorage = isTauri();
+  const desktopKeyStorage = true;
 
   const refreshCloudKeyStatus = useCallback(async () => {
-    if (!desktopKeyStorage) {
-      setCloudKeyStatus({});
-      return;
-    }
     try {
       setCloudKeyStatus(await getCloudKeyStatus());
       setCloudKeyError(null);
     } catch (e: any) {
       setCloudKeyError(e?.message || 'Failed to read cloud key status');
     }
-  }, [desktopKeyStorage]);
+  }, []);
+
+  const localModels = query
+    ? models.filter((m) => m.id.toLowerCase().includes(query.toLowerCase()))
+    : models;
+
+  const allCloudModels = CLOUD_PROVIDERS.flatMap((provider) =>
+    provider.models.map((m) => ({
+      ...m,
+      provider: provider.name,
+      envKey: provider.envKey,
+      hasKey: !!cloudKeyStatus[provider.envKey],
+    }))
+  );
+
+  const cloudModels = allCloudModels.filter((m) => {
+    const matches =
+      !query ||
+      m.id.toLowerCase().includes(query.toLowerCase()) ||
+      m.desc.toLowerCase().includes(query.toLowerCase()) ||
+      m.provider.toLowerCase().includes(query.toLowerCase());
+    return matches && (m.hasKey || query.length > 0 || m.id === selectedModel);
+  });
 
   const filtered = tab === 'installed'
-    ? (query
-        ? models.filter((m) => m.id.toLowerCase().includes(query.toLowerCase()))
-        : models)
+    ? localModels
     : tab === 'catalogue'
     ? CATALOGUE_MODELS.filter((m) =>
         !installedIds.has(m.id) &&
         (!query || m.id.toLowerCase().includes(query.toLowerCase()) || m.desc.toLowerCase().includes(query.toLowerCase()))
       )
-    : []; // cloud tab doesn't use filtered
+    : [];
 
   useEffect(() => {
     inputRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
+    void refreshModels();
     void refreshCloudKeyStatus();
   }, [refreshCloudKeyStatus]);
 
@@ -356,61 +370,129 @@ export function CommandPalette() {
         {/* Results */}
         <div className="max-h-[400px] overflow-y-auto py-2">
           {tab === 'installed' ? (
-            filtered.length === 0 ? (
+            localModels.length === 0 && cloudModels.length === 0 ? (
               <div className="px-4 py-6 text-center text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
                 {models.length === 0
                   ? 'No models available — switch to "Download" to get started'
                   : 'No matching models'}
               </div>
             ) : (
-              (filtered as typeof models).map((model, idx) => {
-                const isActive = model.id === selectedModel;
-                const isSelected = idx === selectedIdx;
-                const isDeleting = deleting === model.id;
-                return (
-                  <div
-                    key={model.id}
-                    className="flex items-center gap-3 w-full px-4 py-2.5 transition-colors"
-                    style={{ background: isSelected ? 'var(--color-bg-secondary)' : 'transparent' }}
-                    onMouseEnter={() => setSelectedIdx(idx)}
-                  >
-                    <button
-                      onClick={() => handleSelect(model.id, model.owned_by)}
-                      className="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer"
-                      style={{ background: 'none', border: 'none', padding: 0 }}
+              <>
+                {/* Local (Ollama) section */}
+                {localModels.length > 0 && (
+                  <div className="mb-2">
+                    <div
+                      className="px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider flex items-center justify-between"
+                      style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-secondary)' }}
                     >
-                      {model.owned_by === 'litellm' ? (
-                        <Cloud size={16} style={{ color: isActive ? 'var(--color-accent)' : 'var(--color-text-tertiary)' }} />
-                      ) : (
-                        <Cpu size={16} style={{ color: isActive ? 'var(--color-accent)' : 'var(--color-text-tertiary)' }} />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm truncate" style={{ color: isActive ? 'var(--color-accent)' : 'var(--color-text)', fontWeight: isActive ? 500 : 400 }}>
-                          {model.id}
+                      <span>Local (Ollama)</span>
+                      <span className="text-[10px] font-normal lowercase">{localModels.length} available</span>
+                    </div>
+                    {localModels.map((model, idx) => {
+                      const isActive = model.id === selectedModel;
+                      const isSelected = idx === selectedIdx;
+                      const isDeleting = deleting === model.id;
+                      return (
+                        <div
+                          key={model.id}
+                          className="flex items-center gap-3 w-full px-4 py-2.5 transition-colors"
+                          style={{ background: isSelected ? 'var(--color-bg-secondary)' : 'transparent' }}
+                          onMouseEnter={() => setSelectedIdx(idx)}
+                        >
+                          <button
+                            onClick={() => handleSelect(model.id, model.owned_by)}
+                            className="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer"
+                            style={{ background: 'none', border: 'none', padding: 0 }}
+                          >
+                            <Cpu size={16} style={{ color: isActive ? 'var(--color-accent)' : 'var(--color-text-tertiary)' }} />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm truncate" style={{ color: isActive ? 'var(--color-accent)' : 'var(--color-text)', fontWeight: isActive ? 500 : 400 }}>
+                                {model.id}
+                              </div>
+                            </div>
+                            {isActive && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)' }}>
+                                Active
+                              </span>
+                            )}
+                          </button>
+                          {model.owned_by !== 'litellm' && (
+                            <button
+                              onClick={() => handleDelete(model.id)}
+                              disabled={isDeleting}
+                              className="p-1 rounded transition-colors cursor-pointer"
+                              style={{ color: 'var(--color-text-tertiary)', opacity: 0 }}
+                              title="Delete model"
+                              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--color-error)'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.color = 'var(--color-text-tertiary)'; }}
+                            >
+                              {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                            </button>
+                          )}
                         </div>
-                      </div>
-                      {isActive && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)' }}>
-                          Active
-                        </span>
-                      )}
-                    </button>
-                    {model.owned_by !== 'litellm' && (
-                      <button
-                        onClick={() => handleDelete(model.id)}
-                        disabled={isDeleting}
-                        className="p-1 rounded transition-colors cursor-pointer"
-                        style={{ color: 'var(--color-text-tertiary)', opacity: 0 }}
-                        title="Delete model"
-                        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--color-error)'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.color = 'var(--color-text-tertiary)'; }}
-                      >
-                        {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                      </button>
-                    )}
+                      );
+                    })}
                   </div>
-                );
-              })
+                )}
+
+                {/* Cloud section */}
+                {cloudModels.length > 0 && (
+                  <div>
+                    <div
+                      className="px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider flex items-center justify-between"
+                      style={{ color: 'var(--color-text-tertiary)', background: 'var(--color-bg-secondary)' }}
+                    >
+                      <span>Cloud</span>
+                      <span className="text-[10px] font-normal lowercase">
+                        {cloudModels.filter((m) => m.hasKey).length > 0
+                          ? `${cloudModels.filter((m) => m.hasKey).length} connected`
+                          : 'Configure keys in Settings'}
+                      </span>
+                    </div>
+                    {cloudModels.map((model, cIdx) => {
+                      const isActive = model.id === selectedModel;
+                      const globalIdx = localModels.length + cIdx;
+                      const isSelected = globalIdx === selectedIdx;
+                      return (
+                        <div
+                          key={model.id}
+                          className="flex items-center gap-3 w-full px-4 py-2.5 transition-colors"
+                          style={{ background: isSelected ? 'var(--color-bg-secondary)' : 'transparent' }}
+                          onMouseEnter={() => setSelectedIdx(globalIdx)}
+                        >
+                          <button
+                            onClick={() => handleSelect(model.id)}
+                            className="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer"
+                            style={{ background: 'none', border: 'none', padding: 0 }}
+                          >
+                            <Cloud size={16} style={{ color: isActive ? 'var(--color-accent)' : model.hasKey ? 'var(--color-success)' : 'var(--color-text-tertiary)' }} />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm truncate flex items-center gap-2" style={{ color: isActive ? 'var(--color-accent)' : 'var(--color-text)', fontWeight: isActive ? 500 : 400 }}>
+                                <span>{model.id}</span>
+                                <span className="text-[10px] px-1.5 py-0.2 rounded font-normal" style={{ background: 'var(--color-bg-tertiary)', color: 'var(--color-text-tertiary)' }}>
+                                  {model.provider}
+                                </span>
+                              </div>
+                              <div className="text-[10px] truncate" style={{ color: 'var(--color-text-tertiary)' }}>
+                                {model.desc}
+                              </div>
+                            </div>
+                            {isActive ? (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)' }}>
+                                Active
+                              </span>
+                            ) : !model.hasKey ? (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded text-[var(--color-text-tertiary)] opacity-70">
+                                Key needed
+                              </span>
+                            ) : null}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )
           ) : tab === 'catalogue' ? (
             <>

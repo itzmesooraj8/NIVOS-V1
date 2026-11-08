@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Send, Square, Paperclip, Search, Plus, FolderPlus, FilePlus, X, Loader2 } from 'lucide-react';
+import { Send, Square, Paperclip, Search, Plus, FolderPlus, FilePlus, X, Loader2, Cloud } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppStore, generateId } from '../../lib/store';
 import { streamChat, streamResearch } from '../../lib/sse';
@@ -8,6 +8,7 @@ import { listConnectors, getSyncStatus } from '../../lib/connectors-api';
 import { serializeToolCallArguments } from '../../lib/tool-call';
 import {
   engineFromCompletionChunk,
+  getCloudProvider,
   resolveChatEngine,
 } from '../../lib/chat-telemetry';
 import { MicButton } from './MicButton';
@@ -87,6 +88,7 @@ export function InputArea() {
 
   const activeId = useAppStore((s) => s.activeId);
   const selectedModel = useAppStore((s) => s.selectedModel);
+  const cloudProvider = getCloudProvider(selectedModel);
   const streamState = useAppStore((s) => s.streamState);
   const messages = useAppStore((s) => s.messages);
   const speechEnabled = useAppStore((s) => s.settings.speechEnabled);
@@ -702,6 +704,22 @@ export function InputArea() {
           >
             Clear
           </button>
+        </div>
+      )}
+
+      {cloudProvider && (
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 mb-2 rounded-xl text-xs"
+          style={{
+            background: 'color-mix(in srgb, var(--color-accent) 8%, var(--color-bg-secondary))',
+            border: '1px solid color-mix(in srgb, var(--color-accent) 25%, transparent)',
+            color: 'var(--color-text-secondary)',
+          }}
+        >
+          <Cloud size={14} className="shrink-0 text-accent" />
+          <span>
+            Cloud: your messages and any files or notes nivos reads are sent to {cloudProvider}
+          </span>
         </div>
       )}
 

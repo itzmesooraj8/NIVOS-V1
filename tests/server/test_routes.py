@@ -1793,3 +1793,117 @@ class TestTraceRecording:
         assert trace.query == "stream please"
         # _make_engine streams "Hello", " ", "world".
         assert trace.result == "Hello world"
+
+
+class TestCloudKeysAndPrivacy:
+    """Tests for cloud key management and obsidian privacy guardrails."""
+
+    def test_cloud_keys_endpoints(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("openjarvis.server.routes.get_config_dir", lambda: tmp_path)
+        engine = _make_engine()
+        app = create_app(engine, "test-model", config=_test_config())
+        client = TestClient(app)
+
+        # GET initially
+        resp = client.get("/v1/cloud/keys")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "OPENAI_API_KEY" in data
+        assert isinstance(data["OPENAI_API_KEY"], bool)
+
+        # POST key
+        resp = client.post("/v1/cloud/keys", json={"key": "OPENAI_API_KEY", "value": "sk-test12345"})
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "ok"
+        assert resp.json()["set"] is True
+
+        # Verify key was written locally and never leaked in GET
+        keys_file = tmp_path / "cloud-keys.env"
+        assert keys_file.exists()
+        assert "OPENAI_API_KEY=sk-test12345" in keys_file.read_text(encoding="utf-8")
+
+        resp = client.get("/v1/cloud/keys")
+        assert resp.status_code == 200
+        assert resp.json()["OPENAI_API_KEY"] is True
+        # Ensure raw value is NEVER in the response
+        assert "sk-test12345" not in resp.text
+
+        # DELETE key
+        resp = client.delete("/v1/cloud/keys/OPENAI_API_KEY")
+        assert resp.status_code == 200
+        assert resp.json()["set"] is False
+        assert "OPENAI_API_KEY=sk-test12345" not in keys_file.read_text(encoding="utf-8")
+
+    def test_privacy_settings_endpoints(self):
+        engine = _make_engine()
+        app = create_app(engine, "test-model", config=_test_config())
+        client = TestClient(app)
+
+        resp = client.get("/v1/settings/privacy")
+        assert resp.status_code == 200
+        assert resp.json()["allow_obsidian_to_cloud"] is False
+
+        resp = client.post("/v1/settings/privacy", json={"allow_obsidian_to_cloud": True})
+        assert resp.status_code == 200
+        assert resp.json()["allow_obsidian_to_cloud"] is True
+
+        resp = client.get("/v1/settings/privacy")
+        assert resp.status_code == 200
+        assert resp.json()["allow_obsidian_to_cloud"] is True
+
+    def test_obsidian_notes_never_sent_to_cloud_unless_allowed(self, monkeypatch):
+        from openjarvis.memory.store import Fact
+
+        captured_messages = []
+
+        async def mock_stream_cloud(model, messages, *args, **kw):
+            captured_messages.append(messages)
+            yield "reply"
+
+        monkeypatch.setattr("openjarvis.server.cloud_router.stream_cloud", mock_stream_cloud)
+
+        engine = _make_engine()
+        app = create_app(engine, "test-model", config=_test_config())
+        app.state.config.security.allow_obsidian_to_cloud = False
+
+        # Mock memory service with an obsidian fact and non-obsidian fact
+        class MockMemoryService:
+            def list_facts(self):
+                return [
+                    Fact(text="secret obsidian note", source="obsidian"),
+                    Fact(text="general public fact", source="user"),
+                ]
+        app.state.memory_service = MockMemoryService()
+        client = TestClient(app)
+
+        # Call with cloud model (gpt-4o) and allow_obsidian = False
+        resp = client.post(
+            "/v1/chat/completions",
+            json={
+                "model": "gpt-4o",
+                "messages": [{"role": "user", "content": "tell me notes"}],
+                "stream": True,
+            },
+        )
+        assert resp.status_code == 200
+        _ = resp.text
+        sent_messages = captured_messages[-1]
+        all_text = " ".join(m.content or "" for m in sent_messages)
+        assert "secret obsidian note" not in all_text
+
+        # When explicitly allowed via setting
+        app.state.config.security.allow_obsidian_to_cloud = True
+        resp = client.post(
+            "/v1/chat/completions",
+            json={
+                "model": "gpt-4o",
+                "messages": [{"role": "user", "content": "tell me notes"}],
+                "stream": True,
+            },
+        )
+        assert resp.status_code == 200
+        _ = resp.text
+        sent_messages_allowed = captured_messages[-1]
+        all_text_allowed = " ".join(m.content or "" for m in sent_messages_allowed)
+        assert "secret obsidian note" in all_text_allowed
+

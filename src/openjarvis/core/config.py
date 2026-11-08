@@ -1457,6 +1457,7 @@ class SecurityConfig:
         default_factory=lambda: str(get_config_dir() / ".vault_key")
     )
     capabilities: CapabilitiesConfig = field(default_factory=CapabilitiesConfig)
+    allow_obsidian_to_cloud: bool = False
 
 
 # ---------------------------------------------------------------------------

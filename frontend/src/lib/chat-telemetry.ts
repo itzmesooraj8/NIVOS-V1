@@ -52,3 +52,23 @@ export function resolveChatEngine({
   }
   return 'ollama';
 }
+
+export function getCloudProvider(model: string): string | null {
+  if (!model) return null;
+  if (model === 'gpt-oss' || model.startsWith('gpt-oss:') || model.startsWith('gpt-oss-')) return null;
+  if (
+    model.startsWith('gpt-') ||
+    model.startsWith('o1-') ||
+    model.startsWith('o3-') ||
+    model.startsWith('o4-') ||
+    model.startsWith('chatgpt-')
+  ) {
+    return 'OpenAI';
+  }
+  if (model.startsWith('claude-')) return 'Anthropic';
+  if (model.startsWith('gemini-')) return 'Google Gemini';
+  if (model.startsWith('atlascloud/')) return 'Atlas Cloud';
+  if (model.startsWith('MiniMax-')) return 'MiniMax';
+  if (model.includes('/') || model.startsWith('openrouter/')) return 'OpenRouter';
+  return null;
+}

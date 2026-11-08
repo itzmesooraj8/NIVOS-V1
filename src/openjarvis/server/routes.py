@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import threading
 import uuid
 import weakref
@@ -177,9 +178,29 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
     ):
         try:
             from openjarvis.tools.storage.context import ContextConfig, inject_context
+            from openjarvis.server.cloud_router import is_cloud_model
+
+            is_cloud = is_cloud_model(model)
+            allow_obsidian = False
+            if hasattr(request.app.state, "allow_obsidian_to_cloud"):
+                allow_obsidian = request.app.state.allow_obsidian_to_cloud
+            else:
+                cfg_sec = getattr(getattr(request.app.state, "config", None), "security", None)
+                if cfg_sec:
+                    allow_obsidian = getattr(cfg_sec, "allow_obsidian_to_cloud", False)
+            if request.headers.get("x-allow-obsidian-to-cloud", "").lower() in ("true", "1"):
+                allow_obsidian = True
 
             memory_service = getattr(request.app.state, "memory_service", None)
             facts = memory_service.list_facts() if memory_service is not None else []
+            if is_cloud and not allow_obsidian:
+                facts = [
+                    f
+                    for f in facts
+                    if getattr(f, "source", "") != "obsidian"
+                    and not getattr(f, "doc_id", "").startswith("obsidian:")
+                    and "obsidian" not in getattr(f, "doc_id", "").lower()
+                ]
 
             # Extract query from the last user message
             query_text = ""
@@ -201,10 +222,31 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
                     min_score=config.memory.context_min_score,
                     max_context_tokens=config.memory.context_max_tokens,
                 )
+                mem_backend = memory_backend
+                if is_cloud and not allow_obsidian and mem_backend is not None:
+                    class PrivacyFilteredBackend:
+                        def __init__(self, inner):
+                            self._inner = inner
+
+                        def retrieve(self, q, top_k=5):
+                            res = self._inner.retrieve(q, top_k=top_k)
+                            return [
+                                r
+                                for r in res
+                                if getattr(r, "source", "") != "obsidian"
+                                and not getattr(r, "doc_id", "").startswith("obsidian:")
+                                and "obsidian" not in getattr(r, "doc_id", "").lower()
+                            ]
+
+                        def __getattr__(self, name):
+                            return getattr(self._inner, name)
+
+                    mem_backend = PrivacyFilteredBackend(memory_backend)
+
                 enriched = inject_context(
                     query_text,
                     messages,
-                    memory_backend,
+                    mem_backend,
                     config=ctx_cfg,
                     facts=facts,
                 )
@@ -1352,6 +1394,141 @@ async def reload_cloud_engine(request: Request):
         request.app.state.engine_name = "multi"
 
     return {"status": "ok", "message": "Cloud engine reloaded"}
+
+
+_MANAGED_CLOUD_KEYS = (
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "GEMINI_API_KEY",
+    "OPENROUTER_API_KEY",
+    "ATLASCLOUD_API_KEY",
+    "MINIMAX_API_KEY",
+    "NIM_API_KEY",
+)
+
+
+def _read_cloud_keys_file() -> dict[str, str]:
+    keys: dict[str, str] = {}
+    keys_path = get_config_dir() / "cloud-keys.env"
+    if keys_path.exists():
+        for raw_line in keys_path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                keys[k.strip()] = v.strip()
+    return keys
+
+
+def _write_cloud_keys_file(keys: dict[str, str]) -> None:
+    config_dir = get_config_dir()
+    config_dir.mkdir(parents=True, exist_ok=True)
+    keys_path = config_dir / "cloud-keys.env"
+    lines = [f"{k}={v}" for k, v in sorted(keys.items()) if v]
+    keys_path.write_text("\n".join(lines) + "\n" if lines else "", encoding="utf-8")
+
+
+@router.get("/v1/cloud/keys")
+async def get_cloud_keys():
+    """Return status of managed cloud API keys (never expose values)."""
+    file_keys = _read_cloud_keys_file()
+    status = {}
+    for key_name in _MANAGED_CLOUD_KEYS:
+        is_set = bool(file_keys.get(key_name) or os.environ.get(key_name))
+        status[key_name] = is_set
+    return status
+
+
+@router.post("/v1/cloud/keys")
+async def save_cloud_key(request: Request):
+    """Save or delete a cloud API key locally without logging or exposing it."""
+    body = await request.json()
+    key = str(body.get("key") or body.get("key_name") or "").strip()
+    value = str(
+        body.get("value")
+        if "value" in body
+        else body.get("key_value", "")
+    ).strip()
+    if not key or key not in _MANAGED_CLOUD_KEYS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid or unmanaged key: {key}",
+        )
+
+    file_keys = _read_cloud_keys_file()
+    if value:
+        file_keys[key] = value
+        os.environ[key] = value
+    else:
+        file_keys.pop(key, None)
+        os.environ.pop(key, None)
+    _write_cloud_keys_file(file_keys)
+
+    # Hot-reload cloud engine if MultiEngine is used
+    outer = getattr(request.app.state, "engine", None)
+    inner = getattr(outer, "_inner", outer)
+    if inner is not None and type(inner).__name__ == "MultiEngine":
+        try:
+            from openjarvis.engine.cloud import CloudEngine
+
+            cloud = CloudEngine()
+            if cloud.health():
+                new_engines = [(k, e) for k, e in inner._engines if k != "cloud"]
+                new_engines.append(("cloud", cloud))
+                inner._engines = new_engines
+                inner._refresh_map()
+        except Exception:
+            pass
+
+    return {"status": "ok", "key": key, "set": bool(value)}
+
+
+@router.delete("/v1/cloud/keys/{key_name}")
+async def delete_cloud_key(key_name: str, request: Request):
+    """Remove a cloud API key locally."""
+    if key_name not in _MANAGED_CLOUD_KEYS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid key name: {key_name}",
+        )
+    file_keys = _read_cloud_keys_file()
+    file_keys.pop(key_name, None)
+    os.environ.pop(key_name, None)
+    _write_cloud_keys_file(file_keys)
+    outer = getattr(request.app.state, "engine", None)
+    inner = getattr(outer, "_inner", outer)
+    if inner is not None and type(inner).__name__ == "MultiEngine":
+        try:
+            from openjarvis.engine.cloud import CloudEngine
+
+            cloud = CloudEngine()
+            new_engines = [(k, e) for k, e in inner._engines if k != "cloud"]
+            if cloud.health():
+                new_engines.append(("cloud", cloud))
+            inner._engines = new_engines
+            inner._refresh_map()
+        except Exception:
+            pass
+    return {"status": "ok", "key": key_name, "set": False}
+
+
+@router.get("/v1/settings/privacy")
+async def get_privacy_settings(request: Request):
+    if hasattr(request.app.state, "allow_obsidian_to_cloud"):
+        return {"allow_obsidian_to_cloud": bool(request.app.state.allow_obsidian_to_cloud)}
+    cfg = getattr(request.app.state, "config", None)
+    allow = bool(getattr(getattr(cfg, "security", None), "allow_obsidian_to_cloud", False))
+    return {"allow_obsidian_to_cloud": allow}
+
+
+@router.post("/v1/settings/privacy")
+async def set_privacy_settings(request: Request):
+    body = await request.json()
+    allow = bool(body.get("allow_obsidian_to_cloud", False))
+    request.app.state.allow_obsidian_to_cloud = allow
+    cfg = getattr(request.app.state, "config", None)
+    if cfg and hasattr(cfg, "security"):
+        cfg.security.allow_obsidian_to_cloud = allow
+    return {"allow_obsidian_to_cloud": allow}
 
 
 @router.get("/v1/savings")
