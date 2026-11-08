@@ -44,7 +44,7 @@ def test_gui_custom_ports_use_project_root_and_same_origin_proxy(
     ):
         result = CliRunner().invoke(
             gui_cmd.gui,
-            ["--frontend-port", "5180", "--api-port", "8123", "--no-browser"],
+            ["--dev", "--frontend-port", "5180", "--api-port", "8123", "--no-browser"],
         )
 
     assert result.exit_code == 0, result.output
@@ -56,7 +56,7 @@ def test_gui_custom_ports_use_project_root_and_same_origin_proxy(
             "run",
             "--extra",
             "desktop",
-            "jarvis",
+            "nivos",
             "start",
             "--port",
             "8123",
@@ -104,7 +104,7 @@ def test_gui_rejects_occupied_frontend_port_before_launch(tmp_path: Path) -> Non
         ):
             result = CliRunner().invoke(
                 gui_cmd.gui,
-                ["--frontend-port", str(port), "--no-server", "--no-browser"],
+                ["--dev", "--frontend-port", str(port), "--no-server", "--no-browser"],
             )
 
     assert result.exit_code != 0
@@ -120,3 +120,64 @@ def test_wait_for_port_stops_when_vite_exits() -> None:
     with mock.patch.object(gui_cmd.socket, "create_connection") as connect:
         assert not gui_cmd._wait_for_port(process, "127.0.0.1", 5173)
     connect.assert_not_called()
+
+
+def test_gui_single_port_normal_mode(tmp_path: Path) -> None:
+    frontend = tmp_path / "frontend"
+    frontend.mkdir()
+    (frontend / "index.html").write_text("<html></html>")
+    static = tmp_path / "src" / "openjarvis" / "server" / "static"
+    static.mkdir(parents=True)
+    (static / "index.html").write_text("<html></html>")
+
+    with (
+        mock.patch.object(gui_cmd, "_frontend_dir", return_value=frontend),
+        mock.patch.object(gui_cmd, "_static_dir", return_value=static),
+        mock.patch.object(gui_cmd, "_is_static_outdated", return_value=False),
+        mock.patch.object(gui_cmd, "_api_healthy", return_value=True),
+        mock.patch.object(gui_cmd, "_daemon_pid_alive", return_value=True),
+        mock.patch.object(gui_cmd.subprocess, "Popen") as popen,
+        mock.patch.object(gui_cmd.webbrowser, "open") as open_browser,
+    ):
+        result = CliRunner().invoke(gui_cmd.gui, ["--port", "8000", "--no-browser"])
+
+    assert result.exit_code == 0, result.output
+    assert "Reusing the API server already running on port 8000" in result.output
+    assert "http://127.0.0.1:8000" in result.output
+    popen.assert_not_called()
+    open_browser.assert_not_called()
+
+
+def test_gui_normal_mode_builds_static_when_outdated(tmp_path: Path) -> None:
+    frontend = tmp_path / "frontend"
+    frontend.mkdir()
+    static = tmp_path / "src" / "openjarvis" / "server" / "static"
+    static.mkdir(parents=True)
+
+    with (
+        mock.patch.object(gui_cmd, "_frontend_dir", return_value=frontend),
+        mock.patch.object(gui_cmd, "_static_dir", return_value=static),
+        mock.patch.object(gui_cmd, "_is_static_outdated", return_value=True),
+        mock.patch.object(gui_cmd, "build_frontend") as build_fe,
+        mock.patch.object(gui_cmd, "_api_healthy", return_value=True),
+        mock.patch.object(gui_cmd, "_daemon_pid_alive", return_value=True),
+        mock.patch.object(gui_cmd.subprocess, "Popen") as popen,
+    ):
+        result = CliRunner().invoke(gui_cmd.gui, ["--no-browser"])
+
+    assert result.exit_code == 0, result.output
+    build_fe.assert_called_once()
+    popen.assert_not_called()
+
+
+def test_build_ui_command(tmp_path: Path) -> None:
+    frontend = tmp_path / "frontend"
+    frontend.mkdir()
+    with (
+        mock.patch.object(gui_cmd, "_frontend_dir", return_value=frontend),
+        mock.patch.object(gui_cmd, "build_frontend") as build_fe,
+    ):
+        result = CliRunner().invoke(gui_cmd.build_ui)
+
+    assert result.exit_code == 0, result.output
+    build_fe.assert_called_once()

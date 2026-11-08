@@ -369,7 +369,7 @@ def test_invocation_unregisters_exit_hook_and_restores_signals(
     monkeypatch.setattr(gui_cmd.atexit, "register", register)
     monkeypatch.setattr(gui_cmd.atexit, "unregister", unregister)
 
-    result = CliRunner().invoke(gui_cmd.gui, ["--no-server"])
+    result = CliRunner().invoke(gui_cmd.gui, ["--dev", "--no-server"])
 
     assert result.exit_code == (0 if failure is None else 1)
     owner.shutdown.assert_called_once()
@@ -389,7 +389,7 @@ def test_api_monitor_arms_when_slow_backend_first_becomes_healthy(
     )
     monkeypatch.setattr(gui_cmd, "_daemon_pid_alive", lambda port: False)
 
-    result = CliRunner().invoke(gui_cmd.gui, ["--no-server", "--no-browser"])
+    result = CliRunner().invoke(gui_cmd.gui, ["--dev", "--no-server", "--no-browser"])
 
     assert result.exit_code == 1
     assert "API server stopped" in result.output
@@ -406,7 +406,7 @@ def test_api_failure_before_first_healthy_probe_does_not_leave_gui_running(
     )
     monkeypatch.setattr(gui_cmd, "_daemon_pid_alive", lambda port: False)
 
-    result = CliRunner().invoke(gui_cmd.gui, ["--no-browser"])
+    result = CliRunner().invoke(gui_cmd.gui, ["--dev", "--no-browser"])
 
     assert result.exit_code == 1
     assert "failed to start" in result.output
@@ -424,7 +424,7 @@ def test_automatic_api_reuse_requires_verified_daemon_ownership(
     run = mock.Mock(return_value=mock.Mock(returncode=0))
     monkeypatch.setattr(gui_cmd.subprocess, "run", run)
 
-    result = CliRunner().invoke(gui_cmd.gui, ["--no-browser"])
+    result = CliRunner().invoke(gui_cmd.gui, ["--dev", "--no-browser"])
 
     ownership.assert_called_once_with(8000, require_ready=True)
     run.assert_not_called()
@@ -446,7 +446,7 @@ def test_explicit_no_server_allows_an_externally_managed_backend(
     ownership = mock.Mock(return_value=False)
     monkeypatch.setattr(gui_cmd, "_daemon_pid_alive", ownership)
 
-    result = CliRunner().invoke(gui_cmd.gui, ["--no-server", "--no-browser"])
+    result = CliRunner().invoke(gui_cmd.gui, ["--dev", "--no-server", "--no-browser"])
 
     assert result.exit_code == 0
     ownership.assert_not_called()

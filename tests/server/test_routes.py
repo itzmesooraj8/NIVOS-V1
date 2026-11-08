@@ -1861,6 +1861,7 @@ class TestCloudKeysAndPrivacy:
             yield "reply"
 
         monkeypatch.setattr("openjarvis.server.cloud_router.stream_cloud", mock_stream_cloud)
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
         engine = _make_engine()
         app = create_app(engine, "test-model", config=_test_config())

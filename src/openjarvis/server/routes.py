@@ -161,7 +161,28 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
     """Handle chat completion requests (streaming and non-streaming)."""
     engine = request.app.state.engine
     agent = getattr(request.app.state, "agent", None)
-    model = request_body.model
+    model = request_body.model or getattr(request.app.state, "model", "")
+    from openjarvis.server.cloud_router import get_provider, _load_keys, is_cloud_model, stream_cloud
+
+    if _uses_direct_cloud_router(engine, model):
+        provider = get_provider(model)
+        if provider:
+            keys = _load_keys()
+            key_map = {
+                "openai": ("OPENAI_API_KEY",),
+                "anthropic": ("ANTHROPIC_API_KEY",),
+                "google": ("GEMINI_API_KEY", "GOOGLE_API_KEY"),
+                "openrouter": ("OPENROUTER_API_KEY",),
+                "atlascloud": ("ATLASCLOUD_API_KEY",),
+                "minimax": ("MINIMAX_API_KEY",),
+            }
+            needed = key_map.get(provider, ())
+            has_key = any(keys.get(k) for k in needed)
+            if not has_key:
+                raise HTTPException(status_code=400, detail="Add your key in Settings")
+    else:
+        provider = None
+
     use_server_agent = (
         agent is not None
         and not request_body.tools
@@ -381,7 +402,33 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
     # worker thread so a slow/wedged non-streaming request can't stall the
     # event loop and every other concurrent request with it.
     try:
-        if use_server_agent:
+        if provider and not request_body.tools:
+            messages = _to_messages(request_body.messages)
+            tokens = []
+            async for token in stream_cloud(
+                model,
+                messages,
+                temperature=request_body.temperature,
+                max_tokens=request_body.max_tokens,
+            ):
+                tokens.append(token)
+            content = "".join(tokens)
+            response = ChatCompletionResponse(
+                model=model,
+                choices=[
+                    Choice(
+                        message=ChoiceMessage(role="assistant", content=content),
+                        finish_reason="stop",
+                    )
+                ],
+                usage=UsageInfo(
+                    prompt_tokens=0,
+                    completion_tokens=len(tokens),
+                    total_tokens=len(tokens),
+                ),
+                complexity=complexity_info,
+            )
+        elif use_server_agent:
             response = await asyncio.to_thread(
                 _handle_agent,
                 agent,

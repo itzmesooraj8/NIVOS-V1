@@ -319,12 +319,13 @@ def _port_owner_pid(port: int) -> int | None:
     """Best-effort PID listening on *port*, for a message the user can act on."""
     try:
         if sys.platform == "win32":
-            out = subprocess.run(
+            res = subprocess.run(
                 ["netstat", "-ano", "-p", "tcp"],
                 capture_output=True,
                 text=True,
                 check=False,
-            ).stdout
+            )
+            out = res.stdout if isinstance(res.stdout, str) else ""
             for line in out.splitlines():
                 parts = line.split()
                 if (
@@ -335,14 +336,16 @@ def _port_owner_pid(port: int) -> int | None:
                 ):
                     return int(parts[4])
             return None
-        out = subprocess.run(
+        res = subprocess.run(
             ["lsof", "-ti", f"tcp:{port}", "-sTCP:LISTEN"],
             capture_output=True,
             text=True,
             check=False,
-        ).stdout.split()
-        return int(out[0]) if out else None
-    except (OSError, ValueError):
+        )
+        out = res.stdout if isinstance(res.stdout, str) else ""
+        parts = out.split()
+        return int(parts[0]) if parts else None
+    except (OSError, ValueError, TypeError):
         return None
 
 
@@ -454,33 +457,234 @@ def _ensure_frontend_dependencies(frontend: Path, npm: str) -> None:
         )
 
 
-@click.command()
-@click.option(
-    "--frontend-port", default=5173, show_default=True, type=click.IntRange(1, 65535)
-)
-@click.option(
-    "--api-port", default=8000, show_default=True, type=click.IntRange(1, 65535)
-)
-@click.option("--no-server", is_flag=True, help="Do not start the API server.")
-@click.option("--no-browser", is_flag=True, help="Only start the frontend.")
-def gui(frontend_port: int, api_port: int, no_server: bool, no_browser: bool) -> None:
-    """Start the browser-based graphical mode in the default browser.
+def _static_dir() -> Path:
+    """Path to the server's static frontend directory."""
+    return Path(__file__).resolve().parent.parent / "server" / "static"
 
-    This command is intended for source checkouts. For an installed desktop
-    application, launch Nivos from the operating system menu instead.
-    """
+
+def _is_static_outdated(frontend: Path, static_dir: Path) -> bool:
+    """Return True if static/ is missing, missing index.html, or older than frontend sources."""
+    if not static_dir.is_dir():
+        return True
+    index_file = static_dir / "index.html"
+    if not index_file.is_file():
+        return True
+    try:
+        static_mtime = index_file.stat().st_mtime
+    except OSError:
+        return True
+
+    check_targets = [
+        frontend / "index.html",
+        frontend / "package.json",
+        frontend / "vite.config.ts",
+    ]
+    src_dir = frontend / "src"
+    if src_dir.is_dir():
+        check_targets.extend(src_dir.rglob("*"))
+
+    for p in check_targets:
+        try:
+            if p.is_file() and p.stat().st_mtime > static_mtime:
+                return True
+        except OSError:
+            continue
+    return False
+
+
+def build_frontend(frontend: Path, console: Console | None = None) -> None:
+    """Build the graphical frontend into server/static using npm run build."""
+    npm = shutil.which("npm") or shutil.which("npm.cmd")
+    if npm is None:
+        raise click.ClickException(
+            "Node.js/npm is required to build the frontend. Install Node.js 22 or newer."
+        )
+    _ensure_frontend_dependencies(frontend, npm)
+    if console:
+        console.print("[cyan]Building frontend assets (npm run build)...[/cyan]")
+    result = subprocess.run([npm, "run", "build"], cwd=frontend, check=False)
+    if result.returncode != 0:
+        raise click.ClickException("Failed to build frontend assets.")
+    if console:
+        console.print("[green]Frontend assets built successfully.[/green]")
+
+
+def _configured_server_endpoint() -> tuple[str, int]:
+    """Read host and port from config.toml without triggering hardware detection."""
+    from openjarvis.core.config import DEFAULT_CONFIG_PATH
+
+    host, port = "127.0.0.1", 8000
+    try:
+        import tomllib
+
+        if DEFAULT_CONFIG_PATH.is_file():
+            data = tomllib.loads(DEFAULT_CONFIG_PATH.read_text(encoding="utf-8"))
+            server_section = data.get("server", {})
+            if isinstance(server_section, dict):
+                if "host" in server_section and isinstance(server_section["host"], str):
+                    host = server_section["host"]
+                if "port" in server_section:
+                    port = int(server_section["port"])
+    except Exception:
+        pass
+    return host, port
+
+
+@click.command("build-ui")
+def build_ui() -> None:
+    """Build the graphical frontend assets into the static directory."""
     console = Console(stderr=True)
     frontend = _frontend_dir()
     if frontend is None:
         raise click.ClickException(
             "The graphical frontend is not available in this installation. "
-            "Download the Nivos desktop app or run this command "
-            "from a source checkout."
+            "Run this command from a source checkout."
+        )
+    build_frontend(frontend, console)
+
+
+@click.command()
+@click.option(
+    "-p",
+    "--port",
+    "port",
+    default=None,
+    type=click.IntRange(1, 65535),
+    help="Port number for the Nivos server (defaults to config.toml or 8000).",
+)
+@click.option(
+    "--api-port",
+    default=None,
+    type=click.IntRange(1, 65535),
+    help="Alias for --port (backward compatibility).",
+)
+@click.option(
+    "--dev",
+    is_flag=True,
+    default=False,
+    help="Run in development mode with Vite dev server on port 5173.",
+)
+@click.option(
+    "--frontend-port",
+    default=5173,
+    show_default=True,
+    type=click.IntRange(1, 65535),
+    help="Port for the Vite dev server (only used with --dev).",
+)
+@click.option("--no-server", is_flag=True, help="Do not start the API server.")
+@click.option("--no-browser", is_flag=True, help="Only start without opening the browser.")
+def gui(
+    port: int | None,
+    api_port: int | None,
+    dev: bool,
+    frontend_port: int,
+    no_server: bool,
+    no_browser: bool,
+) -> None:
+    """Start the browser-based graphical mode in the default browser.
+
+    In normal use, the app and API run on a single port (8000, configurable in
+    config.toml), serving the built frontend from server/static.
+    Use --dev for development mode with Vite on port 5173.
+    """
+    console = Console(stderr=True)
+    cfg_host, cfg_port = _configured_server_endpoint()
+    effective_port = (
+        port if port is not None else (api_port if api_port is not None else cfg_port)
+    )
+    bind_host = cfg_host
+
+    frontend = _frontend_dir()
+    static_dir = _static_dir()
+
+    if not dev:
+        # Single-port mode: ensure static build is present and up to date
+        if frontend is not None:
+            if _is_static_outdated(frontend, static_dir):
+                console.print(
+                    "[cyan]Frontend assets are missing or outdated. Building...[/cyan]"
+                )
+                build_frontend(frontend, console)
+        elif not static_dir.is_dir() or not (static_dir / "index.html").is_file():
+            raise click.ClickException(
+                "The graphical frontend is not available in this installation. "
+                "Download the Nivos desktop app or run this command "
+                "from a source checkout."
+            )
+
+        # Check / reuse / start API server on effective_port
+        if not no_server and _api_healthy(effective_port):
+            if not _daemon_pid_alive(effective_port, require_ready=True):
+                raise click.ClickException(
+                    f"API port {effective_port} is already serving an unregistered service. "
+                    "Stop it or choose another port. Use --no-server only when you "
+                    "intend to use an externally managed Nivos backend."
+                )
+            console.print(
+                f"[green]Reusing the API server already running on port {effective_port}.[/green]"
+            )
+            no_server = True
+
+        launched_api = not no_server
+        if launched_api:
+            uv = shutil.which("uv")
+            if uv is None:
+                cmd = [
+                    sys.executable,
+                    "-m",
+                    "openjarvis.cli",
+                    "start",
+                    "--port",
+                    str(effective_port),
+                ]
+            else:
+                cmd = [
+                    uv,
+                    "run",
+                    "--extra",
+                    "desktop",
+                    "nivos",
+                    "start",
+                    "--port",
+                    str(effective_port),
+                ]
+            server = subprocess.run(
+                cmd,
+                cwd=frontend.parent if frontend else None,
+                check=False,
+            )
+            if server.returncode != 0:
+                raise click.ClickException("Could not start the Nivos API server.")
+
+            # Wait for API to become healthy
+            deadline = time.monotonic() + 15.0
+            while time.monotonic() < deadline:
+                if _api_healthy(effective_port):
+                    break
+                time.sleep(0.2)
+            if not _api_healthy(effective_port):
+                raise click.ClickException("The API server did not become healthy.")
+
+        url = (
+            f"http://[{bind_host}]:{effective_port}"
+            if ":" in bind_host
+            else f"http://{bind_host}:{effective_port}"
+        )
+        console.print(f"[green]Nivos graphical mode is ready:[/green] {url}")
+        if not no_browser:
+            webbrowser.open(url)
+        return
+
+    # Development mode (--dev): starts Vite dev server
+    if frontend is None:
+        raise click.ClickException(
+            "The graphical frontend source is not available in this installation. "
+            "Run this command from a source checkout."
         )
     npm = shutil.which("npm") or shutil.which("npm.cmd")
     if npm is None:
         raise click.ClickException(
-            "Node.js/npm is required for graphical mode. Install Node.js 22 or newer."
+            "Node.js/npm is required for graphical dev mode. Install Node.js 22 or newer."
         )
     _check_frontend_port(frontend_port)
     _ensure_frontend_dependencies(frontend, npm)
@@ -488,15 +692,15 @@ def gui(frontend_port: int, api_port: int, no_server: bool, no_browser: bool) ->
     # `nivos start` exits non-zero when a daemon is already registered, so
     # without this a perfectly healthy API turned into the misleading "Could
     # not start the Nivos API server." Adopt it instead.
-    if not no_server and _api_healthy(api_port):
-        if not _daemon_pid_alive(api_port, require_ready=True):
+    if not no_server and _api_healthy(effective_port):
+        if not _daemon_pid_alive(effective_port, require_ready=True):
             raise click.ClickException(
-                f"API port {api_port} is already serving an unregistered service. "
+                f"API port {effective_port} is already serving an unregistered service. "
                 "Stop it or choose another port. Use --no-server only when you "
                 "intend to use an externally managed Nivos backend."
             )
         console.print(
-            f"[green]Reusing the API server already running on port {api_port}.[/green]"
+            f"[green]Reusing the API server already running on port {effective_port}.[/green]"
         )
         no_server = True
 
@@ -517,7 +721,7 @@ def gui(frontend_port: int, api_port: int, no_server: bool, no_browser: bool) ->
                 "nivos",
                 "start",
                 "--port",
-                str(api_port),
+                str(effective_port),
             ],
             cwd=frontend.parent,
             check=False,
@@ -529,7 +733,7 @@ def gui(frontend_port: int, api_port: int, no_server: bool, no_browser: bool) ->
     # Let browser requests use Vite's same-origin proxy at any frontend port.
     # VITE_API_URL is exposed to browser code, so clear an inherited override.
     env["VITE_API_URL"] = ""
-    env["OPENJARVIS_VITE_PROXY_TARGET"] = f"http://127.0.0.1:{api_port}"
+    env["OPENJARVIS_VITE_PROXY_TARGET"] = f"http://127.0.0.1:{effective_port}"
     spawn_kwargs = {}
     if sys.platform == "win32":
         spawn_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
@@ -571,11 +775,11 @@ def gui(frontend_port: int, api_port: int, no_server: bool, no_browser: bool) ->
             )
         owner.refresh()
         url = f"http://127.0.0.1:{frontend_port}"
-        console.print(f"[green]Nivos graphical mode is ready:[/green] {url}")
+        console.print(f"[green]Nivos graphical mode is ready (dev):[/green] {url}")
         if not no_browser:
             webbrowser.open(url)
 
-        watch_api = _api_healthy(api_port)
+        watch_api = _api_healthy(effective_port)
         failures = 0
         while True:
             owner.refresh()
@@ -584,7 +788,7 @@ def gui(frontend_port: int, api_port: int, no_server: bool, no_browser: bool) ->
                 break
             except subprocess.TimeoutExpired:
                 pass
-            healthy = _api_healthy(api_port)
+            healthy = _api_healthy(effective_port)
             if healthy:
                 watch_api = True
                 failures = 0
@@ -592,13 +796,13 @@ def gui(frontend_port: int, api_port: int, no_server: bool, no_browser: bool) ->
             if not watch_api and not launched_api:
                 continue
             failures += 1
-            if failures < _API_FAILURES_BEFORE_DOWN or _daemon_pid_alive(api_port):
+            if failures < _API_FAILURES_BEFORE_DOWN or _daemon_pid_alive(effective_port):
                 continue
             console.print(
                 "[red]The API server stopped or failed to start; "
                 "shutting down the frontend.[/red]\n"
                 f"  Check {DEFAULT_CONFIG_DIR / 'server.log'}, "
-                f"then run 'jarvis gui' again."
+                f"then run 'nivos gui' again."
             )
             raise SystemExit(1)
     except KeyboardInterrupt:
