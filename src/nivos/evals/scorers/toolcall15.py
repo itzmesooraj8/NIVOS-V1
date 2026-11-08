@@ -15,8 +15,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-from openjarvis.evals.core.scorer import LLMJudgeScorer
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.scorer import LLMJudgeScorer
+from nivos.evals.core.types import EvalRecord
 
 LOGGER = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def _extract_tool_calls(
         if tool_calls:
             return tool_calls
 
-    # Try tool_results list (from JarvisAgentBackend)
+    # Try tool_results list (from NivosAgentBackend)
     tool_results = record.metadata.get("tool_results", [])
     for tr in tool_results:
         tool_calls.append(

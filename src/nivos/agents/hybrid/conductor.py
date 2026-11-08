@@ -39,8 +39,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from openjarvis.agents._stubs import AgentContext
-from openjarvis.agents.hybrid._base import (
+from nivos.agents._stubs import AgentContext
+from nivos.agents.hybrid._base import (
     GEMINI_SEARCH_COST_PER_CALL,
     OPENAI_WEB_SEARCH_COST_PER_CALL,
     WEB_SEARCH_COST_PER_CALL,
@@ -49,17 +49,17 @@ from openjarvis.agents.hybrid._base import (
     tavily_search_context,
     web_search_cfg,
 )
-from openjarvis.agents.hybrid._prices import (
+from nivos.agents.hybrid._prices import (
     PRICES,
     is_gpt5_family,
     supports_temperature,
 )
-from openjarvis.agents.hybrid.mini_swe_agent import (
+from nivos.agents.hybrid.mini_swe_agent import (
     _clone_repo,
     _extract_diff,
     run_swe_agent_loop,
 )
-from openjarvis.core.registry import AgentRegistry
+from nivos.core.registry import AgentRegistry
 
 CONDUCTOR_SYS = """\
 Your role as an assistant involves obtaining answers to questions by an iterative \

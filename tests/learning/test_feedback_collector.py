@@ -1,12 +1,12 @@
-"""Tests for openjarvis.optimize.feedback.collector module."""
+"""Tests for nivos.optimize.feedback.collector module."""
 
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from openjarvis.core.types import Trace
-from openjarvis.learning.optimize.feedback.collector import FeedbackCollector
-from openjarvis.learning.optimize.feedback.judge import TraceJudge
+from nivos.core.types import Trace
+from nivos.learning.optimize.feedback.collector import FeedbackCollector
+from nivos.learning.optimize.feedback.judge import TraceJudge
 
 
 def _make_trace(trace_id: str = "trace-001") -> Trace:

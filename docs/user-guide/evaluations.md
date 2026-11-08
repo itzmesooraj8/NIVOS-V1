@@ -1,14 +1,14 @@
 # Evaluations
 
-The Nivos evaluation framework (`openjarvis.evals`) measures model **correctness and accuracy** on academic datasets. It ships inside the main `openjarvis` package (at `src/openjarvis/evals/`) and is designed specifically for research workflows where you need reproducible, dataset-driven quality assessments.
+The Nivos evaluation framework (`nivos.evals`) measures model **correctness and accuracy** on academic datasets. It ships inside the main `nivos` package (at `src/nivos/evals/`) and is designed specifically for research workflows where you need reproducible, dataset-driven quality assessments.
 
 !!! info "Evals vs. Benchmarks"
     Nivos has two distinct measurement systems that complement each other:
 
     | System | Module | Measures | Entry Point |
     |--------|--------|----------|-------------|
-    | **Evaluations** | `openjarvis.evals` | Correctness on academic datasets (accuracy, pass rate) | `nivos eval` |
-    | **Benchmarks** | `openjarvis.bench` | Engine performance (latency, throughput) | `nivos bench` |
+    | **Evaluations** | `nivos.evals` | Correctness on academic datasets (accuracy, pass rate) | `nivos eval` |
+    | **Benchmarks** | `nivos.bench` | Engine performance (latency, throughput) | `nivos bench` |
 
     Use evaluations to answer "does this model get the right answer?" and benchmarks to answer "how fast does this model respond?". See the [Benchmarks guide](benchmarks.md) for the performance measurement system.
 
@@ -18,13 +18,13 @@ The Nivos evaluation framework (`openjarvis.evals`) measures model **correctness
 
 ## Installation
 
-The evaluation framework is part of the main `openjarvis` package — no separate install or extra is required. The standard dev setup is enough:
+The evaluation framework is part of the main `nivos` package — no separate install or extra is required. The standard dev setup is enough:
 
 ```bash
 uv sync --extra dev
 ```
 
-The framework's core dependencies (`click`, `datasets`, `rich`) are base dependencies of `openjarvis`. Two optional extras enable experiment tracking integrations:
+The framework's core dependencies (`click`, `datasets`, `rich`) are base dependencies of `nivos`. Two optional extras enable experiment tracking integrations:
 
 ```bash
 uv sync --extra dev --extra eval-wandb     # Weights & Biases run tracking
@@ -42,7 +42,7 @@ Nivos does not install third-party packages automatically when an
 evaluation is imported or run.
 
 !!! note "Python version requirement"
-    Python 3.10 requires the `tomli` package for TOML config parsing. `openjarvis` declares it as a conditional dependency, so it is installed automatically.
+    Python 3.10 requires the `tomli` package for TOML config parsing. `nivos` declares it as a conditional dependency, so it is installed automatically.
 
 ## Entry Points
 
@@ -51,15 +51,15 @@ Two equivalent entry points expose the framework:
 | Command | Surface |
 |---------|---------|
 | `nivos eval {list,run,compare,report}` | Canonical CLI. `run` covers the common options; `compare` and `report` post-process result files. |
-| `python -m openjarvis.evals {list,run,run-all,summarize,reparse-judge}` | Full research surface, including judge configuration, the agentic runner, and episode mode. |
+| `python -m nivos.evals {list,run,run-all,summarize,reparse-judge}` | Full research surface, including judge configuration, the agentic runner, and episode mode. |
 
-The `openjarvis-eval` console script is an alias for `python -m openjarvis.evals` — same commands, same options. This guide uses `nivos eval` wherever its option set suffices and the module form for research-only options.
+The `nivos-eval` console script is an alias for `python -m nivos.evals` — same commands, same options. This guide uses `nivos eval` wherever its option set suffices and the module form for research-only options.
 
 ---
 
 ## Datasets
 
-The framework ships with **40 registered benchmarks** covering academic reasoning, agentic tasks, coding, retrieval, conversation quality, and practical use-case benchmarks. Datasets are grouped by category below; `uv run python -m openjarvis.evals list` prints the authoritative registry.
+The framework ships with **40 registered benchmarks** covering academic reasoning, agentic tasks, coding, retrieval, conversation quality, and practical use-case benchmarks. Datasets are grouped by category below; `uv run python -m nivos.evals list` prints the authoritative registry.
 
 ### Use-Case Benchmarks
 
@@ -163,7 +163,7 @@ The framework includes two pre-built configs for evaluating models on the five c
 ### Cloud models
 
 ```bash
-uv run nivos eval run --config src/openjarvis/evals/configs/use_case_v2_cloud.toml
+uv run nivos eval run --config src/nivos/evals/configs/use_case_v2_cloud.toml
 ```
 
 This config evaluates **6 cloud models** (Claude Opus 4.6, Claude Haiku 4.5, Gemini 3.1 Pro, Gemini 3.1 Flash Lite, GPT-5.4, GPT-5 Mini) against all 5 use-case benchmarks with 30 samples each, producing a 6x5 = 30-run matrix. Results are written to `results/use-cases-v2-cloud/`.
@@ -171,7 +171,7 @@ This config evaluates **6 cloud models** (Claude Opus 4.6, Claude Haiku 4.5, Gem
 ### Local models
 
 ```bash
-uv run nivos eval run --config src/openjarvis/evals/configs/use_case_v2_local.toml
+uv run nivos eval run --config src/nivos/evals/configs/use_case_v2_local.toml
 ```
 
 This config evaluates **5 local models** via Ollama (Qwen3.5 122B-A10B, GPT-OSS 120B, GLM4, Qwen3.5 35B-A3B, GLM-4.7-Flash) against the same 5 benchmarks, producing a 5x5 = 25-run matrix. Uses 2 workers (suitable for single-GPU setups). Results are written to `results/use-cases-v2-local/`.
@@ -187,14 +187,14 @@ Every evaluation run routes model calls through one of four backends:
 
 | Backend | Key | Description |
 |---------|-----|-------------|
-| **jarvis-direct** | `jarvis-direct` | Engine-level inference via `SystemBuilder`. Works for local (Ollama, vLLM, llama.cpp) and cloud models. |
-| **jarvis-agent** | `jarvis-agent` | Agent-level inference with tool calling. Uses `JarvisSystem.ask()` with the specified agent and tools. |
+| **nivos-direct** | `nivos-direct` | Engine-level inference via `SystemBuilder`. Works for local (Ollama, vLLM, llama.cpp) and cloud models. |
+| **nivos-agent** | `nivos-agent` | Agent-level inference with tool calling. Uses `NivosSystem.ask()` with the specified agent and tools. |
 | **hermes** | `hermes` | Real Hermes Agent (Nous Research) via subprocess. Requires `--base-url` and `--api-key`. |
 | **openclaw** | `openclaw` | Real OpenClaw via Node subprocess. Requires `--base-url` and `--api-key`. |
 
-Use `jarvis-direct` for most evaluations. Use `jarvis-agent` when the benchmark requires tool use — for example, GAIA tasks that reference files that must be read with `file_read`, or arithmetic tasks that benefit from `calculator`.
+Use `nivos-direct` for most evaluations. Use `nivos-agent` when the benchmark requires tool use — for example, GAIA tasks that reference files that must be read with `file_read`, or arithmetic tasks that benefit from `calculator`.
 
-The `hermes` and `openclaw` backends shell out to external agent frameworks and need an OpenAI-compatible endpoint for their model calls: pass `--base-url`/`--api-key`, set the `JARVIS_BACKEND_BASE_URL`/`JARVIS_BACKEND_API_KEY` environment variables, or add a `[backend.external]` section to your config (see [Config Reference](#backendexternal)).
+The `hermes` and `openclaw` backends shell out to external agent frameworks and need an OpenAI-compatible endpoint for their model calls: pass `--base-url`/`--api-key`, set the `NIVOS_BACKEND_BASE_URL`/`NIVOS_BACKEND_API_KEY` environment variables, or add a `[backend.external]` section to your config (see [Config Reference](#backendexternal)).
 
 !!! note "TerminalBench Native"
     `nivos eval run --backend` additionally accepts `terminalbench-native`, a Docker-based execution backend used by the TerminalBench Native benchmark.
@@ -206,7 +206,7 @@ The `hermes` and `openclaw` backends shell out to external agent frameworks and 
 ### List available benchmarks and backends
 
 ```bash
-uv run python -m openjarvis.evals list
+uv run python -m nivos.evals list
 ```
 
 Abridged output (40 benchmarks, 4 backends):
@@ -224,8 +224,8 @@ Abridged output (40 benchmarks, 4 backends):
 └──────────────────────┴───────────┴───────────────────────────────────┘
                          Available Backends
 ┌───────────────┬──────────────────────────────────────────────────┐
-│ jarvis-direct │ Engine-level inference (local or cloud)          │
-│ jarvis-agent  │ Agent-level inference with tool calling          │
+│ nivos-direct │ Engine-level inference (local or cloud)          │
+│ nivos-agent  │ Agent-level inference with tool calling          │
 │ hermes        │ Real Hermes Agent (Nous Research) via subprocess │
 │ openclaw      │ Real OpenClaw via Node subprocess                │
 └───────────────┴──────────────────────────────────────────────────┘
@@ -240,7 +240,7 @@ Abridged output (40 benchmarks, 4 backends):
 uv run nivos eval run -b supergpqa -m qwen3:8b -n 10
 
 # Evaluate GPT-5 Mini on GAIA using the agent backend with tools
-uv run nivos eval run -b gaia -m gpt-5-mini --backend jarvis-agent \
+uv run nivos eval run -b gaia -m gpt-5-mini --backend nivos-agent \
     --agent orchestrator --tools calculator,file_read -n 50
 
 # Run FRAMES with the vLLM engine, write output to a file
@@ -259,10 +259,10 @@ uv run nivos eval run -b wildchat -m qwen3:8b --temperature 0.7 -n 100
 | `--benchmark` | `-b` | str | required* | Any registered benchmark key (see `... list`) |
 | `--model` | `-m` | str | required* | Model identifier (e.g., `qwen3:8b`, `gpt-5-mini`) |
 | `--max-samples` | `-n` | int | all | Limit the number of samples evaluated |
-| `--backend` | | choice | `jarvis-direct` | `jarvis-direct`, `jarvis-agent`, `hermes`, `openclaw`, or `terminalbench-native` |
-| `--base-url` | | str | — | OpenAI-compatible endpoint URL (env: `JARVIS_BACKEND_BASE_URL`) |
-| `--api-key` | | str | — | API key for the endpoint (env: `JARVIS_BACKEND_API_KEY`) |
-| `--agent` | | str | — | Agent name for `jarvis-agent` backend (e.g., `orchestrator`) |
+| `--backend` | | choice | `nivos-direct` | `nivos-direct`, `nivos-agent`, `hermes`, `openclaw`, or `terminalbench-native` |
+| `--base-url` | | str | — | OpenAI-compatible endpoint URL (env: `NIVOS_BACKEND_BASE_URL`) |
+| `--api-key` | | str | — | API key for the endpoint (env: `NIVOS_BACKEND_API_KEY`) |
+| `--agent` | | str | — | Agent name for `nivos-agent` backend (e.g., `orchestrator`) |
 | `--engine` | `-e` | str | auto | Engine key (`ollama`, `vllm`, `cloud`, ...) |
 | `--tools` | | str | `""` | Comma-separated tool names (e.g., `calculator,file_read`) |
 | `--telemetry/--no-telemetry` | | flag | off | Enable telemetry collection during eval |
@@ -278,7 +278,7 @@ uv run nivos eval run -b wildchat -m qwen3:8b --temperature 0.7 -n 100
 
 *Required when `--config` is not provided.
 
-#### Research-only options (`python -m openjarvis.evals run`)
+#### Research-only options (`python -m nivos.evals run`)
 
 The module CLI accepts everything above plus research-grade options that `nivos eval run` does not expose:
 
@@ -295,17 +295,17 @@ The module CLI accepts everything above plus research-grade options that `nivos 
 | `--concurrency` | | int | `1` | Parallel query execution (AgenticRunner only) |
 | `--query-timeout` | | float | — | Per-query wall-clock timeout in seconds (AgenticRunner only) |
 
-Note: the module CLI's `--backend` choice covers `jarvis-direct`, `jarvis-agent`, `hermes`, and `openclaw`; `terminalbench-native` as a backend is available via `nivos eval run` and TOML configs.
+Note: the module CLI's `--backend` choice covers `nivos-direct`, `nivos-agent`, `hermes`, and `openclaw`; `terminalbench-native` as a backend is available via `nivos eval run` and TOML configs.
 
 ### Run all benchmarks at once
 
 The `run-all` command (module CLI only) evaluates a single model against **every registered benchmark** sequentially and writes results to an output directory:
 
 ```bash
-uv run python -m openjarvis.evals run-all -m qwen3:8b
+uv run python -m nivos.evals run-all -m qwen3:8b
 
 # With options
-uv run python -m openjarvis.evals run-all -m gpt-5-mini -n 100 --output-dir results/gpt5mini/
+uv run python -m nivos.evals run-all -m gpt-5-mini -n 100 --output-dir results/gpt5mini/
 ```
 
 Output files are written as `{output_dir}/{benchmark}_{model-slug}.jsonl`. The model slug replaces `/` and `:` with `-`, so `qwen3:8b` becomes `qwen3-8b`.
@@ -315,7 +315,7 @@ Output files are written as `{output_dir}/{benchmark}_{model-slug}.jsonl`. The m
 After a run, inspect a JSONL results file:
 
 ```bash
-uv run python -m openjarvis.evals summarize results/supergpqa_qwen3-8b.jsonl
+uv run python -m nivos.evals summarize results/supergpqa_qwen3-8b.jsonl
 ```
 
 Output:
@@ -360,12 +360,12 @@ uv run nivos eval run -b supergpqa -m Qwen/Qwen3-8B \
     -n 50
 ```
 
-The `-m` value must match a model id the server reports at `GET /v1/models`. Both flags fall back to the `JARVIS_BACKEND_BASE_URL` and `JARVIS_BACKEND_API_KEY` environment variables, so CI jobs can set them once:
+The `-m` value must match a model id the server reports at `GET /v1/models`. Both flags fall back to the `NIVOS_BACKEND_BASE_URL` and `NIVOS_BACKEND_API_KEY` environment variables, so CI jobs can set them once:
 
 ```bash
-export JARVIS_BACKEND_BASE_URL=http://gpu-node:8000/v1
-export JARVIS_BACKEND_API_KEY=local-key
-uv run nivos eval run -b gaia -m Qwen/Qwen3-8B --backend jarvis-agent -n 25
+export NIVOS_BACKEND_BASE_URL=http://gpu-node:8000/v1
+export NIVOS_BACKEND_API_KEY=local-key
+uv run nivos eval run -b gaia -m Qwen/Qwen3-8B --backend nivos-agent -n 25
 ```
 
 For the external `hermes` and `openclaw` backends these values are **required** (the foreign frameworks need an endpoint to send model calls to).
@@ -374,7 +374,7 @@ For the external `hermes` and `openclaw` backends these values are **required** 
     The vLLM engine also honors the `VLLM_HOST` environment variable (default `http://localhost:8000`):
 
     ```bash
-    VLLM_HOST=http://gpu-node:8000 uv run python -m openjarvis.evals run \
+    VLLM_HOST=http://gpu-node:8000 uv run python -m nivos.evals run \
         -b supergpqa -m Qwen/Qwen3-8B -e vllm -n 50
     ```
 
@@ -389,7 +389,7 @@ For research workflows that compare multiple models across multiple benchmarks, 
 ### Running from a config
 
 ```bash
-uv run nivos eval run --config src/openjarvis/evals/configs/full-suite.toml
+uv run nivos eval run --config src/nivos/evals/configs/full-suite.toml
 ```
 
 When `--config` is provided, the `-b`/`--benchmark` and `-m`/`--model` options are not required. All settings come from the config file. The CLI expands the matrix, prints a progress table, and writes results to the configured `output_dir`.
@@ -398,7 +398,7 @@ When `--config` is provided, the `-b`/`--benchmark` and `-m`/`--model` options a
 
 A config file has six sections: `[meta]`, `[defaults]`, `[judge]`, `[run]`, `[[models]]`, and `[[benchmarks]]`. Only `[[models]]` and `[[benchmarks]]` are required — all other sections are optional and fall back to built-in defaults.
 
-```toml title="src/openjarvis/evals/configs/full-suite.toml"
+```toml title="src/nivos/evals/configs/full-suite.toml"
 # Suite-level metadata (optional)
 [meta]
 name = "full-suite-v1"
@@ -442,13 +442,13 @@ temperature = 0.1
 
 [[benchmarks]]
 name = "supergpqa"
-backend = "jarvis-direct"
+backend = "nivos-direct"
 max_samples = 200
 split = "train"
 
 [[benchmarks]]
 name = "gaia"
-backend = "jarvis-agent"
+backend = "nivos-agent"
 agent = "orchestrator"
 tools = ["file_read", "calculator"]
 max_samples = 50
@@ -456,12 +456,12 @@ judge_model = "claude-sonnet-4-20250514"  # override judge for this benchmark
 
 [[benchmarks]]
 name = "frames"
-backend = "jarvis-direct"
+backend = "nivos-direct"
 max_samples = 100
 
 [[benchmarks]]
 name = "wildchat"
-backend = "jarvis-direct"
+backend = "nivos-direct"
 max_samples = 150
 temperature = 0.7   # override temperature for this benchmark
 ```
@@ -482,7 +482,7 @@ For example, `temperature` is resolved as: use `[defaults].temperature` (0.0), t
 
 A config requires only one `[[models]]` and one `[[benchmarks]]` entry:
 
-```toml title="src/openjarvis/evals/configs/minimal.toml"
+```toml title="src/nivos/evals/configs/minimal.toml"
 [[models]]
 name = "qwen3:8b"
 
@@ -494,7 +494,7 @@ This runs SuperGPQA against qwen3:8b with all default settings. Use this as a st
 
 ### Single-run config with full options
 
-```toml title="src/openjarvis/evals/configs/single-run.toml"
+```toml title="src/nivos/evals/configs/single-run.toml"
 [meta]
 name = "single-run-example"
 description = "Evaluate SuperGPQA with a single model and full configuration"
@@ -521,7 +521,7 @@ max_tokens = 4096
 
 [[benchmarks]]
 name = "supergpqa"
-backend = "jarvis-direct"
+backend = "nivos-direct"
 max_samples = 100
 split = "train"
 ```
@@ -586,8 +586,8 @@ Endpoint settings for the `hermes` and `openclaw` backends. Environment variable
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `base_url` | str | `None` | OpenAI-compatible endpoint URL (env: `JARVIS_BACKEND_BASE_URL`) |
-| `api_key` | str | `None` | API key for the endpoint (env: `JARVIS_BACKEND_API_KEY`) |
+| `base_url` | str | `None` | OpenAI-compatible endpoint URL (env: `NIVOS_BACKEND_BASE_URL`) |
+| `api_key` | str | `None` | API key for the endpoint (env: `NIVOS_BACKEND_API_KEY`) |
 
 ### `[[models]]`
 
@@ -612,14 +612,14 @@ One block per benchmark. The `name` field is required.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `name` | str | required | Any registered benchmark key (see `uv run python -m openjarvis.evals list`) |
-| `backend` | str | `"jarvis-direct"` | `jarvis-direct`, `jarvis-agent`, `hermes`, `openclaw`, or `terminalbench-native` |
+| `name` | str | required | Any registered benchmark key (see `uv run python -m nivos.evals list`) |
+| `backend` | str | `"nivos-direct"` | `nivos-direct`, `nivos-agent`, `hermes`, `openclaw`, or `terminalbench-native` |
 | `max_samples` | int | `None` | Limit number of samples; `None` evaluates the full dataset |
 | `split` | str | `None` | Override the default dataset split |
 | `subset` | str | `None` | Dataset subset/variant (benchmark-specific) |
 | `record_ids` | list[str] | `None` | Evaluate only these record ids |
-| `agent` | str | `None` | Agent name for `jarvis-agent` backend (e.g., `"orchestrator"`) |
-| `tools` | list[str] | `[]` | Tool names for `jarvis-agent` backend |
+| `agent` | str | `None` | Agent name for `nivos-agent` backend (e.g., `"orchestrator"`) |
+| `tools` | list[str] | `[]` | Tool names for `nivos-agent` backend |
 | `judge_model` | str | `None` | Override `[judge].model` for this benchmark only |
 | `temperature` | float | `None` | Override temperature for this benchmark (highest precedence) |
 | `max_tokens` | int | `None` | Override max tokens for this benchmark (highest precedence) |
@@ -639,7 +639,7 @@ Each line is a JSON object with the following fields:
   "record_id": "supergpqa-42",
   "benchmark": "supergpqa",
   "model": "qwen3:8b",
-  "backend": "jarvis-direct",
+  "backend": "nivos-direct",
   "model_answer": "The answer is C because...",
   "is_correct": true,
   "score": 1.0,
@@ -694,7 +694,7 @@ After all samples complete, a summary file is written alongside the JSONL at `{o
 {
   "benchmark": "supergpqa",
   "category": "reasoning",
-  "backend": "jarvis-direct",
+  "backend": "nivos-direct",
   "model": "qwen3:8b",
   "total_samples": 200,
   "scored_samples": 198,
@@ -793,7 +793,7 @@ The `EvalRunner` processes samples concurrently using a `ThreadPoolExecutor`. Re
 
 ```bash
 # Use more workers for faster evaluation (if the engine supports concurrent requests)
-uv run python -m openjarvis.evals run -b supergpqa -m qwen3:8b -w 8 -n 500
+uv run python -m nivos.evals run -b supergpqa -m qwen3:8b -w 8 -n 500
 ```
 
 !!! warning "Worker count and engine load"
@@ -805,6 +805,6 @@ uv run python -m openjarvis.evals run -b supergpqa -m qwen3:8b -w 8 -n 500
 
 - [Benchmarks](benchmarks.md) — Measure inference engine latency and throughput
 - [Telemetry & Traces](telemetry.md) — Record and analyze inference metrics from production use
-- [Agents](agents.md) — Configure the `OrchestratorAgent` used by `jarvis-agent` backend
+- [Agents](agents.md) — Configure the `OrchestratorAgent` used by `nivos-agent` backend
 - [Tools](tools.md) — Available tools for agent-backed evaluations
 - [Python SDK](python-sdk.md) — Programmatic access to Nivos inference and agents

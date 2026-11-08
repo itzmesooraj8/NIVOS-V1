@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 from typing import Sequence
 
-from openjarvis.learning.spec_search.models import Edit, EditOp, EditRiskTier
+from nivos.learning.spec_search.models import Edit, EditOp, EditRiskTier
 
 logger = logging.getLogger(__name__)
 

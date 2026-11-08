@@ -1,4 +1,4 @@
-"""``jarvis vault`` — encrypted credential store."""
+"""``nivos vault`` — encrypted credential store."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from openjarvis.core.config import DEFAULT_CONFIG_DIR
+from nivos.core.config import DEFAULT_CONFIG_DIR
 
 _VAULT_FILE = DEFAULT_CONFIG_DIR / "vault.enc"
 _VAULT_KEY_FILE = DEFAULT_CONFIG_DIR / ".vault_key"

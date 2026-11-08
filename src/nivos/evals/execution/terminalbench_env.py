@@ -8,7 +8,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any, MutableMapping, Optional, Type
 
-from openjarvis.evals.core.environment import TaskEnvironmentError
+from nivos.evals.core.environment import TaskEnvironmentError
 
 LOGGER = logging.getLogger(__name__)
 

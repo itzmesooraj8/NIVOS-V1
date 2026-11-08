@@ -6,10 +6,10 @@ from collections.abc import AsyncIterator, Sequence
 from typing import Any, Dict, List
 from unittest import mock
 
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.types import Message, Role, TelemetryRecord
-from openjarvis.engine._base import InferenceEngine
-from openjarvis.telemetry.wrapper import instrumented_generate
+from nivos.core.events import EventBus, EventType
+from nivos.core.types import Message, Role, TelemetryRecord
+from nivos.engine._base import InferenceEngine
+from nivos.telemetry.wrapper import instrumented_generate
 
 
 class _StubEngine(InferenceEngine):

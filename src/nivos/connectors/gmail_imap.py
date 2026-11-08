@@ -18,11 +18,11 @@ from email.utils import parsedate_to_datetime
 from imaplib import IMAP4
 from typing import Iterator, List, Optional
 
-from openjarvis.connectors._stubs import BaseConnector, Document, SyncStatus
-from openjarvis.connectors.oauth import delete_tokens, load_tokens, save_tokens
-from openjarvis.core.config import DEFAULT_CONFIG_DIR
-from openjarvis.core.registry import ConnectorRegistry
-from openjarvis.tools._stubs import ToolSpec
+from nivos.connectors._stubs import BaseConnector, Document, SyncStatus
+from nivos.connectors.oauth import delete_tokens, load_tokens, save_tokens
+from nivos.core.config import DEFAULT_CONFIG_DIR
+from nivos.core.registry import ConnectorRegistry
+from nivos.tools._stubs import ToolSpec
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ _DEFAULT_CREDENTIALS_PATH = str(DEFAULT_CONFIG_DIR / "connectors" / "gmail_imap.
 _IMAP_TIMEOUT_SECONDS = 30
 _SECURITY_TLS = "tls"
 _SECURITY_STARTTLS = "starttls"
-_UIDVALIDITY_ATTRIBUTE = "_openjarvis_uidvalidity"
+_UIDVALIDITY_ATTRIBUTE = "_nivos_uidvalidity"
 
 
 def _normalize_imap_security(value: str) -> str:

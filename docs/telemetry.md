@@ -97,7 +97,7 @@ does not delete previously submitted entries from Supabase.
 
 The canonical, authoritative list with every property name and its
 type validator lives in
-[`src/openjarvis/analytics/events.py`](../src/openjarvis/analytics/events.py).
+[`src/nivos/analytics/events.py`](../src/nivos/analytics/events.py).
 That file is the only place new events can be added — PR review is
 the gate.
 
@@ -122,8 +122,8 @@ Backend events use a property allowlist and value-level redaction:
 
 Two independent filters run before backend event properties are sent:
 
-1. [`src/openjarvis/analytics/redaction.py`](../src/openjarvis/analytics/redaction.py) — value-level pattern matching (20+ regexes for PII).
-2. [`src/openjarvis/analytics/events.py`](../src/openjarvis/analytics/events.py) — structural allowlist (event name + property name + type validator).
+1. [`src/nivos/analytics/redaction.py`](../src/nivos/analytics/redaction.py) — value-level pattern matching (20+ regexes for PII).
+2. [`src/nivos/analytics/events.py`](../src/nivos/analytics/events.py) — structural allowlist (event name + property name + type validator).
 
 Any failure at either layer → the event or property is silently
 dropped. Tests covering the patterns: [`tests/analytics/test_redaction.py`](../tests/analytics/test_redaction.py).
@@ -139,7 +139,7 @@ recording are disabled. Installer beacons use fixed fields assembled separately.
   `https://34.231.106.201.sslip.io`, configured for the Nivos team's
   PostHog project.
 - Runtime deployments can override `[analytics] host`; installer deployments
-  can override `OPENJARVIS_ANALYTICS_HOST`. A configured endpoint alone does
+  can override `NIVOS_ANALYTICS_HOST`. A configured endpoint alone does
   not establish its hosting provider or server logging settings.
 - **Never** sold, shared with advertisers, or used for anything other
   than improving Nivos.
@@ -154,29 +154,29 @@ recording are disabled. Installer beacons use fixed fields assembled separately.
 ## How identity works
 
 A single UUID v4 is generated when sharing is first enabled and stored at
-`~/.openjarvis/anon_id`. The install script, backend, and frontend all
+`~/.nivos/anon_id`. The install script, backend, and frontend all
 read the same file so events across the lifecycle can be linked to the
 same installation.
 
-Delete the file (`rm ~/.openjarvis/anon_id`) and a fresh UUID will be
+Delete the file (`rm ~/.nivos/anon_id`) and a fresh UUID will be
 generated next time analytics are enabled. Events associated with the
 previous UUID remain on the receiving service until deleted there.
 
 ## For researchers and contributors
 
-- **Adding an event**: edit `src/openjarvis/analytics/events.py`,
+- **Adding an event**: edit `src/nivos/analytics/events.py`,
   declare the spec, then update this page. PR review enforces both.
-- **Adding a PII pattern**: edit `src/openjarvis/analytics/redaction.py`
+- **Adding a PII pattern**: edit `src/nivos/analytics/redaction.py`
   and add a test case in `tests/analytics/test_redaction.py`.
 - **Inspecting what your install sends**: run with
-  `OPENJARVIS_LOG_LEVEL=DEBUG` and grep for `Analytics`. You'll see
+  `NIVOS_LOG_LEVEL=DEBUG` and grep for `Analytics`. You'll see
   every event name and (redacted) property dict before it ships.
 
 ## Related
 
 - Local telemetry (FLOPs, energy, latency stored in
-  `~/.openjarvis/telemetry.db`) is a **separate** subsystem documented
-  in [`src/openjarvis/telemetry/`](../src/openjarvis/telemetry/). It
+  `~/.nivos/telemetry.db`) is a **separate** subsystem documented
+  in [`src/nivos/telemetry/`](../src/nivos/telemetry/). It
   never leaves the machine and is controlled by `[telemetry]` (not
   `[analytics]`) in `config.toml`.
 - The leaderboard / contest opt-in (`OptInModal.tsx`) is a separate,

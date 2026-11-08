@@ -1,4 +1,4 @@
-"""``jarvis workflow`` — workflow management commands."""
+"""``nivos workflow`` — workflow management commands."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def list_workflows() -> None:
     """List available workflow definitions."""
     console = Console(stderr=True)
     try:
-        from openjarvis.workflow.loader import discover_workflows
+        from nivos.workflow.loader import discover_workflows
 
         workflows = discover_workflows()
         if not workflows:
@@ -43,14 +43,14 @@ def run(workflow_name: str, input_text: str | None) -> None:
     console = Console(stderr=True)
     console.print(f"[yellow]Running workflow: {workflow_name}[/yellow]")
     try:
-        from openjarvis.workflow.loader import discover_workflows
+        from nivos.workflow.loader import discover_workflows
 
         workflows = discover_workflows()
         if workflow_name not in workflows:
             console.print(f"[red]Workflow '{workflow_name}' not found.[/red]")
             return
         console.print(f"[green]Workflow '{workflow_name}' started.[/green]")
-        # Full execution would need a JarvisSystem — just report for now
+        # Full execution would need a NivosSystem — just report for now
         console.print(
             "[dim]Note: Full workflow execution requires a running system.[/dim]"
         )

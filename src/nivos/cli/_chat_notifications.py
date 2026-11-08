@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from openjarvis.cli._bg_state import BgStatus
+from nivos.cli._bg_state import BgStatus
 
 
 class NotificationDispatcher:

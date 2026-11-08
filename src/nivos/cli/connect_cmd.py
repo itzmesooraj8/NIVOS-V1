@@ -1,4 +1,4 @@
-"""``jarvis connect`` -- manage data source connections."""
+"""``nivos connect`` -- manage data source connections."""
 
 from __future__ import annotations
 
@@ -96,7 +96,7 @@ def _connect_source(registry: object, source: str, path: str = "") -> None:
 
     elif auth_type == "oauth":
         # OAuth connectors — auto-open browser + catch callback
-        from openjarvis.connectors.oauth import (
+        from nivos.connectors.oauth import (
             get_client_credentials,
             get_provider_for_connector,
             run_connector_oauth,
@@ -138,8 +138,8 @@ def _connect_source(registry: object, source: str, path: str = "") -> None:
         import json
         from pathlib import Path
 
-        from openjarvis.connectors.oauth import save_tokens
-        from openjarvis.core.config import DEFAULT_CONFIG_DIR
+        from nivos.connectors.oauth import save_tokens
+        from nivos.core.config import DEFAULT_CONFIG_DIR
 
         try:
             instance = connector_cls()
@@ -204,8 +204,8 @@ def connect(
 ) -> None:
     """Manage data source connections (Gmail, Obsidian, etc.)."""
     # Lazy imports to avoid top-level side effects
-    import openjarvis.connectors  # noqa: F401 — registers all connectors
-    from openjarvis.core.registry import ConnectorRegistry
+    import nivos.connectors  # noqa: F401 — registers all connectors
+    from nivos.core.registry import ConnectorRegistry
 
     if list_sources:
         _list_sources(ConnectorRegistry)

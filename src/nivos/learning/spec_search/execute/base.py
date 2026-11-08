@@ -13,27 +13,27 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar
 
-from openjarvis.learning.spec_search.models import Edit, EditOp
+from nivos.learning.spec_search.models import Edit, EditOp
 
 
 @dataclass
 class ApplyContext:
     """Shared context passed to all appliers."""
 
-    openjarvis_home: Path
+    nivos_home: Path
     session_id: str
 
     @property
     def config_path(self) -> Path:
-        return self.openjarvis_home / "config.toml"
+        return self.nivos_home / "config.toml"
 
     @property
     def agents_dir(self) -> Path:
-        return self.openjarvis_home / "agents"
+        return self.nivos_home / "agents"
 
     @property
     def tools_dir(self) -> Path:
-        return self.openjarvis_home / "tools"
+        return self.nivos_home / "tools"
 
 
 @dataclass

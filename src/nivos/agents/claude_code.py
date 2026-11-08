@@ -18,18 +18,18 @@ import subprocess
 from pathlib import Path
 from typing import Any, List, Optional
 
-from openjarvis.agents._stubs import AgentContext, AgentResult, BaseAgent
-from openjarvis.core.events import EventBus
-from openjarvis.core.paths import get_config_dir
-from openjarvis.core.registry import AgentRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.engine._stubs import InferenceEngine
+from nivos.agents._stubs import AgentContext, AgentResult, BaseAgent
+from nivos.core.events import EventBus
+from nivos.core.paths import get_config_dir
+from nivos.core.registry import AgentRegistry
+from nivos.core.types import ToolResult
+from nivos.engine._stubs import InferenceEngine
 
 logger = logging.getLogger(__name__)
 
 # Sentinel markers for parsing subprocess output
-_OUTPUT_START = "---OPENJARVIS_OUTPUT_START---"
-_OUTPUT_END = "---OPENJARVIS_OUTPUT_END---"
+_OUTPUT_START = "---NIVOS_OUTPUT_START---"
+_OUTPUT_END = "---NIVOS_OUTPUT_END---"
 
 # Path to the bundled runner source (relative to this module).
 # In editable installs this lives next to this file; in wheel installs
@@ -100,7 +100,7 @@ class ClaudeCodeAgent(BaseAgent):
     # ------------------------------------------------------------------
 
     def _ensure_runner(self) -> Path:
-        """Copy the bundled runner to ``~/.openjarvis/claude_code_runner/``
+        """Copy the bundled runner to ``~/.nivos/claude_code_runner/``
         and install the Agent SDK when it is missing or outdated.
 
         Returns the path to the runner directory.

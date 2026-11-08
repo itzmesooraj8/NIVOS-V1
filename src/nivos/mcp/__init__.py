@@ -1,9 +1,9 @@
-"""MCP (Model Context Protocol) layer for OpenJarvis."""
+"""MCP (Model Context Protocol) layer for Nivos."""
 
-from openjarvis.mcp.client import MCPClient
-from openjarvis.mcp.protocol import MCPError, MCPNotification, MCPRequest, MCPResponse
-from openjarvis.mcp.server import MCPServer
-from openjarvis.mcp.transport import (
+from nivos.mcp.client import MCPClient
+from nivos.mcp.protocol import MCPError, MCPNotification, MCPRequest, MCPResponse
+from nivos.mcp.server import MCPServer
+from nivos.mcp.transport import (
     InProcessTransport,
     MCPTransport,
     SSETransport,

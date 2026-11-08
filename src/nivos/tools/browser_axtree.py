@@ -10,15 +10,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 # Re-use the shared browser session from the browser module.
 # This is imported at module level so tests can patch
-# ``openjarvis.tools.browser_axtree._session``.
+# ``nivos.tools.browser_axtree._session``.
 try:
-    from openjarvis.tools.browser import _session
+    from nivos.tools.browser import _session
 except Exception:  # pragma: no cover — optional dependency
     _session = None  # type: ignore[assignment]
 

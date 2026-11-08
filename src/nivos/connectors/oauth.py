@@ -16,8 +16,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
-from openjarvis.core import open_browser
-from openjarvis.core.config import DEFAULT_CONFIG_DIR
+from nivos.core import open_browser
+from nivos.core.config import DEFAULT_CONFIG_DIR
 
 # ---------------------------------------------------------------------------
 # Connector credentials directory
@@ -48,7 +48,7 @@ class OAuthProvider:
     extra_auth_params: Dict[str, str] = field(default_factory=dict)
     # Which connector IDs this provider covers (one flow → all connected)
     connector_ids: Tuple[str, ...] = ()
-    # Filenames in ~/.openjarvis/connectors/ to save tokens to
+    # Filenames in ~/.nivos/connectors/ to save tokens to
     credential_files: Tuple[str, ...] = ()
 
 
@@ -139,9 +139,9 @@ def get_client_credentials(
 ) -> Optional[Tuple[str, str]]:
     """Load stored client_id and client_secret for *provider*.
 
-    Checks credential files in ``~/.openjarvis/connectors/`` and falls
-    back to environment variables ``OPENJARVIS_{NAME}_CLIENT_ID`` and
-    ``OPENJARVIS_{NAME}_CLIENT_SECRET``.
+    Checks credential files in ``~/.nivos/connectors/`` and falls
+    back to environment variables ``NIVOS_{NAME}_CLIENT_ID`` and
+    ``NIVOS_{NAME}_CLIENT_SECRET``.
     """
     # Check credential files
     for filename in provider.credential_files:
@@ -151,7 +151,7 @@ def get_client_credentials(
             return tokens["client_id"], tokens["client_secret"]
 
     # Check environment variables
-    prefix = f"OPENJARVIS_{provider.name.upper()}"
+    prefix = f"NIVOS_{provider.name.upper()}"
     env_id = os.environ.get(f"{prefix}_CLIENT_ID", "")
     env_secret = os.environ.get(f"{prefix}_CLIENT_SECRET", "")
     if env_id and env_secret:
@@ -262,7 +262,7 @@ def save_tokens(path: str, tokens: Dict[str, Any]) -> None:
 
     Creates parent directories as needed.
     """
-    from openjarvis.security.file_utils import secure_write_json
+    from nivos.security.file_utils import secure_write_json
 
     secure_write_json(Path(path), tokens)
 
@@ -461,7 +461,7 @@ def run_oauth_flow(
                 self.end_headers()
                 self.wfile.write(
                     b"<html><body><h2>Authorization successful!</h2>"
-                    b"<p>You can close this tab and return to OpenJarvis.</p>"
+                    b"<p>You can close this tab and return to Nivos.</p>"
                     b"</body></html>"
                 )
             elif "error" in params:
@@ -581,7 +581,7 @@ def _wait_for_callback_code(
                     b"<html><body style='font-family:system-ui;text-align:center;"
                     b"padding:60px'>"
                     b"<h2 style='color:#22c55e'>Connected!</h2>"
-                    b"<p>You can close this tab and return to OpenJarvis.</p>"
+                    b"<p>You can close this tab and return to Nivos.</p>"
                     b"</body></html>"
                 )
             elif "error" in params:

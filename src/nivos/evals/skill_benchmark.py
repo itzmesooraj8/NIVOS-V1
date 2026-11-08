@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from openjarvis.core.paths import get_config_dir
+from nivos.core.paths import get_config_dir
 
 LOGGER = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ class SkillBenchmarkRunner:
         # An "empty" overlay dir for the skills_on condition.  We point at
         # a known-empty subdirectory under the output dir so SkillManager
         # finds zero overlays even if the user happens to have populated
-        # the default ~/.openjarvis/learning/skills/ tree.
+        # the default ~/.nivos/learning/skills/ tree.
         self._empty_overlay_dir = (
             Path(self._config.output_dir).expanduser() / "_skills_on_empty_overlays"
         )
@@ -118,7 +118,7 @@ class SkillBenchmarkRunner:
     # ------------------------------------------------------------------
 
     def _backend_kwargs_for_condition(self, condition: str) -> Dict[str, Any]:
-        """Return the kwargs to pass to JarvisAgentBackend for *condition*.
+        """Return the kwargs to pass to NivosAgentBackend for *condition*.
 
         Pure function — no side effects, no SystemBuilder construction.
         Tested in isolation so we can verify the per-condition switches
@@ -150,15 +150,15 @@ class SkillBenchmarkRunner:
         )
 
     def _build_backend_for_condition(self, condition: str) -> Any:
-        """Construct a JarvisAgentBackend for *condition*.
+        """Construct a NivosAgentBackend for *condition*.
 
         Separate from `_backend_kwargs_for_condition` so the kwarg logic
         can be tested without instantiating an engine.
         """
-        from openjarvis.evals.backends.jarvis_agent import JarvisAgentBackend
+        from nivos.evals.backends.nivos_agent import NivosAgentBackend
 
         kw = self._backend_kwargs_for_condition(condition)
-        return JarvisAgentBackend(
+        return NivosAgentBackend(
             engine_key=self._config.engine,
             agent_name=self._config.agent,
             tools=list(self._config.tools),
@@ -187,11 +187,11 @@ class SkillBenchmarkRunner:
         shim so tests can monkeypatch it without instantiating an
         engine or running real benchmark tasks.
         """
-        from openjarvis.evals.backends.jarvis_direct import JarvisDirectBackend
-        from openjarvis.evals.core.runner import EvalRunner
-        from openjarvis.evals.core.types import RunConfig
-        from openjarvis.evals.datasets.pinchbench import PinchBenchDataset
-        from openjarvis.evals.scorers.pinchbench import PinchBenchScorer
+        from nivos.evals.backends.nivos_direct import NivosDirectBackend
+        from nivos.evals.core.runner import EvalRunner
+        from nivos.evals.core.types import RunConfig
+        from nivos.evals.datasets.pinchbench import PinchBenchDataset
+        from nivos.evals.scorers.pinchbench import PinchBenchScorer
 
         backend = self._build_backend_for_condition(condition)
 
@@ -206,7 +206,7 @@ class SkillBenchmarkRunner:
         # backend.  We reuse the same engine the agent uses (typically
         # a local Ollama model) so the headline run is fully local.
         try:
-            judge_backend = JarvisDirectBackend(
+            judge_backend = NivosDirectBackend(
                 engine_key=self._config.engine,
             )
         except RuntimeError as exc:
@@ -219,7 +219,7 @@ class SkillBenchmarkRunner:
 
         runner_cfg = RunConfig(
             benchmark=self._config.benchmark,
-            backend="jarvis-agent",
+            backend="nivos-agent",
             model=self._config.model,
             max_workers=1,
             episode_mode=False,

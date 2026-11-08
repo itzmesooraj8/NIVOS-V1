@@ -7,11 +7,11 @@ import time
 from collections.abc import AsyncIterator
 from typing import Any, Dict, List, Optional, Sequence
 
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.types import TOKEN_COUNTING_VERSION, Message, TelemetryRecord
-from openjarvis.engine._stubs import InferenceEngine, StreamChunk
-from openjarvis.telemetry.energy_monitor import BASIS_GPU
-from openjarvis.telemetry.gpu_monitor import GpuSample
+from nivos.core.events import EventBus, EventType
+from nivos.core.types import TOKEN_COUNTING_VERSION, Message, TelemetryRecord
+from nivos.engine._stubs import InferenceEngine, StreamChunk
+from nivos.telemetry.energy_monitor import BASIS_GPU
+from nivos.telemetry.gpu_monitor import GpuSample
 
 # ---------------------------------------------------------------------------
 # ITL helpers
@@ -58,7 +58,7 @@ class InstrumentedEngine(InferenceEngine):
     ``INFERENCE_END``, and ``TELEMETRY_RECORD`` events on the bus.
 
     If an ``energy_monitor`` is provided (new multi-vendor
-    :class:`~openjarvis.telemetry.energy_monitor.EnergyMonitor`), it is
+    :class:`~nivos.telemetry.energy_monitor.EnergyMonitor`), it is
     preferred over the legacy ``gpu_monitor`` for energy measurement.
     """
 

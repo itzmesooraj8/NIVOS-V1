@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
-from openjarvis.core.paths import get_workspace_dir
+from nivos.core.paths import get_workspace_dir
 
 logger = logging.getLogger(__name__)
 

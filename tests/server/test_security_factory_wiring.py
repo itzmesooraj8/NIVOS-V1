@@ -9,24 +9,24 @@ import pytest
 
 pytest.importorskip("fastapi")
 
-from openjarvis.core.config import JarvisConfig
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.security import SecurityContext
-from openjarvis.security.capabilities import CapabilityPolicy
-from openjarvis.server.app import create_app
+from nivos.core.config import NivosConfig
+from nivos.core.events import EventBus, EventType
+from nivos.security import SecurityContext
+from nivos.security.capabilities import CapabilityPolicy
+from nivos.server.app import create_app
 
 
-def _config() -> JarvisConfig:
-    config = JarvisConfig()
+def _config() -> NivosConfig:
+    config = NivosConfig()
     config.analytics.enabled = False
     config.traces.enabled = False
     config.security.enabled = True
     return config
 
 
-def _runtime_config() -> JarvisConfig:
+def _runtime_config() -> NivosConfig:
     """Factory config without external analytics or derived security."""
-    config = JarvisConfig()
+    config = NivosConfig()
     config.analytics.enabled = False
     config.traces.enabled = False
     config.security.enabled = False
@@ -49,7 +49,7 @@ def test_factory_derives_missing_security_and_secures_prebuilt_agent(
             audit_logger=audit,
         )
     )
-    monkeypatch.setattr("openjarvis.security.setup_security", setup)
+    monkeypatch.setattr("nivos.security.setup_security", setup)
     agent = SimpleNamespace(
         agent_id="tool-agent",
         _engine=engine,
@@ -90,7 +90,7 @@ def test_factory_preserves_explicit_security_primitives(monkeypatch) -> None:
             audit_logger=derived_audit,
         )
     )
-    monkeypatch.setattr("openjarvis.security.setup_security", setup)
+    monkeypatch.setattr("nivos.security.setup_security", setup)
 
     app = create_app(
         "raw",
@@ -108,7 +108,7 @@ def test_factory_preserves_explicit_security_primitives(monkeypatch) -> None:
 
 def test_factory_propagates_strict_security_setup_failure(monkeypatch) -> None:
     monkeypatch.setattr(
-        "openjarvis.security.setup_security",
+        "nivos.security.setup_security",
         MagicMock(side_effect=RuntimeError("policy failed")),
     )
 
@@ -117,8 +117,8 @@ def test_factory_propagates_strict_security_setup_failure(monkeypatch) -> None:
 
 
 def test_factory_synchronizes_prebuilt_rlm_lazy_executor_runtime(monkeypatch) -> None:
-    from openjarvis.agents.rlm import RLMAgent
-    from openjarvis.agents.rlm_repl import RLMRepl
+    from nivos.agents.rlm import RLMAgent
+    from nivos.agents.rlm_repl import RLMRepl
 
     engine = MagicMock()
     engine.generate.side_effect = [
@@ -180,7 +180,7 @@ def test_factory_synchronizes_prebuilt_rlm_lazy_executor_runtime(monkeypatch) ->
 def test_factory_preserves_prebuilt_rlm_policy_and_limiter_while_reidentifying() -> (
     None
 ):
-    from openjarvis.agents.rlm import RLMAgent
+    from nivos.agents.rlm import RLMAgent
 
     engine = MagicMock()
     agent_policy = CapabilityPolicy(default_deny=True)
@@ -213,9 +213,9 @@ def test_factory_preserves_prebuilt_rlm_policy_and_limiter_while_reidentifying()
 
 
 def test_factory_overrides_prebuilt_executor_identity_at_server_boundary() -> None:
-    from openjarvis.agents.orchestrator import OrchestratorAgent
-    from openjarvis.core.types import ToolCall, ToolResult
-    from openjarvis.tools._stubs import BaseTool, ToolSpec
+    from nivos.agents.orchestrator import OrchestratorAgent
+    from nivos.core.types import ToolCall, ToolResult
+    from nivos.tools._stubs import BaseTool, ToolSpec
 
     class _AdminTool(BaseTool):
         @property

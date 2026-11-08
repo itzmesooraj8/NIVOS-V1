@@ -1,10 +1,10 @@
-//! Error types for OpenJarvis.
+//! Error types for Nivos.
 
 use thiserror::Error;
 
-/// Top-level error type for all OpenJarvis operations.
+/// Top-level error type for all Nivos operations.
 #[derive(Error, Debug)]
-pub enum OpenJarvisError {
+pub enum NivosError {
     #[error("Registry error: {0}")]
     Registry(#[from] RegistryError),
 
@@ -254,9 +254,9 @@ mod tests {
 
     #[test]
     fn test_error_from_registry() {
-        let e: OpenJarvisError =
+        let e: NivosError =
             RegistryError::DuplicateKey("foo".into(), "ToolRegistry").into();
-        assert!(matches!(e, OpenJarvisError::Registry(_)));
+        assert!(matches!(e, NivosError::Registry(_)));
     }
 
     #[test]

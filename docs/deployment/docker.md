@@ -10,7 +10,7 @@ refuses to start on a non-loopback address without one. Set it first:
 ```bash
 cd deploy/docker
 cp .env.example .env
-echo "OPENJARVIS_API_KEY=$(nivos auth generate-key)" > .env   # or paste your own
+echo "NIVOS_API_KEY=$(nivos auth generate-key)" > .env   # or paste your own
 ```
 
 Then start both the API server and an Ollama backend with Docker Compose:
@@ -19,7 +19,7 @@ Then start both the API server and an Ollama backend with Docker Compose:
 docker compose up -d
 ```
 
-`docker compose` reads `OPENJARVIS_API_KEY` from `.env` (or your shell
+`docker compose` reads `NIVOS_API_KEY` from `.env` (or your shell
 environment) and fails fast if it is unset. Clients must then send
 `Authorization: Bearer <key>` on `/v1/*` and `/api/*` requests.
 
@@ -50,7 +50,7 @@ The default `Dockerfile` uses a multi-stage build based on `python:3.12-slim` to
 
 **Build stages:**
 
-1. **Builder stage** -- installs `uv` and the `openjarvis[server]` package (which includes FastAPI, uvicorn, and all server dependencies) from the project source.
+1. **Builder stage** -- installs `uv` and the `nivos[server]` package (which includes FastAPI, uvicorn, and all server dependencies) from the project source.
 2. **Runtime stage** -- copies only the installed Python packages and application code from the builder, keeping the final image small.
 
 ```dockerfile
@@ -78,13 +78,13 @@ CMD ["serve", "--host", "0.0.0.0", "--port", "8000"]
 Build it manually:
 
 ```bash
-docker build -t openjarvis:latest .
+docker build -t nivos:latest .
 ```
 
 Run it standalone:
 
 ```bash
-docker run -d -p 8000:8000 openjarvis:latest
+docker run -d -p 8000:8000 nivos:latest
 ```
 
 ### GPU Image (`Dockerfile.gpu`)
@@ -124,13 +124,13 @@ CMD ["serve", "--host", "0.0.0.0", "--port", "8000"]
 Build the GPU image:
 
 ```bash
-docker build -f Dockerfile.gpu -t openjarvis:gpu .
+docker build -f Dockerfile.gpu -t nivos:gpu .
 ```
 
 Run with GPU access (requires the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)):
 
 ```bash
-docker run -d --gpus all -p 8000:8000 openjarvis:gpu
+docker run -d --gpus all -p 8000:8000 nivos:gpu
 ```
 
 !!! note "NVIDIA Container Toolkit required"
@@ -144,15 +144,15 @@ The `docker-compose.yml` defines a complete deployment with the Nivos API server
 version: "3.9"
 
 services:
-  jarvis:
+  nivos:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
-      - OPENJARVIS_ENGINE_DEFAULT=ollama
-      - OPENJARVIS_OLLAMA_HOST=http://ollama:11434
+      - NIVOS_ENGINE_DEFAULT=ollama
+      - NIVOS_OLLAMA_HOST=http://ollama:11434
     depends_on:
       - ollama
     restart: unless-stopped
@@ -175,8 +175,8 @@ The `nivos` service is configured through environment variables:
 
 | Variable                      | Description                                             | Default                    |
 |-------------------------------|---------------------------------------------------------|----------------------------|
-| `OPENJARVIS_ENGINE_DEFAULT`   | Inference engine backend to use                         | `ollama`                   |
-| `OPENJARVIS_OLLAMA_HOST`      | URL of the Ollama server (uses Docker service name)     | `http://ollama:11434`      |
+| `NIVOS_ENGINE_DEFAULT`   | Inference engine backend to use                         | `ollama`                   |
+| `NIVOS_OLLAMA_HOST`      | URL of the Ollama server (uses Docker service name)     | `http://ollama:11434`      |
 
 ### Volumes
 
@@ -190,21 +190,21 @@ The `nivos` service declares `depends_on: ollama`, ensuring the Ollama container
 
 ### Mounting a Configuration File
 
-To use a custom `config.toml`, mount it into the container at the expected path (`~/.openjarvis/config.toml`, which is `/root/.openjarvis/config.toml` in the container):
+To use a custom `config.toml`, mount it into the container at the expected path (`~/.nivos/config.toml`, which is `/root/.nivos/config.toml` in the container):
 
 ```yaml
 services:
-  jarvis:
+  nivos:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - ./my-config.toml:/root/.openjarvis/config.toml:ro
+      - ./my-config.toml:/root/.nivos/config.toml:ro
     environment:
-      - OPENJARVIS_ENGINE_DEFAULT=ollama
-      - OPENJARVIS_OLLAMA_HOST=http://ollama:11434
+      - NIVOS_ENGINE_DEFAULT=ollama
+      - NIVOS_OLLAMA_HOST=http://ollama:11434
     depends_on:
       - ollama
     restart: unless-stopped
@@ -216,14 +216,14 @@ To persist telemetry data, memory databases, and trace records across container 
 
 ```yaml
 services:
-  jarvis:
+  nivos:
     # ... other config ...
     volumes:
-      - openjarvis-data:/root/.openjarvis
+      - nivos-data:/root/.nivos
 
 volumes:
   ollama-models:
-  openjarvis-data:
+  nivos-data:
 ```
 
 This preserves:
@@ -239,7 +239,7 @@ To use the GPU Dockerfile in your Compose setup, change the `dockerfile` field a
 
 ```yaml
 services:
-  jarvis:
+  nivos:
     build:
       context: .
       dockerfile: Dockerfile.gpu
@@ -253,8 +253,8 @@ services:
               count: all
               capabilities: [gpu]
     environment:
-      - OPENJARVIS_ENGINE_DEFAULT=ollama
-      - OPENJARVIS_OLLAMA_HOST=http://ollama:11434
+      - NIVOS_ENGINE_DEFAULT=ollama
+      - NIVOS_OLLAMA_HOST=http://ollama:11434
     depends_on:
       - ollama
     restart: unless-stopped
@@ -284,7 +284,7 @@ You can integrate this into your Docker Compose healthcheck:
 
 ```yaml
 services:
-  jarvis:
+  nivos:
     # ... other config ...
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -310,7 +310,7 @@ RUN pip install --no-cache-dir uv && \
 The entrypoint is `nivos` and the default command is `serve --host 0.0.0.0 --port 8000`. Override the command to change server options:
 
 ```bash
-docker run -d -p 9000:9000 openjarvis:latest \
+docker run -d -p 9000:9000 nivos:latest \
   serve --host 0.0.0.0 --port 9000 --engine ollama --model qwen3:8b
 ```
 
@@ -318,7 +318,7 @@ Or in Docker Compose:
 
 ```yaml
 services:
-  jarvis:
+  nivos:
     build: .
     command: ["serve", "--host", "0.0.0.0", "--port", "9000", "--model", "qwen3:8b"]
     ports:

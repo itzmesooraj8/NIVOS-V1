@@ -1,6 +1,6 @@
 """Recipe loader — load and resolve TOML recipe files.
 
-Recipes are the universal composition format for OpenJarvis.  Each recipe
+Recipes are the universal composition format for Nivos.  Each recipe
 specifies all five primitives (Intelligence, Engine, Agent, Tools, Learning)
 and carries a ``kind`` that determines its lifecycle:
 
@@ -19,7 +19,7 @@ try:
 except ModuleNotFoundError:
     import tomli as tomllib  # type: ignore[no-redef]
 
-from openjarvis.core.paths import get_config_dir
+from nivos.core.paths import get_config_dir
 
 # Built-in recipes directory (package data)
 _PROJECT_RECIPES_DIR = Path(__file__).resolve().parent / "data"
@@ -88,10 +88,10 @@ class Recipe:
     # ------------------------------------------------------------------ #
 
     def to_builder_kwargs(self) -> Dict[str, Any]:
-        """Convert recipe fields to kwargs for SystemBuilder/Jarvis.
+        """Convert recipe fields to kwargs for SystemBuilder/Nivos.
 
         Returns a dict with only the non-None fields, keyed to match
-        the SystemBuilder fluent API or Jarvis constructor parameters.
+        the SystemBuilder fluent API or Nivos constructor parameters.
         """
         kwargs: Dict[str, Any] = {}
         if self.model is not None:
@@ -137,7 +137,7 @@ class Recipe:
         and the recipe's benchmarks (or *benchmarks* override) as
         ``[[benchmarks]]``, inheriting agent type and tools.
         """
-        from openjarvis.recipes.composer import recipe_to_eval_suite
+        from nivos.recipes.composer import recipe_to_eval_suite
 
         return recipe_to_eval_suite(
             self,
@@ -148,7 +148,7 @@ class Recipe:
 
     def to_operator_manifest(self) -> Any:
         """Convert this recipe into an ``OperatorManifest``."""
-        from openjarvis.recipes.composer import recipe_to_operator
+        from nivos.recipes.composer import recipe_to_operator
 
         return recipe_to_operator(self)
 
@@ -289,8 +289,8 @@ def discover_recipes(
     Search order (later entries override earlier ones by name):
     1. Project ``recipes/data/`` directory (discrete recipes)
     2. Project ``recipes/data/operators/`` directory (operator recipes)
-    3. User ``~/.openjarvis/recipes/`` directory
-    4. User ``~/.openjarvis/operators/`` directory
+    3. User ``~/.nivos/recipes/`` directory
+    4. User ``~/.nivos/operators/`` directory
     5. Any additional directories in *extra_dirs*
 
     Args:

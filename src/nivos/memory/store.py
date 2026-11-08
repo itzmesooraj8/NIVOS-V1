@@ -22,8 +22,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Iterable, Iterator, List
 
-from openjarvis.core.paths import get_config_dir
-from openjarvis.core.registry import FactStoreRegistry
+from nivos.core.paths import get_config_dir
+from nivos.core.registry import FactStoreRegistry
 
 if sys.platform != "win32":
     import fcntl
@@ -424,7 +424,7 @@ def load_configured_facts(config: Any) -> List[Fact]:
     """Load automatic-memory facts from *config* when the service is enabled.
 
     Context injection is also used by short-lived commands such as
-    ``jarvis ask``, where no :class:`MemoryService` instance exists.  This
+    ``nivos ask``, where no :class:`MemoryService` instance exists.  This
     helper gives those callers the same configured fact-store view without
     coupling them to the service lifecycle.
     """

@@ -11,30 +11,30 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from openjarvis.learning.spec_search.execute.appliers.agent import (
+from nivos.learning.spec_search.execute.appliers.agent import (
     EditFewShotExemplarsApplier,
     PatchSystemPromptApplier,
     ReplaceSystemPromptApplier,
     SetAgentClassApplier,
     SetAgentParamApplier,
 )
-from openjarvis.learning.spec_search.execute.appliers.intelligence import (
+from nivos.learning.spec_search.execute.appliers.intelligence import (
     SetModelForQueryClassApplier,
     SetModelParamApplier,
 )
-from openjarvis.learning.spec_search.execute.appliers.lora_stub import (
+from nivos.learning.spec_search.execute.appliers.lora_stub import (
     LoraStubApplier,
 )
-from openjarvis.learning.spec_search.execute.appliers.tools import (
+from nivos.learning.spec_search.execute.appliers.tools import (
     AddToolToAgentApplier,
     EditToolDescriptionApplier,
     RemoveToolFromAgentApplier,
 )
-from openjarvis.learning.spec_search.execute.base import (
+from nivos.learning.spec_search.execute.base import (
     ApplyContext,
     EditApplierRegistry,
 )
-from openjarvis.learning.spec_search.models import (
+from nivos.learning.spec_search.models import (
     AutonomyMode,
     Edit,
     EditOutcome,

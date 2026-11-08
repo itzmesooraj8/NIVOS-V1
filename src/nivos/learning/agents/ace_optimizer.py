@@ -11,11 +11,11 @@ playbook with entries like::
                                        conversion, prefer the exact
                                        rational form before rounding.
 
-The wrapper adapts OpenJarvis traces into ACE's
+The wrapper adapts Nivos traces into ACE's
 ``train_samples`` / ``val_samples`` / ``test_samples`` shape, builds a
 minimal ``DataProcessor`` from the trace feedback signal, runs ACE in
 ``offline`` mode, and writes the resulting ``final_playbook.txt`` as a
-sidecar overlay under ``~/.openjarvis/learning/ace/<task>/`` for the
+sidecar overlay under ``~/.nivos/learning/ace/<task>/`` for the
 agent runtime to pick up on next start.
 
 ACE is not on PyPI as of v1.0.1. The ``learning-ace`` extra installs
@@ -29,10 +29,10 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List
 
-from openjarvis.core.config import ACEOptimizerConfig
-from openjarvis.core.paths import get_config_dir
-from openjarvis.core.registry import LearningRegistry
-from openjarvis.learning._stubs import AgentLearningPolicy
+from nivos.core.config import ACEOptimizerConfig
+from nivos.core.paths import get_config_dir
+from nivos.core.registry import LearningRegistry
+from nivos.learning._stubs import AgentLearningPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def _default_save_dir(task_name: str) -> Path:
 
 
 class _TraceDataProcessor:
-    """Adapter that exposes OpenJarvis traces in ACE's three-method API.
+    """Adapter that exposes Nivos traces in ACE's three-method API.
 
     ACE expects a processor with:
 
@@ -94,7 +94,7 @@ class _TraceDataProcessor:
 
 
 def _traces_to_samples(traces: List[Any]) -> List[Dict[str, Any]]:
-    """Convert OpenJarvis trace records to ACE's sample dict shape."""
+    """Convert Nivos trace records to ACE's sample dict shape."""
     samples: List[Dict[str, Any]] = []
     for t in traces:
         question = getattr(t, "query", "") or ""
@@ -156,7 +156,7 @@ class ACEAgentOptimizer:
             return {
                 "status": "error",
                 "reason": (
-                    "ace not installed (pip install 'openjarvis[learning-ace]')"
+                    "ace not installed (pip install 'nivos[learning-ace]')"
                 ),
             }
 

@@ -58,7 +58,7 @@ def tty_wants_runtime_panel(cli_skip: bool = False) -> bool:
 
     if cli_skip:
         return False
-    skip = (os.environ.get("JARVIS_SKIP_RUNTIME_PANEL", "") or "").strip().lower() in (
+    skip = (os.environ.get("NIVOS_SKIP_RUNTIME_PANEL", "") or "").strip().lower() in (
         "1",
         "true",
         "yes",

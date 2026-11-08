@@ -6,9 +6,9 @@ import os
 from pathlib import Path
 from typing import Any
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 _SUPPORTED_FORMATS = {".mp3", ".wav", ".m4a", ".ogg", ".flac", ".webm"}
 _MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024  # 25 MB

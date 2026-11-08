@@ -10,17 +10,17 @@ from rich.console import Console
 from rich.markup import escape
 from rich.table import Table
 
-from openjarvis.core.config import load_config
-from openjarvis.core.events import EventBus
-from openjarvis.core.paths import get_config_dir
-from openjarvis.skills.manager import SkillManager
+from nivos.core.config import load_config
+from nivos.core.events import EventBus
+from nivos.core.paths import get_config_dir
+from nivos.skills.manager import SkillManager
 
 
 def _get_trace_store():
     """Return a TraceStore instance from the user config (or None)."""
     try:
-        from openjarvis.core.config import load_config
-        from openjarvis.traces.store import TraceStore
+        from nivos.core.config import load_config
+        from nivos.traces.store import TraceStore
 
         cfg = load_config()
         return TraceStore(cfg.traces.db_path)
@@ -146,12 +146,12 @@ def _skill_tool_names(mgr: SkillManager, skill_name: str) -> list[str]:
 @click.option("--arg", "-a", multiple=True, help="Arguments as key=value pairs.")
 def run(skill_name: str, arg: tuple):
     """Execute a stepped skill using configured security and tool permissions."""
-    import openjarvis.tools  # noqa: F401
-    from openjarvis.cli._tool_names import resolve_tool_names
-    from openjarvis.cli.ask import _build_tools
-    from openjarvis.core.registry import ToolRegistry
-    from openjarvis.security import setup_security
-    from openjarvis.tools._stubs import ToolExecutor
+    import nivos.tools  # noqa: F401
+    from nivos.cli._tool_names import resolve_tool_names
+    from nivos.cli.ask import _build_tools
+    from nivos.core.registry import ToolRegistry
+    from nivos.security import setup_security
+    from nivos.tools._stubs import ToolExecutor
 
     console = Console()
     bus = EventBus()
@@ -222,11 +222,11 @@ def _parse_source_query(query: str) -> tuple[str, str]:
 def _get_resolver(source: str, url: str = ""):
     """Return a resolver instance for the given source name."""
     if source == "hermes":
-        from openjarvis.skills.sources.hermes import HermesResolver
+        from nivos.skills.sources.hermes import HermesResolver
 
         return HermesResolver()
     if source == "openclaw":
-        from openjarvis.skills.sources.openclaw import OpenClawResolver
+        from nivos.skills.sources.openclaw import OpenClawResolver
 
         return OpenClawResolver()
     if source == "github":
@@ -234,7 +234,7 @@ def _get_resolver(source: str, url: str = ""):
             raise click.BadParameter("github source requires --url")
         from pathlib import Path as _Path
 
-        from openjarvis.skills.sources.github import GitHubResolver
+        from nivos.skills.sources.github import GitHubResolver
 
         cache = _Path(
             str(get_config_dir() / "skill-cache" / "github")
@@ -280,7 +280,7 @@ def _sync_resolver(resolver, console: Console) -> None:
 def install(query: str, with_scripts: bool, force: bool, url: str, yes_dangerous: bool):
     """Install a skill from a source.
 
-    Example: ``jarvis skill install hermes:apple-notes``
+    Example: ``nivos skill install hermes:apple-notes``
     """
     console = Console()
     source, name = _parse_source_query(query)
@@ -306,9 +306,9 @@ def install(query: str, with_scripts: bool, force: bool, url: str, yes_dangerous
         console.print(f"[red]No skill named '{name}' found in source '{source}'[/red]")
         raise SystemExit(1)
 
-    from openjarvis.skills.importer import SkillImporter
-    from openjarvis.skills.parser import SkillParser
-    from openjarvis.skills.tool_translator import ToolTranslator
+    from nivos.skills.importer import SkillImporter
+    from nivos.skills.parser import SkillParser
+    from nivos.skills.tool_translator import ToolTranslator
 
     importer = SkillImporter(parser=SkillParser(), tool_translator=ToolTranslator())
     result = importer.import_skill(
@@ -398,9 +398,9 @@ def sync(
         )
         return
 
-    from openjarvis.skills.importer import SkillImporter
-    from openjarvis.skills.parser import SkillParser
-    from openjarvis.skills.tool_translator import ToolTranslator
+    from nivos.skills.importer import SkillImporter
+    from nivos.skills.parser import SkillParser
+    from nivos.skills.tool_translator import ToolTranslator
 
     importer = SkillImporter(parser=SkillParser(), tool_translator=ToolTranslator())
 
@@ -498,7 +498,7 @@ def sources():
 def remove(skill_name: str, yes: bool):
     """Remove an installed skill by name.
 
-    Searches ``~/.openjarvis/skills/`` and ``./skills`` for a directory whose
+    Searches ``~/.nivos/skills/`` and ``./skills`` for a directory whose
     name (or parsed manifest name) matches ``skill_name`` and deletes it.
     """
     console = Console()
@@ -599,7 +599,7 @@ def search(query: str, source: str):
     console.print(table)
     console.print(
         f"[dim]{len(rows)} match(es). "
-        f"Install with: jarvis skill install <source>:<name>[/dim]"
+        f"Install with: nivos skill install <source>:<name>[/dim]"
     )
 
 
@@ -649,7 +649,7 @@ def update():
 )
 def discover(min_frequency: int, min_outcome: float, dry_run: bool) -> None:
     """Mine the trace store for recurring tool sequences and write them as
-    discovered skill manifests under ~/.openjarvis/skills/discovered/."""
+    discovered skill manifests under ~/.nivos/skills/discovered/."""
     console = Console()
     store = _get_trace_store()
     if store is None:
@@ -667,7 +667,7 @@ def discover(min_frequency: int, min_outcome: float, dry_run: bool) -> None:
         # Use a temporary directory so nothing is persisted
         import tempfile
 
-        tmp = Path(tempfile.mkdtemp(prefix="openjarvis-discover-dryrun-"))
+        tmp = Path(tempfile.mkdtemp(prefix="nivos-discover-dryrun-"))
         try:
             written = mgr.discover_from_traces(
                 store,
@@ -708,7 +708,7 @@ def discover(min_frequency: int, min_outcome: float, dry_run: bool) -> None:
 def show_overlay(skill_name: str) -> None:
     """Show the optimization overlay for a skill, if one exists."""
     console = Console()
-    from openjarvis.skills.overlay import SkillOverlayLoader
+    from nivos.skills.overlay import SkillOverlayLoader
 
     loader = SkillOverlayLoader(_get_overlay_dir())
     overlay = loader.load(skill_name)

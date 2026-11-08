@@ -27,7 +27,7 @@ About 3 minutes. Type `nivos` to start.
 
 - The installer detects WSL via `/proc/sys/kernel/osrelease` and uses `nohup ollama serve &` instead of systemd to start the Ollama daemon (WSL2 doesn't ship systemd by default).
 - The first time you run `nivos`, the WSL kernel may show a "process running in background" notification — that's the bg-orchestrator detaching. It's expected.
-- Models are stored in WSL's filesystem (`~/.openjarvis/`), not your Windows drive. To free up space later: `jarvis-uninstall` removes everything.
+- Models are stored in WSL's filesystem (`~/.nivos/`), not your Windows drive. To free up space later: `nivos-uninstall` removes everything.
 
 ## See also
 

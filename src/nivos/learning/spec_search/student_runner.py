@@ -111,7 +111,7 @@ def build_benchmark_samples_from_traces(
     Pulls recent traces (optionally filtered by feedback score) and
     converts them into benchmark samples the teacher can reference.
     """
-    from openjarvis.learning.optimize.personal.synthesizer import (
+    from nivos.learning.optimize.personal.synthesizer import (
         PersonalBenchmarkSample,
     )
 

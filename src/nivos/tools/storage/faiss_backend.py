@@ -17,10 +17,10 @@ except ImportError as _faiss_exc:
         "pip install faiss-cpu  (or faiss-gpu)"
     ) from _faiss_exc
 
-from openjarvis.core.events import EventType, get_event_bus
-from openjarvis.core.registry import MemoryRegistry
-from openjarvis.tools.storage._stubs import MemoryBackend, RetrievalResult
-from openjarvis.tools.storage.embeddings import (
+from nivos.core.events import EventType, get_event_bus
+from nivos.core.registry import MemoryRegistry
+from nivos.tools.storage._stubs import MemoryBackend, RetrievalResult
+from nivos.tools.storage.embeddings import (
     Embedder,
     SentenceTransformerEmbedder,
 )

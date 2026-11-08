@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from openjarvis.engine._stubs import InferenceEngine
+from nivos.engine._stubs import InferenceEngine
 
 
 @dataclass(slots=True)

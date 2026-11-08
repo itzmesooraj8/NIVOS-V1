@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from openjarvis.learning._stubs import RewardFunction, RoutingContext
+from nivos.learning._stubs import RewardFunction, RoutingContext
 
 
 class HeuristicRewardFunction(RewardFunction):

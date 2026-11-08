@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from openjarvis.intelligence.model_catalog import (
+from nivos.intelligence.model_catalog import (
     BUILTIN_MODELS,
     merge_discovered_models,
     register_builtin_models,

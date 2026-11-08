@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from openjarvis.telemetry.aggregator import (
+from nivos.telemetry.aggregator import (
     AggregatedStats,
     EngineStats,
     ModelStats,
     TelemetryAggregator,
 )
-from openjarvis.telemetry.store import TelemetryStore
-from openjarvis.telemetry.wrapper import instrumented_generate
+from nivos.telemetry.store import TelemetryStore
+from nivos.telemetry.wrapper import instrumented_generate
 
 try:
-    from openjarvis.telemetry.gpu_monitor import (
+    from nivos.telemetry.gpu_monitor import (
         GpuHardwareSpec,
         GpuMonitor,
         GpuSample,
@@ -22,17 +22,17 @@ except ImportError:
     pass
 
 try:
-    from openjarvis.telemetry.efficiency import EfficiencyMetrics, compute_efficiency
+    from nivos.telemetry.efficiency import EfficiencyMetrics, compute_efficiency
 except ImportError:
     pass
 
 try:
-    from openjarvis.telemetry.vllm_metrics import VLLMMetrics, VLLMMetricsScraper
+    from nivos.telemetry.vllm_metrics import VLLMMetrics, VLLMMetricsScraper
 except ImportError:
     pass
 
 try:
-    from openjarvis.telemetry.energy_monitor import (
+    from nivos.telemetry.energy_monitor import (
         EnergyMonitor,
         EnergySample,
         EnergyVendor,
@@ -41,30 +41,30 @@ try:
 except ImportError:
     pass
 
-from openjarvis.telemetry.batch import BatchMetrics, EnergyBatch
-from openjarvis.telemetry.steady_state import (
+from nivos.telemetry.batch import BatchMetrics, EnergyBatch
+from nivos.telemetry.steady_state import (
     SteadyStateConfig,
     SteadyStateDetector,
     SteadyStateResult,
 )
 
 try:
-    from openjarvis.telemetry.session import TelemetrySample, TelemetrySession
+    from nivos.telemetry.session import TelemetrySample, TelemetrySession
 except ImportError:
     pass
 
 try:
-    from openjarvis.telemetry.phase_metrics import compute_phase_metrics, split_at_ttft
+    from nivos.telemetry.phase_metrics import compute_phase_metrics, split_at_ttft
 except ImportError:
     pass
 
 try:
-    from openjarvis.telemetry.itl import compute_itl_stats
+    from nivos.telemetry.itl import compute_itl_stats
 except ImportError:
     pass
 
 try:
-    from openjarvis.telemetry.flops import (
+    from nivos.telemetry.flops import (
         GPU_PEAK_TFLOPS_BF16,
         MODEL_PARAMS_B,
         compute_mfu,

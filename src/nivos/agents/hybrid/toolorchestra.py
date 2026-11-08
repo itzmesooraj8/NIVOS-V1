@@ -57,8 +57,8 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from openjarvis.agents._stubs import AgentContext
-from openjarvis.agents.hybrid._base import (
+from nivos.agents._stubs import AgentContext
+from nivos.agents.hybrid._base import (
     ANTHROPIC_WEB_SEARCH_TOOL,
     GEMINI_SEARCH_COST_PER_CALL,
     OPENAI_WEB_SEARCH_COST_PER_CALL,
@@ -66,17 +66,17 @@ from openjarvis.agents.hybrid._base import (
     LocalCloudAgent,
     tavily_search_context,
 )
-from openjarvis.agents.hybrid._prices import (
+from nivos.agents.hybrid._prices import (
     PRICES,
     is_gpt5_family,
     supports_temperature,
 )
-from openjarvis.agents.hybrid.mini_swe_agent import (
+from nivos.agents.hybrid.mini_swe_agent import (
     _clone_repo,
     _extract_diff,
     run_swe_agent_loop,
 )
-from openjarvis.core.registry import AgentRegistry
+from nivos.core.registry import AgentRegistry
 
 ORCHESTRATOR_SYS = """\
 You are a tool-orchestrating agent. You coordinate a pool of workers to answer the user's question. Each turn you MUST emit exactly one JSON object — no prose, no markdown fences — taking one of two forms:
@@ -183,7 +183,7 @@ RL_ALL_TOOLS: Dict[str, Dict[str, List[str]]] = {
     "search": {"model": ["search-1", "search-2", "search-3"]},
 }
 
-# Map the orchestrator's `model` slot to a concrete OpenJarvis worker spec.
+# Map the orchestrator's `model` slot to a concrete Nivos worker spec.
 # Tiers ranked by the upstream tools.json table (`*-1` = frontier,
 # `*-2` = mid, `*-3` = local). math-1 / math-2 collapse onto the same
 # tiers since we don't have Qwen-Math served.
@@ -372,7 +372,7 @@ def _call_tavily_search(
 ) -> Tuple[str, int, int, float, int]:
     """One-shot Tavily search. Returns (text, p_tok=0, c_tok=0, cost, uses).
 
-    Token counts are reported as zero (no LLM was billed); the OpenJarvis
+    Token counts are reported as zero (no LLM was billed); the Nivos
     accounting layer separately tallies tool-call counts. Falls back to
     DuckDuckGo if Tavily is unreachable (see ``WebSearchTool``).
     """
@@ -380,7 +380,7 @@ def _call_tavily_search(
     return res["text"], 0, 0, float(res["cost_usd"]), int(res["n_searches"])
 
 
-_MODAL_APP_NAME = "openjarvis-toolorchestra-sandbox"
+_MODAL_APP_NAME = "nivos-toolorchestra-sandbox"
 
 
 def _call_modal_python(code: str, timeout_s: int = 60) -> Tuple[str, int]:

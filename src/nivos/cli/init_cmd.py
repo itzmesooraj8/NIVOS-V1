@@ -11,12 +11,12 @@ from rich.console import Console
 from rich.markup import escape
 from rich.panel import Panel
 
-from openjarvis.cli._analytics_consent import apply_analytics_choice
-from openjarvis.cli._banner import print_banner
-from openjarvis.cli._bootstrap import detect_cloud_keys
-from openjarvis.cli.model import find_model_spec, hf_download, ollama_pull
-from openjarvis.cli.scan_cmd import PrivacyScanner
-from openjarvis.core.config import (
+from nivos.cli._analytics_consent import apply_analytics_choice
+from nivos.cli._banner import print_banner
+from nivos.cli._bootstrap import detect_cloud_keys
+from nivos.cli.model import find_model_spec, hf_download, ollama_pull
+from nivos.cli.scan_cmd import PrivacyScanner
+from nivos.core.config import (
     DEFAULT_CONFIG_DIR,
     DEFAULT_CONFIG_PATH,
     _available_memory_gb,
@@ -28,7 +28,7 @@ from openjarvis.core.config import (
     recommend_model,
 )
 
-# Engines supported by ``jarvis init --engine``.
+# Engines supported by ``nivos init --engine``.
 _SUPPORTED_ENGINES = [
     "ollama",
     "vllm",
@@ -291,11 +291,11 @@ def _do_download(engine: str, model: str, spec, console: Console) -> None:
     help="Use a pre-built starter config instead of generating one.",
 )
 @click.option(
-    "--from-bare-jarvis",
+    "--from-bare-nivos",
     is_flag=True,
     default=False,
     hidden=True,
-    help="Run init non-interactively; called by the bare-jarvis first-run guard.",
+    help="Run init non-interactively; called by the bare-nivos first-run guard.",
 )
 @click.pass_context
 def init(
@@ -309,10 +309,10 @@ def init(
     host: Optional[str] = None,
     enable_digest: bool = False,
     preset: Optional[str] = None,
-    from_bare_jarvis: bool = False,
+    from_bare_nivos: bool = False,
     analytics: bool | None = None,
 ) -> None:
-    """Detect hardware and generate ~/.openjarvis/config.toml."""
+    """Detect hardware and generate ~/.nivos/config.toml."""
     print_banner(quiet=(ctx.obj or {}).get("quiet", False))
     console = Console()
 
@@ -341,14 +341,14 @@ def init(
     # Handle --preset: copy a starter config and return early
     if preset:
         examples_dir = (
-            Path(__file__).resolve().parents[2] / "configs" / "openjarvis" / "examples"
+            Path(__file__).resolve().parents[2] / "configs" / "nivos" / "examples"
         )
         # Also check installed package location
         if not examples_dir.exists():
             examples_dir = (
                 Path(__file__).resolve().parents[3]
                 / "configs"
-                / "openjarvis"
+                / "nivos"
                 / "examples"
             )
         preset_path = examples_dir / f"{preset}.toml"
@@ -361,7 +361,7 @@ def init(
             apply_analytics_choice(
                 preset_path.read_text(encoding="utf-8"),
                 analytics,
-                prompt=not from_bare_jarvis,
+                prompt=not from_bare_nivos,
             ),
             encoding="utf-8",
         )
@@ -392,8 +392,8 @@ def init(
     # Resolve engine: explicit flag > interactive selection > auto-detect
     if engine is None and config is None:
         recommended = recommend_engine(hw)
-        # Bare-jarvis cold path: use the recommended engine non-interactively.
-        if from_bare_jarvis:
+        # Bare-nivos cold path: use the recommended engine non-interactively.
+        if from_bare_nivos:
             engine = recommended
         else:
             console.print()
@@ -473,9 +473,9 @@ def init(
     DEFAULT_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     # ``--config`` selects an existing file to install; it is not an alternate
     # output path.  Always activate the selected/generated configuration at
-    # the canonical location that subsequent ``jarvis`` commands load.
+    # the canonical location that subsequent ``nivos`` commands load.
     toml_content = apply_analytics_choice(
-        toml_content, analytics, prompt=not from_bare_jarvis
+        toml_content, analytics, prompt=not from_bare_nivos
     )
     DEFAULT_CONFIG_PATH.write_text(toml_content, encoding="utf-8")
 
@@ -562,7 +562,7 @@ sources = ["hackernews", "news_rss"]
             f"  [dim](selected for {avail:.0f} GB available memory)[/dim]"
         )
 
-        if not no_download and not from_bare_jarvis and spec:
+        if not no_download and not from_bare_nivos and spec:
             prompt = f"  Download {model} (~{size_gb:.1f} GB) now?"
             if click.confirm(prompt, default=True):
                 _do_download(selected_engine, model, spec, console)

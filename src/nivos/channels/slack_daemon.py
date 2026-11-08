@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from openjarvis.core.paths import get_config_dir
+from nivos.core.paths import get_config_dir
 
 logger = logging.getLogger(__name__)
 
@@ -50,12 +50,12 @@ def run_slack_daemon(
     from slack_bolt import App
     from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-    from openjarvis.agents.deep_research import DeepResearchAgent
-    from openjarvis.core.config import load_config
-    from openjarvis.core.events import EventBus
-    from openjarvis.engine.ollama import OllamaEngine
-    from openjarvis.security import setup_security
-    from openjarvis.server.agent_manager_routes import (
+    from nivos.agents.deep_research import DeepResearchAgent
+    from nivos.core.config import load_config
+    from nivos.core.events import EventBus
+    from nivos.engine.ollama import OllamaEngine
+    from nivos.security import setup_security
+    from nivos.server.agent_manager_routes import (
         _build_deep_research_tools,
     )
 
@@ -160,7 +160,7 @@ def start_slack_daemon(
         [
             sys.executable,
             "-m",
-            "openjarvis.channels.slack_daemon",
+            "nivos.channels.slack_daemon",
             "--bot-token",
             bot_token,
             "--app-token",

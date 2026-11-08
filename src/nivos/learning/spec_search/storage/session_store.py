@@ -1,6 +1,6 @@
 """SQLite-backed storage for spec-search LearningSession records.
 
-Mirrors the style of ``openjarvis.learning.optimize.store.OptimizationStore``:
+Mirrors the style of ``nivos.learning.optimize.store.OptimizationStore``:
 
 - stdlib ``sqlite3`` in WAL mode
 - inline DDL as module-level constants
@@ -9,7 +9,7 @@ Mirrors the style of ``openjarvis.learning.optimize.store.OptimizationStore``:
 
 The store does NOT share its database file with ``OptimizationStore`` (see
 spec §8.1 / brainstorming Q8). The two SQLite files live side-by-side in
-``~/.openjarvis/learning/`` but are independent.
+``~/.nivos/learning/`` but are independent.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union
 
-from openjarvis.learning.spec_search.models import (
+from nivos.learning.spec_search.models import (
     AutonomyMode,
     BenchmarkSnapshot,
     EditOutcome,

@@ -12,9 +12,9 @@ from rich.table import Table
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from openjarvis.evals.core.types import MetricStats, RunSummary
+    from nivos.evals.core.types import MetricStats, RunSummary
 
-OPENJARVIS_BANNER = r"""
+NIVOS_BANNER = r"""
   ___                       _                  _
  / _ \ _ __   ___ _ __     | | __ _ _ ____   _(_)___
 | | | | '_ \ / _ \ '_ \ _  | |/ _` | '__\ \ / / / __|
@@ -27,9 +27,9 @@ VERSION = "v1.8"
 
 
 def print_banner(console: Console) -> None:
-    """Print the OpenJarvis ASCII banner inside a styled panel."""
+    """Print the Nivos ASCII banner inside a styled panel."""
     panel = Panel(
-        OPENJARVIS_BANNER.rstrip(),
+        NIVOS_BANNER.rstrip(),
         border_style="cyan",
         title=f"[bold white]{VERSION}[/bold white]",
         expand=False,
@@ -436,7 +436,7 @@ def print_completion(
 
 
 __all__ = [
-    "OPENJARVIS_BANNER",
+    "NIVOS_BANNER",
     "print_accuracy_panel",
     "print_banner",
     "print_compact_table",

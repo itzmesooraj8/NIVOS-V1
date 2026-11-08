@@ -11,8 +11,8 @@ from __future__ import annotations
 import os
 import time
 
-from openjarvis.core.config import HardwareInfo
-from openjarvis.core.registry import MinerRegistry
+from nivos.core.config import HardwareInfo
+from nivos.core.registry import MinerRegistry
 
 from . import _install
 from ._constants import (
@@ -83,7 +83,7 @@ class AppleMpsPearlProvider(CpuPearlProvider):
             wallet_address=config.wallet_address,
             log_dir=_log_dir(),
             provider_id=self.provider_id,
-            miner_module="openjarvis.mining._mps_miner_loop_main",
+            miner_module="nivos.mining._mps_miner_loop_main",
         )
         self._launcher.start(
             m=int(extra.get("m", 128)),

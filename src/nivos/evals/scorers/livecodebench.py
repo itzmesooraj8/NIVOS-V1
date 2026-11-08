@@ -16,9 +16,9 @@ import subprocess
 import tempfile
 from typing import Any, Dict, List, Optional, Tuple
 
-from openjarvis.core import get_python_executable
-from openjarvis.evals.core.scorer import Scorer
-from openjarvis.evals.core.types import EvalRecord
+from nivos.core import get_python_executable
+from nivos.evals.core.scorer import Scorer
+from nivos.evals.core.types import EvalRecord
 
 LOGGER = logging.getLogger(__name__)
 

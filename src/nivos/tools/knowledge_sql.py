@@ -10,10 +10,10 @@ import re
 import sqlite3
 from typing import Any, Optional
 
-from openjarvis.connectors.store import KnowledgeStore
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.connectors.store import KnowledgeStore
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 _MAX_ROWS = 50
 

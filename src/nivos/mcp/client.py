@@ -6,9 +6,9 @@ import itertools
 import threading
 from typing import Any, Dict, List
 
-from openjarvis.mcp.protocol import MCPError, MCPRequest, MCPResponse
-from openjarvis.mcp.transport import MCPTransport
-from openjarvis.tools._stubs import ToolSpec
+from nivos.mcp.protocol import MCPError, MCPRequest, MCPResponse
+from nivos.mcp.transport import MCPTransport
+from nivos.tools._stubs import ToolSpec
 
 
 class MCPClient:
@@ -74,7 +74,7 @@ class MCPClient:
         params = {
             "protocolVersion": "2025-03-26",
             "capabilities": {},
-            "clientInfo": {"name": "openjarvis", "version": "0.1.0"},
+            "clientInfo": {"name": "nivos", "version": "0.1.0"},
         }
         response = self._send("initialize", params)
         self._initialized = True

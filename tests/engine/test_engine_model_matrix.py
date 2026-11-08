@@ -5,11 +5,11 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from openjarvis.core.registry import EngineRegistry
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._base import EngineConnectionError
-from openjarvis.engine.ollama import OllamaEngine
-from openjarvis.engine.openai_compat_engines import (
+from nivos.core.registry import EngineRegistry
+from nivos.core.types import Message, Role
+from nivos.engine._base import EngineConnectionError
+from nivos.engine.ollama import OllamaEngine
+from nivos.engine.openai_compat_engines import (
     AppleFmEngine,
     ExoEngine,
     LemonadeEngine,

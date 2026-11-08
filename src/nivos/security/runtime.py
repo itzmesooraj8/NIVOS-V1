@@ -142,8 +142,8 @@ def execute_secured_tool(
     agent_id: str,
 ):
     """Run one direct operation through the canonical ToolExecutor gates."""
-    from openjarvis.core.types import ToolCall
-    from openjarvis.tools._stubs import ToolExecutor
+    from nivos.core.types import ToolCall
+    from nivos.tools._stubs import ToolExecutor
 
     executor = ToolExecutor(
         [tool],
@@ -171,8 +171,8 @@ def authorize_secured_operation(
     agent_id: str,
 ):
     """Authorize one non-``BaseTool`` operation through standard gates."""
-    from openjarvis.core.types import ToolResult
-    from openjarvis.tools._stubs import BaseTool, ToolSpec
+    from nivos.core.types import ToolResult
+    from nivos.tools._stubs import BaseTool, ToolSpec
 
     capabilities = list(dict.fromkeys(str(cap) for cap in required_capabilities))
 

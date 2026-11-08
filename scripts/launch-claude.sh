@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ── OpenJarvis: launch Claude via the cloud engine ────────────────────
+# ── Nivos: launch Claude via the cloud engine ────────────────────
 # Claude is a proprietary Anthropic model with no public weights, so it
-# cannot be served by Ollama. This script routes through OpenJarvis's
+# cannot be served by Ollama. This script routes through Nivos's
 # ``cloud`` engine, which speaks the Anthropic API directly.
 #
 # Usage:
@@ -13,7 +13,7 @@ set -euo pipefail
 #   ./scripts/launch-claude.sh -- --voice            # pass-through flags
 # ──────────────────────────────────────────────────────────────────────
 
-DEFAULT_MODEL="${OPENJARVIS_CLAUDE_MODEL:-claude-opus-4-6}"
+DEFAULT_MODEL="${NIVOS_CLAUDE_MODEL:-claude-opus-4-6}"
 
 MODEL="$DEFAULT_MODEL"
 if [[ $# -gt 0 && "$1" != "--" ]]; then
@@ -30,10 +30,10 @@ if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
     exit 2
 fi
 
-if ! command -v jarvis >/dev/null 2>&1; then
-    echo "error: 'jarvis' CLI not found on PATH" >&2
+if ! command -v nivos >/dev/null 2>&1; then
+    echo "error: 'nivos' CLI not found on PATH" >&2
     echo "  install with: pip install -e '.[inference-cloud]'" >&2
     exit 3
 fi
 
-exec jarvis chat --engine cloud --model "$MODEL" "$@"
+exec nivos chat --engine cloud --model "$MODEL" "$@"

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from openjarvis.evals.core.types import EvalResult, RunConfig, RunSummary
+from nivos.evals.core.types import EvalResult, RunConfig, RunSummary
 
 
 class ResultTracker(ABC):

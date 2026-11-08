@@ -6,9 +6,9 @@ import logging
 from collections.abc import AsyncIterator, Sequence
 from typing import Any, Dict, List
 
-from openjarvis.core.registry import EngineRegistry
-from openjarvis.core.types import Message
-from openjarvis.engine._base import InferenceEngine, messages_to_dicts
+from nivos.core.registry import EngineRegistry
+from nivos.core.types import Message
+from nivos.engine._base import InferenceEngine, messages_to_dicts
 
 logger = logging.getLogger(__name__)
 

@@ -11,22 +11,22 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 #: Actionable message surfaced whenever a Rust-backed memory backend cannot be
-#: constructed because the mandatory ``openjarvis_rust`` extension is missing
+#: constructed because the mandatory ``nivos_rust`` extension is missing
 #: from the *current* venv. Kept as a single constant so the server routes, the
 #: SDK and the regression tests all surface exactly the same wording.
 RUST_MISSING_HINT = (
-    "Memory backend unavailable: the native `openjarvis_rust` extension is not "
+    "Memory backend unavailable: the native `nivos_rust` extension is not "
     "installed in this environment. Build it into the venv that runs the server "
-    "with `uv run maturin develop -m rust/crates/openjarvis-python/Cargo.toml` "
+    "with `uv run maturin develop -m rust/crates/nivos-python/Cargo.toml` "
     "(needs rustc >= 1.88), then restart. Verify with "
-    '`python -c "from openjarvis._rust_bridge import RUST_AVAILABLE; '
+    '`python -c "from nivos._rust_bridge import RUST_AVAILABLE; '
     'print(RUST_AVAILABLE)"`.'
 )
 
 
 class MemoryBackendUnavailable(RuntimeError):
     """Raised when a memory backend cannot be built because the mandatory
-    ``openjarvis_rust`` extension is missing from the current environment.
+    ``nivos_rust`` extension is missing from the current environment.
 
     This is deliberately distinct from "memory is intentionally disabled": a
     missing native extension is an environment/install error that must be

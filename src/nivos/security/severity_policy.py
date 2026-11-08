@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from openjarvis.security.types import ThreatLevel
+from nivos.security.types import ThreatLevel
 
 _DEFAULT_ACTIONS = {
     ThreatLevel.CRITICAL: "block",

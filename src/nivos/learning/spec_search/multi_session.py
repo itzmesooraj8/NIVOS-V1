@@ -17,11 +17,11 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from openjarvis.learning.spec_search.models import (
+from nivos.learning.spec_search.models import (
     LearningSession,
     SessionStatus,
 )
-from openjarvis.learning.spec_search.triggers import OnDemandTrigger
+from nivos.learning.spec_search.triggers import OnDemandTrigger
 
 logger = logging.getLogger(__name__)
 

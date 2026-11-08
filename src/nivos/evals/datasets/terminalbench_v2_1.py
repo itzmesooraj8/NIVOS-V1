@@ -22,8 +22,8 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
 
 LOGGER = logging.getLogger(__name__)
 
@@ -213,7 +213,7 @@ class TerminalBenchV21Dataset(DatasetProvider):
         ``docker_shell_exec`` can target the running container.
         """
         try:
-            from openjarvis.evals.execution.terminalbench_v2_1_env import (
+            from nivos.evals.execution.terminalbench_v2_1_env import (
                 TerminalBenchV21TaskEnv,
             )
         except ImportError:

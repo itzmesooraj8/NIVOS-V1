@@ -18,7 +18,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List
 
-from openjarvis.core.paths import get_config_dir
+from nivos.core.paths import get_config_dir
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,9 @@
-# src/openjarvis/mining/_discovery.py
+# src/nivos/mining/_discovery.py
 """Capability detection for mining providers.
 
 Each function answers a single yes/no question and returns ``(ok: bool,
 info: str)`` where ``info`` is a short human-readable explanation surfaced
-verbatim by ``jarvis mine doctor``.
+verbatim by ``nivos mine doctor``.
 """
 
 from __future__ import annotations
@@ -14,9 +14,9 @@ from typing import Tuple
 
 import httpx
 
-from openjarvis.core.config import HardwareInfo
-from openjarvis.mining._models import get_pearl_model_spec, pearl_variant_for_base_model
-from openjarvis.mining._stubs import MiningCapabilities
+from nivos.core.config import HardwareInfo
+from nivos.mining._models import get_pearl_model_spec, pearl_variant_for_base_model
+from nivos.mining._stubs import MiningCapabilities
 
 # ---------------------------------------------------------------------------
 # Constants for the v1 vllm-pearl provider
@@ -37,7 +37,7 @@ def detect_for_engine_model(
     """Capability matrix for the ``vllm-pearl`` provider.
 
     Pure inspection. No subprocess, no Docker, no network. Used by
-    ``jarvis mine doctor`` and ``jarvis mine init``.
+    ``nivos mine doctor`` and ``nivos mine init``.
     """
     if provider_id != "vllm-pearl":
         return MiningCapabilities(False, reason=f"unknown provider {provider_id!r}")
@@ -84,7 +84,7 @@ def detect_for_engine_model(
     if spec is None:
         return MiningCapabilities(
             False,
-            reason=f"model {model!r} is not in OpenJarvis' Pearl model registry",
+            reason=f"model {model!r} is not in Nivos' Pearl model registry",
         )
     if not spec.is_validated:
         return MiningCapabilities(
@@ -97,7 +97,7 @@ def detect_for_engine_model(
 
 
 # ---------------------------------------------------------------------------
-# Doctor checks (one per row of `jarvis mine doctor` output)
+# Doctor checks (one per row of `nivos mine doctor` output)
 # ---------------------------------------------------------------------------
 
 
@@ -123,7 +123,7 @@ def check_docker_available() -> Tuple[bool, str]:
 
 
 def check_disk_free(path: Path) -> Tuple[bool, str]:
-    from openjarvis.mining._constants import MIN_FREE_DISK_GB
+    from nivos.mining._constants import MIN_FREE_DISK_GB
 
     usage = shutil.disk_usage(path)
     free_gb = usage.free / (1024**3)

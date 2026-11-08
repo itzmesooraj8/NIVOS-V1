@@ -1,4 +1,4 @@
-"""``jarvis add`` — quick MCP server setup."""
+"""``nivos add`` — quick MCP server setup."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import sys
 import click
 from rich.console import Console
 
-from openjarvis.core.config import DEFAULT_CONFIG_DIR
+from nivos.core.config import DEFAULT_CONFIG_DIR
 
 _MCP_CONFIG_DIR = DEFAULT_CONFIG_DIR / "mcp"
 
@@ -80,9 +80,9 @@ def add(server_name: str, key: str | None, extra_args: str | None) -> None:
 
     Quick setup for common MCP servers:
 
-      jarvis add github --key TOKEN
-      jarvis add filesystem
-      jarvis add slack --key TOKEN
+      nivos add github --key TOKEN
+      nivos add filesystem
+      nivos add slack --key TOKEN
 
     Known servers: github, filesystem, slack, postgres, brave-search,
     memory, puppeteer, google-maps

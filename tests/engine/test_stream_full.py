@@ -9,9 +9,9 @@ from typing import Any, Dict, List
 import httpx
 import pytest
 
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._stubs import InferenceEngine, StreamChunk
-from openjarvis.engine.openai_compat_engines import VLLMEngine
+from nivos.core.types import Message, Role
+from nivos.engine._stubs import InferenceEngine, StreamChunk
+from nivos.engine.openai_compat_engines import VLLMEngine
 
 
 def _sse_transport(sse_lines: list[str]) -> httpx.MockTransport:

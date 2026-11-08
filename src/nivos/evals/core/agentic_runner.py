@@ -20,9 +20,9 @@ from contextlib import nullcontext
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from openjarvis.evals.core.environment import TaskEnvironmentError
-from openjarvis.evals.core.event_recorder import AgentEvent, EventRecorder, EventType
-from openjarvis.evals.core.trace import QueryTrace, TurnTrace
+from nivos.evals.core.environment import TaskEnvironmentError
+from nivos.evals.core.event_recorder import AgentEvent, EventRecorder, EventType
+from nivos.evals.core.trace import QueryTrace, TurnTrace
 
 LOGGER = logging.getLogger(__name__)
 
@@ -346,7 +346,7 @@ class AgenticRunner:
         event_recorder.clear()
 
         # Bridge EventBus → EventRecorder so tool events are captured.
-        # ToolExecutor publishes to JarvisSystem.bus; we relay those into
+        # ToolExecutor publishes to NivosSystem.bus; we relay those into
         # the EventRecorder for transcript building and trace enrichment.
         _bus_unsubs: list[tuple] = []
         agent_bus = getattr(agent, "bus", None)
@@ -412,7 +412,7 @@ class AgenticRunner:
                 else:
                     # Standard one-shot agent execution
                     if hasattr(agent, "ask"):
-                        # SystemBuilder-based agent (JarvisSystem)
+                        # SystemBuilder-based agent (NivosSystem)
                         result = agent.ask(record.problem)
                         if isinstance(result, dict):
                             response_text = result.get("content", "")
@@ -568,7 +568,7 @@ class AgenticRunner:
             if turn.cost_usd is None and (
                 turn.input_tokens > 0 or turn.output_tokens > 0
             ):
-                from openjarvis.evals.core.pricing import compute_turn_cost
+                from nivos.evals.core.pricing import compute_turn_cost
 
                 turn.cost_usd = compute_turn_cost(
                     model, turn.input_tokens, turn.output_tokens

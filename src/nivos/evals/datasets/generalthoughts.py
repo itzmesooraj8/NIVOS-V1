@@ -2,7 +2,7 @@
 
 NOT USED FOR EVALUATION. Provides the LLM-guided spec search proposer
 with a large pool of reasoning trajectories to reason over (via
-`openjarvis.learning.spec_search.external_adapter`) when the diagnose
+`nivos.learning.spec_search.external_adapter`) when the diagnose
 phase wants signal from a broad reasoning corpus rather than the
 per-cell student's own trace history.
 
@@ -15,9 +15,9 @@ from __future__ import annotations
 import random
 from typing import Iterable, List, MutableMapping, Optional, Sequence
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.splits import apply_split
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.splits import apply_split
+from nivos.evals.core.types import EvalRecord
 
 HF_DATASET_ID = "natolambert/GeneralThought-430K-filtered"
 HF_SPLIT = "train"

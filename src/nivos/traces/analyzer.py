@@ -10,8 +10,8 @@ import statistics as stats_mod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from openjarvis.core.types import StepType, Trace, TraceStep
-from openjarvis.traces.store import TraceStore
+from nivos.core.types import StepType, Trace, TraceStep
+from nivos.traces.store import TraceStore
 
 
 @dataclass(slots=True)

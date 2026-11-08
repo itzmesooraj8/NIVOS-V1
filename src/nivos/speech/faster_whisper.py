@@ -7,8 +7,8 @@ import os
 import tempfile
 from typing import List, Optional
 
-from openjarvis.core.registry import SpeechRegistry
-from openjarvis.speech._stubs import Segment, SpeechBackend, TranscriptionResult
+from nivos.core.registry import SpeechRegistry
+from nivos.speech._stubs import Segment, SpeechBackend, TranscriptionResult
 
 try:
     from faster_whisper import WhisperModel

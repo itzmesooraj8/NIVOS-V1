@@ -21,9 +21,9 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-from openjarvis.core.paths import get_cache_dir
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
+from nivos.core.paths import get_cache_dir
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +154,7 @@ class WebChoreArenaDataset(DatasetProvider):
     def create_task_env(self, record: EvalRecord):
         """Return a WebChoreArenaTaskEnv for the given record."""
         try:
-            from openjarvis.evals.execution.webchorearena_env import (
+            from nivos.evals.execution.webchorearena_env import (
                 WebChoreArenaTaskEnv,
             )
 

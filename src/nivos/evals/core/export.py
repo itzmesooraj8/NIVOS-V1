@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 from typing import Any, Optional, Sequence
 
-from openjarvis.evals.core.trace import QueryTrace
+from nivos.evals.core.trace import QueryTrace
 
 
 def _agg_stats(values: Sequence[Optional[float]]) -> dict[str, Optional[float]]:
@@ -188,7 +188,7 @@ def export_hf_dataset(traces: list[QueryTrace], path: Path) -> Path:
 def _hardware_info_dict() -> dict[str, Any]:
     """Detect hardware and return a JSON-serializable dict."""
     try:
-        from openjarvis.core.config import detect_hardware
+        from nivos.core.config import detect_hardware
 
         hw = detect_hardware()
         info: dict[str, Any] = {
@@ -406,7 +406,7 @@ def export_summary_json(
         fwk = config.get("framework", "") or ""
         fwk_commit = config.get("framework_commit", "") or ""
     if not fwk:
-        fwk = "openjarvis"
+        fwk = "nivos"
 
     def _stats_block(vals: list[float]) -> dict[str, Any]:
         if not vals:

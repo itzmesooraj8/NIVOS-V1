@@ -7,10 +7,10 @@ import shutil
 import subprocess
 from typing import Any
 
-from openjarvis._rust_bridge import get_rust_module
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos._rust_bridge import get_rust_module
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 logger = logging.getLogger(__name__)
 

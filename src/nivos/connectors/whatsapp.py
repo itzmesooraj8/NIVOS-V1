@@ -10,7 +10,7 @@ Export line format::
     1/15/24, 10:31 AM - Bob: Good thanks! Working on the project.
 
 Each .txt file in the configured directory is parsed and yielded as a
-single :class:`~openjarvis.connectors._stubs.Document` with ``doc_type``
+single :class:`~nivos.connectors._stubs.Document` with ``doc_type``
 ``"message"`` and the message lines joined as content.
 """
 
@@ -23,9 +23,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator, List, Optional
 
-from openjarvis.connectors._stubs import BaseConnector, Document, SyncStatus
-from openjarvis.core.registry import ConnectorRegistry
-from openjarvis.tools._stubs import ToolSpec
+from nivos.connectors._stubs import BaseConnector, Document, SyncStatus
+from nivos.core.registry import ConnectorRegistry
+from nivos.tools._stubs import ToolSpec
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class WhatsAppConnector(BaseConnector):
     WhatsApp allows exporting individual chats as plain-text files via
     *Chat → More → Export Chat*.  Point this connector at the directory
     containing those files (one file per chat) and it will parse each file
-    into a :class:`~openjarvis.connectors._stubs.Document`.
+    into a :class:`~nivos.connectors._stubs.Document`.
 
     Parameters
     ----------

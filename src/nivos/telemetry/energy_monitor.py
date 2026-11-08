@@ -165,7 +165,7 @@ def create_energy_monitor(
     default_order: list[type[EnergyMonitor]] = []
 
     try:
-        from openjarvis.telemetry.energy_nvidia import NvidiaEnergyMonitor
+        from nivos.telemetry.energy_nvidia import NvidiaEnergyMonitor
 
         vendor_map["nvidia"] = NvidiaEnergyMonitor
         default_order.append(NvidiaEnergyMonitor)
@@ -173,7 +173,7 @@ def create_energy_monitor(
         logger.debug("Failed to load NVIDIA energy monitor: %s", exc)
 
     try:
-        from openjarvis.telemetry.energy_amd import AmdEnergyMonitor
+        from nivos.telemetry.energy_amd import AmdEnergyMonitor
 
         vendor_map["amd"] = AmdEnergyMonitor
         default_order.append(AmdEnergyMonitor)
@@ -181,7 +181,7 @@ def create_energy_monitor(
         logger.debug("Failed to load AMD energy monitor: %s", exc)
 
     try:
-        from openjarvis.telemetry.energy_apple import AppleEnergyMonitor
+        from nivos.telemetry.energy_apple import AppleEnergyMonitor
 
         vendor_map["apple"] = AppleEnergyMonitor
         default_order.append(AppleEnergyMonitor)
@@ -189,7 +189,7 @@ def create_energy_monitor(
         logger.debug("Failed to load Apple energy monitor: %s", exc)
 
     try:
-        from openjarvis.telemetry.energy_rapl import RaplEnergyMonitor
+        from nivos.telemetry.energy_rapl import RaplEnergyMonitor
 
         vendor_map["cpu_rapl"] = RaplEnergyMonitor
         default_order.append(RaplEnergyMonitor)
@@ -214,13 +214,13 @@ def create_energy_monitor(
 
     if allow_estimates:
         try:
-            from openjarvis.telemetry.energy_apple import AppleEnergyMonitor
+            from nivos.telemetry.energy_apple import AppleEnergyMonitor
 
             if AppleEnergyMonitor.estimate_available():
                 logger.warning(
                     "No measurable energy backend found; falling back to a "
                     "modelled Apple Silicon estimate. Install "
-                    "`openjarvis[energy-apple]` for real measurements."
+                    "`nivos[energy-apple]` for real measurements."
                 )
                 return AppleEnergyMonitor(
                     poll_interval_ms=poll_interval_ms,

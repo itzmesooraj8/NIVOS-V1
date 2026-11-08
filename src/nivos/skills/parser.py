@@ -5,7 +5,7 @@ into normalized SkillManifest instances.  It runs two passes:
 
 1. Strict pass — validates required fields, length limits, naming rules.
 2. Tolerant pass — maps non-spec top-level fields to their canonical
-   locations under metadata.openjarvis.* via FIELD_MAPPING.
+   locations under metadata.nivos.* via FIELD_MAPPING.
 
 The mapping table is data, not code paths.  Adding support for a new
 vendor's fields means adding entries to FIELD_MAPPING — no logic changes.
@@ -17,7 +17,7 @@ import logging
 import re
 from typing import Any, Dict
 
-from openjarvis.skills.types import SkillManifest
+from nivos.skills.types import SkillManifest
 
 LOGGER = logging.getLogger(__name__)
 
@@ -40,8 +40,8 @@ SPEC_FIELDS = frozenset(
 
 # Each entry maps a non-spec top-level field name to (target_kind, attr).
 # When target_kind is "field" the value is set directly on the SkillManifest
-# dataclass attribute.  When target_kind is "openjarvis_meta" the value is
-# stored under manifest.metadata["openjarvis"][attr].
+# dataclass attribute.  When target_kind is "nivos_meta" the value is
+# stored under manifest.metadata["nivos"][attr].
 FIELD_MAPPING: Dict[str, tuple[str, str]] = {
     "version": ("field", "version"),
     "author": ("field", "author"),
@@ -50,8 +50,8 @@ FIELD_MAPPING: Dict[str, tuple[str, str]] = {
     "required_capabilities": ("field", "required_capabilities"),
     "user_invocable": ("field", "user_invocable"),
     "disable_model_invocation": ("field", "disable_model_invocation"),
-    "platforms": ("openjarvis_meta", "platforms"),
-    "prerequisites": ("openjarvis_meta", "prerequisites"),
+    "platforms": ("nivos_meta", "platforms"),
+    "prerequisites": ("nivos_meta", "prerequisites"),
 }
 
 # Naming pattern: lowercase alnum + hyphens, no leading/trailing/consecutive hyphens
@@ -162,8 +162,8 @@ class SkillParser:
         """Construct a SkillManifest from validated frontmatter.
 
         Runs the tolerant pass: applies FIELD_MAPPING for non-spec fields,
-        captures unknown fields under metadata.openjarvis.original_frontmatter,
-        and merges metadata.openjarvis.* into canonical fields.
+        captures unknown fields under metadata.nivos.original_frontmatter,
+        and merges metadata.nivos.* into canonical fields.
         """
         # Start with required + optional spec fields
         manifest = SkillManifest(
@@ -176,8 +176,8 @@ class SkillParser:
         raw_metadata = frontmatter.get("metadata") or {}
         if not isinstance(raw_metadata, dict):
             raw_metadata = {}
-        # Initialize openjarvis namespace
-        oj_meta = dict(raw_metadata.get("openjarvis") or {})
+        # Initialize nivos namespace
+        oj_meta = dict(raw_metadata.get("nivos") or {})
 
         # Apply FIELD_MAPPING for non-spec top-level fields
         unmapped: Dict[str, Any] = {}
@@ -188,19 +188,19 @@ class SkillParser:
                 target, attr = FIELD_MAPPING[key]
                 if target == "field":
                     setattr(manifest, attr, value)
-                else:  # "openjarvis_meta"
+                else:  # "nivos_meta"
                     oj_meta[attr] = value
             else:
                 unmapped[key] = value
                 LOGGER.warning(
                     "Unmapped frontmatter field '%s' in skill '%s' "
-                    "(value preserved in metadata.openjarvis.original_frontmatter)",
+                    "(value preserved in metadata.nivos.original_frontmatter)",
                     key,
                     manifest.name,
                 )
 
-        # Merge metadata.openjarvis.* into canonical fields (these override
-        # top-level mappings since they are explicit OpenJarvis-namespaced).
+        # Merge metadata.nivos.* into canonical fields (these override
+        # top-level mappings since they are explicit Nivos-namespaced).
         for key in (
             "version",
             "author",
@@ -213,14 +213,14 @@ class SkillParser:
             if key in oj_meta:
                 setattr(manifest, key, oj_meta[key])
 
-        # Preserve unmapped fields under metadata.openjarvis.original_frontmatter
+        # Preserve unmapped fields under metadata.nivos.original_frontmatter
         if unmapped:
             oj_meta["original_frontmatter"] = unmapped
 
-        # Stash the openjarvis metadata block back
+        # Stash the nivos metadata block back
         if oj_meta:
             new_metadata = dict(raw_metadata)
-            new_metadata["openjarvis"] = oj_meta
+            new_metadata["nivos"] = oj_meta
             manifest.metadata = new_metadata
         else:
             manifest.metadata = raw_metadata

@@ -52,7 +52,7 @@ nivos ask --json "What is 2+2?"
 
 ## Configuration Reference
 
-The preset writes this to `~/.openjarvis/config.toml`:
+The preset writes this to `~/.nivos/config.toml`:
 
 ```toml
 [engine]
@@ -80,7 +80,7 @@ port = 8000
 | `qwen3.5:35b` | 35B | Slower | Best | Complex reasoning, detailed analysis |
 | `llama3.1:8b` | 8B | Balanced | Good | Alternative if you prefer Meta models |
 
-To switch models, either edit `~/.openjarvis/config.toml` or override per-query:
+To switch models, either edit `~/.nivos/config.toml` or override per-query:
 
 ```bash
 nivos ask -m qwen3.5:35b "Write a detailed comparison of REST and GraphQL"
@@ -124,7 +124,7 @@ You can change the default model at any time:
 
 ```bash
 # Open the config file
-${EDITOR:-nano} ~/.openjarvis/config.toml
+${EDITOR:-nano} ~/.nivos/config.toml
 # Change default_model to your preferred model
 ```
 
@@ -138,7 +138,7 @@ nivos ask -m deepseek-r1:14b "Hello"
 **Use an environment variable:**
 
 ```bash
-OPENJARVIS_MODEL=qwen3.5:9b nivos ask "Hello"
+NIVOS_MODEL=qwen3.5:9b nivos ask "Hello"
 ```
 
 ## Troubleshooting

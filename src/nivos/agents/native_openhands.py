@@ -1,6 +1,6 @@
 """NativeOpenHandsAgent -- code-execution-centric agent.
 
-Renamed from ``OpenHandsAgent`` to clarify this is OpenJarvis's native
+Renamed from ``OpenHandsAgent`` to clarify this is Nivos's native
 CodeAct-style implementation.  The ``OpenHandsAgent`` name is now used
 for the real openhands-sdk integration in ``openhands.py``.
 """
@@ -11,17 +11,17 @@ import json as _json
 import re
 from typing import Any, List, Optional
 
-from openjarvis.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
-from openjarvis.agents.prompt_loader import (
+from nivos.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
+from nivos.agents.prompt_loader import (
     load_few_shot_exemplars,
     load_system_prompt_override,
 )
-from openjarvis.core.events import EventBus
-from openjarvis.core.registry import AgentRegistry
-from openjarvis.core.types import Message, Role, ToolCall, ToolResult
-from openjarvis.engine._base import estimate_prompt_tokens
-from openjarvis.engine._stubs import InferenceEngine
-from openjarvis.tools._stubs import BaseTool, build_tool_descriptions
+from nivos.core.events import EventBus
+from nivos.core.registry import AgentRegistry
+from nivos.core.types import Message, Role, ToolCall, ToolResult
+from nivos.engine._base import estimate_prompt_tokens
+from nivos.engine._stubs import InferenceEngine
+from nivos.tools._stubs import BaseTool, build_tool_descriptions
 
 OPENHANDS_SYSTEM_PROMPT = (  # noqa: E501
     "You are an AI assistant with access to tools. "
@@ -106,8 +106,8 @@ class NativeOpenHandsAgent(ToolUsingAgent):
             return text, False
         url = url_match.group(0).rstrip(".,;)")
         try:
-            from openjarvis.security.runtime import execute_secured_tool
-            from openjarvis.tools.web_search import WebSearchTool
+            from nivos.security.runtime import execute_secured_tool
+            from nivos.tools.web_search import WebSearchTool
 
             executor = self._executor
             result = execute_secured_tool(

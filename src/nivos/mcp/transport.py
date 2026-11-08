@@ -11,10 +11,10 @@ import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, List, Optional
 
-from openjarvis.mcp.protocol import MCPRequest, MCPResponse
+from nivos.mcp.protocol import MCPRequest, MCPResponse
 
 if TYPE_CHECKING:
-    from openjarvis.mcp.server import MCPServer
+    from nivos.mcp.server import MCPServer
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +103,7 @@ class StdioTransport(MCPTransport):
         )
         self._reader_thread = threading.Thread(
             target=self._read_stdout,
-            name="openjarvis-mcp-stdout",
+            name="nivos-mcp-stdout",
             daemon=True,
         )
         self._reader_thread.start()
@@ -113,7 +113,7 @@ class StdioTransport(MCPTransport):
         self._stderr_thread = threading.Thread(
             target=self._drain_stderr,
             args=(self._process,),
-            name="openjarvis-mcp-stderr",
+            name="nivos-mcp-stderr",
             daemon=True,
         )
         self._stderr_thread.start()

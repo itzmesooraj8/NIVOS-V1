@@ -1,7 +1,7 @@
 """Small cross-platform utilities used by the CLI, OAuth flow, and evals.
 
 Kept dependency-free so importing this module is cheap (the public re-export
-from ``openjarvis.core`` must not pull in heavy modules at package init).
+from ``nivos.core`` must not pull in heavy modules at package init).
 """
 
 from __future__ import annotations

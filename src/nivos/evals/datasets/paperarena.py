@@ -15,9 +15,9 @@ import random
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-from openjarvis.core.paths import get_cache_dir
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
+from nivos.core.paths import get_cache_dir
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
 
 logger = logging.getLogger(__name__)
 

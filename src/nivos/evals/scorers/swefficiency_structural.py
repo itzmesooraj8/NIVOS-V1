@@ -12,8 +12,8 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, Optional, Tuple
 
-from openjarvis.evals.core.scorer import Scorer
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.scorer import Scorer
+from nivos.evals.core.types import EvalRecord
 
 _DIFF_MARKERS = [
     r"^---\s",

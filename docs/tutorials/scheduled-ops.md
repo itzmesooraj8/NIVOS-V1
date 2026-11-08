@@ -5,7 +5,7 @@ description: Run autonomous agents on cron schedules for recurring personal task
 
 # Scheduled Personal Ops
 
-This tutorial walks through `examples/scheduled_ops/` — three scripts that run autonomous agents on cron-like schedules to handle recurring personal tasks. Together they demonstrate how to combine the `Jarvis` SDK, the scheduler CLI, and the Python `TaskScheduler` API to build a personal operations layer that runs in the background.
+This tutorial walks through `examples/scheduled_ops/` — three scripts that run autonomous agents on cron-like schedules to handle recurring personal tasks. Together they demonstrate how to combine the `Nivos` SDK, the scheduler CLI, and the Python `TaskScheduler` API to build a personal operations layer that runs in the background.
 
 !!! tip "Prerequisites"
     - Python 3.10 or later
@@ -21,7 +21,7 @@ This tutorial walks through `examples/scheduled_ops/` — three scripts that run
 | `code_review.py` | `native_react` | `git_log`, `git_diff`, `file_read`, `think` | Monday 8:00 AM | Review the past week of commits in a repository |
 | `gym_scheduler.py` | `orchestrator` | `web_search`, `think` | MWF 6:00 AM | Check gym hours and class availability |
 
-Each script follows the same SDK pattern: create a `Jarvis` instance, call `j.ask()` with an agent and tools, print the result, and close the instance. The schedule is managed externally by the Nivos scheduler daemon.
+Each script follows the same SDK pattern: create a `Nivos` instance, call `j.ask()` with an agent and tools, print the result, and close the instance. The schedule is managed externally by the Nivos scheduler daemon.
 
 ## Quick Start: Run Scripts Manually
 
@@ -136,8 +136,8 @@ uv run python examples/scheduled_ops/gym_scheduler.py \
 The equivalent Python code:
 
 ```python title="Programmatic task registration"
-from openjarvis.scheduler import TaskScheduler
-from openjarvis.scheduler.store import SchedulerStore
+from nivos.scheduler import TaskScheduler
+from nivos.scheduler.store import SchedulerStore
 
 store = SchedulerStore()
 scheduler = TaskScheduler(store)
@@ -160,9 +160,9 @@ print(f"Next run:        {task.next_run}")
 The digest script is the simplest of the three. It builds a date-stamped prompt and passes it to an orchestrator with `web_search` and `think`:
 
 ```python title="examples/scheduled_ops/daily_digest.py" hl_lines="5 6 7 8"
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis()  # uses defaults from ~/.openjarvis/config.toml
+j = Nivos()  # uses defaults from ~/.nivos/config.toml
 response = j.ask(
     f"Today is {today}. Search and summarize the top news on: {topics}",
     agent="orchestrator",
@@ -185,7 +185,7 @@ uv run python examples/scheduled_ops/daily_digest.py \
 Or add channel output inside the script:
 
 ```python title="In-script channel output"
-from openjarvis.channels import ChannelRegistry
+from nivos.channels import ChannelRegistry
 
 channel = ChannelRegistry.create("slack", webhook_url="https://hooks.slack.com/...")
 channel.send(response)

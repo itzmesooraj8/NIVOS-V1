@@ -15,9 +15,9 @@ from typing import Optional
 
 import click
 
-import openjarvis
-from openjarvis.core import config as _cfg
-from openjarvis.core.config import (
+import nivos
+from nivos.core import config as _cfg
+from nivos.core.config import (
     HardwareInfo,
     detect_hardware,
     recommend_engine,
@@ -91,7 +91,7 @@ def _now_iso() -> str:
 
 
 def _installer_version() -> str:
-    return openjarvis.__version__
+    return nivos.__version__
 
 
 def _render_provenance_lines() -> str:
@@ -110,8 +110,8 @@ def write_initial_config(
 ) -> Path:
     """Render the initial ``config.toml`` and seed memory files.
 
-    Called by both ``install.sh`` (via ``jarvis _bootstrap --write-config``)
-    and ``jarvis init`` so the TOML format has one definition.
+    Called by both ``install.sh`` (via ``nivos _bootstrap --write-config``)
+    and ``nivos init`` so the TOML format has one definition.
     """
     _cfg.DEFAULT_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -180,7 +180,7 @@ def _seed_memory_files() -> None:
 
 
 # ---------------------------------------------------------------------------
-# CLI command — invoked by install.sh, hidden from `jarvis --help`
+# CLI command — invoked by install.sh, hidden from `nivos --help`
 # ---------------------------------------------------------------------------
 
 # Default model picked at install time when a cloud key is detected via

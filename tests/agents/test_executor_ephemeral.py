@@ -3,11 +3,11 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-REGISTRY_PATH = "openjarvis.core.registry.AgentRegistry.get"
+REGISTRY_PATH = "nivos.core.registry.AgentRegistry.get"
 
 
 def test_run_ephemeral_creates_and_runs_agent():
-    from openjarvis.agents.executor import AgentExecutor
+    from nivos.agents.executor import AgentExecutor
 
     manager = MagicMock()
     executor = AgentExecutor(manager=manager, event_bus=MagicMock())
@@ -27,7 +27,7 @@ def test_run_ephemeral_creates_and_runs_agent():
 
 
 def test_run_ephemeral_passes_input():
-    from openjarvis.agents.executor import AgentExecutor
+    from nivos.agents.executor import AgentExecutor
 
     manager = MagicMock()
     executor = AgentExecutor(manager=manager, event_bus=MagicMock())
@@ -47,13 +47,13 @@ def test_run_ephemeral_passes_input():
 
 
 def test_run_ephemeral_resolves_tools_and_preserves_security():
-    from openjarvis.agents.executor import AgentExecutor
-    from openjarvis.agents.simple import SimpleAgent
-    from openjarvis.core.events import EventBus
-    from openjarvis.core.registry import AgentRegistry, ToolRegistry
-    from openjarvis.core.types import ToolResult
-    from openjarvis.security.capabilities import CapabilityPolicy
-    from openjarvis.tools._stubs import BaseTool, ToolSpec
+    from nivos.agents.executor import AgentExecutor
+    from nivos.agents.simple import SimpleAgent
+    from nivos.core.events import EventBus
+    from nivos.core.registry import AgentRegistry, ToolRegistry
+    from nivos.core.types import ToolResult
+    from nivos.security.capabilities import CapabilityPolicy
+    from nivos.tools._stubs import BaseTool, ToolSpec
 
     class _FlushProbe(BaseTool):
         calls = 0

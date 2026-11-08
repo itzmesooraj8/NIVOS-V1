@@ -6,14 +6,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openjarvis.agents.proactive_agent import (
+from nivos.agents.proactive_agent import (
     _PROACTIVE_CRON_PROMPT,
     _build_notification_channel,
     register_cron,
 )
-from openjarvis.core.registry import ChannelRegistry
-from openjarvis.scheduler.scheduler import TaskScheduler
-from openjarvis.scheduler.store import SchedulerStore
+from nivos.core.registry import ChannelRegistry
+from nivos.scheduler.scheduler import TaskScheduler
+from nivos.scheduler.store import SchedulerStore
 
 
 @pytest.fixture()
@@ -91,7 +91,7 @@ class TestRegisterCron:
         current = _register(scheduler)
 
         assert current.id != legacy.id
-        assert current.metadata["openjarvis_task_key"] == "proactive-daily"
+        assert current.metadata["nivos_task_key"] == "proactive-daily"
         assert scheduler.list_tasks(status="cancelled")[0].id == legacy.id
 
 
@@ -106,9 +106,9 @@ class TestNotificationChannel:
         with (
             patch.object(ChannelRegistry, "contains", return_value=True),
             patch.object(ChannelRegistry, "get", return_value=FakeTelegram),
-            patch("openjarvis.core.config.load_config", return_value=config),
+            patch("nivos.core.config.load_config", return_value=config),
             patch(
-                "openjarvis.system._channel_kwargs.build_channel_kwargs",
+                "nivos.system._channel_kwargs.build_channel_kwargs",
                 return_value={"bot_token": "configured-token"},
             ),
         ):

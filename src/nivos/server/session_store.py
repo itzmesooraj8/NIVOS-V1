@@ -10,7 +10,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from openjarvis.core.paths import get_config_dir
+from nivos.core.paths import get_config_dir
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class SessionStore:
             db_path = str(get_config_dir() / "sessions.db")
         # Ensure the parent directory exists (skip for :memory:)
         if db_path != ":memory:":
-            from openjarvis.security.file_utils import secure_create
+            from nivos.security.file_utils import secure_create
 
             secure_create(Path(db_path))
         self._db_lock = threading.RLock()

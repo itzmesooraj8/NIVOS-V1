@@ -1,6 +1,6 @@
 """PinchBench grading helpers and scorer.
 
-Provides transcript translation (OpenJarvis events → PinchBench format),
+Provides transcript translation (Nivos events → PinchBench format),
 automated grading (exec of embedded Python), LLM judge grading, and
 hybrid combination. Used by PinchBenchTaskEnv.run_tests() and the
 standalone PinchBenchScorer.
@@ -15,14 +15,14 @@ import logging
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-from openjarvis.evals.core.event_recorder import EventType
-from openjarvis.evals.core.scorer import LLMJudgeScorer
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.event_recorder import EventType
+from nivos.evals.core.scorer import LLMJudgeScorer
+from nivos.evals.core.types import EvalRecord
 
 LOGGER = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Tool name mapping: OpenJarvis name → PinchBench-expected name
+# Tool name mapping: Nivos name → PinchBench-expected name
 # ---------------------------------------------------------------------------
 _TOOL_NAME_MAP: Dict[str, str] = {
     "file_read": "read_file",
@@ -134,7 +134,7 @@ def _trace_to_transcript(trace: Any) -> List[Dict[str, Any]]:
 def _tool_results_to_transcript(
     tool_results: List[Dict[str, Any]],
 ) -> List[Dict[str, Any]]:
-    """Build transcript from JarvisAgentBackend tool_results list."""
+    """Build transcript from NivosAgentBackend tool_results list."""
     transcript: List[Dict[str, Any]] = []
     for tr in tool_results:
         tool_name = tr.get("tool_name", "unknown")

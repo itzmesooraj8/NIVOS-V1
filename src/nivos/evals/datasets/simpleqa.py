@@ -9,8 +9,8 @@ import ast
 import random
 from typing import Any, Dict, Iterable, List, MutableMapping, Optional, Sequence
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
 
 _PROMPT_TEMPLATE = """Please answer the following question with a short, factual response.
 Your answer should be a word, phrase, name, number, or date.

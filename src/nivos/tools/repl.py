@@ -15,9 +15,9 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 # ---------------------------------------------------------------------------
 # Security

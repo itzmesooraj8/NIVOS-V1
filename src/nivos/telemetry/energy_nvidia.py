@@ -8,7 +8,7 @@ import time
 from contextlib import contextmanager
 from typing import Generator, List, Optional, Tuple
 
-from openjarvis.telemetry.energy_monitor import (
+from nivos.telemetry.energy_monitor import (
     EnergyMonitor,
     EnergySample,
     EnergyVendor,

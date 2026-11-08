@@ -19,16 +19,16 @@ import logging
 import re
 from typing import Any, List, Optional
 
-from openjarvis.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
-from openjarvis.agents.prompt_loader import (
+from nivos.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
+from nivos.agents.prompt_loader import (
     load_few_shot_exemplars,
     load_system_prompt_override,
 )
-from openjarvis.core.events import EventBus
-from openjarvis.core.registry import AgentRegistry
-from openjarvis.core.types import Message, Role, ToolCall, ToolResult, _message_to_dict
-from openjarvis.engine._stubs import InferenceEngine
-from openjarvis.tools._stubs import BaseTool
+from nivos.core.events import EventBus
+from nivos.core.registry import AgentRegistry
+from nivos.core.types import Message, Role, ToolCall, ToolResult, _message_to_dict
+from nivos.engine._stubs import InferenceEngine
+from nivos.tools._stubs import BaseTool
 
 logger = logging.getLogger(__name__)
 
@@ -218,7 +218,7 @@ class MonitorOperativeAgent(ToolUsingAgent):
             sys_parts.append(f"\n## Previous State\n{previous_state}")
 
         system_prompt = "\n\n".join(sys_parts) if sys_parts else None
-        # Honor SOUL.md / MEMORY.md / USER.md persona files like `jarvis ask`,
+        # Honor SOUL.md / MEMORY.md / USER.md persona files like `nivos ask`,
         # appended so the monitor's own instructions are preserved (#376).
         system_prompt = self._apply_persona(system_prompt)
 
@@ -508,7 +508,7 @@ class MonitorOperativeAgent(ToolUsingAgent):
         """Build a text description of available tools for the system prompt."""
         if not self._tools:
             return ""
-        from openjarvis.tools._stubs import build_tool_descriptions
+        from nivos.tools._stubs import build_tool_descriptions
 
         return build_tool_descriptions(self._tools)
 

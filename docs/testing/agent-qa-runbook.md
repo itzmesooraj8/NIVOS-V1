@@ -8,7 +8,7 @@ Manual testing scenarios for persistent agents in the CLI and desktop app.
 |---|---|
 | Ollama running with model | `ollama list` shows `qwen3:8b` |
 | Nivos initialized | `uv run nivos doctor` all green |
-| Rust extension built | `uv run maturin develop -m rust/crates/openjarvis-python/Cargo.toml` |
+| Rust extension built | `uv run maturin develop -m rust/crates/nivos-python/Cargo.toml` |
 | Desktop app running | `uv run nivos serve` + `cd frontend && npm run dev` |
 | Slack credentials | `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN` set, bot invited to test channel |
 | Gmail credentials | OAuth credentials.json downloaded, token generated |

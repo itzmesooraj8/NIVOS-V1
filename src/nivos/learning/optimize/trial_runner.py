@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Optional
 
-from openjarvis.evals.core.types import RunConfig, RunSummary
-from openjarvis.learning.optimize.types import (
+from nivos.evals.core.types import RunConfig, RunSummary
+from nivos.learning.optimize.types import (
     BenchmarkScore,
     SampleScore,
     TrialConfig,
@@ -66,13 +66,13 @@ class TrialRunner:
         run_config = self._build_run_config(trial, recipe)
 
         # Lazy imports so the optimize package stays lightweight
-        from openjarvis.evals.cli import (
+        from nivos.evals.cli import (
             _build_backend,
             _build_dataset,
             _build_judge_backend,
             _build_scorer,
         )
-        from openjarvis.evals.core.runner import EvalRunner
+        from nivos.evals.core.runner import EvalRunner
 
         dataset = _build_dataset(self.benchmark)
         backend = _build_backend(
@@ -110,9 +110,9 @@ class TrialRunner:
     def _build_run_config(self, trial: TrialConfig, recipe: Any) -> RunConfig:
         """Map recipe fields into a :class:`RunConfig`."""
         model = recipe.model or "default"
-        backend_name = "jarvis-direct"
+        backend_name = "nivos-direct"
         if recipe.agent_type is not None:
-            backend_name = "jarvis-agent"
+            backend_name = "nivos-agent"
 
         model_slug = model.replace("/", "-").replace(":", "-")
         output_path = str(
@@ -275,7 +275,7 @@ class MultiBenchTrialRunner:
             "dataset_version": "0.1.1",
             "model_name": litellm_model,
             "agent_import_path": (
-                "openjarvis.evals.backends.tb_agent:OpenJarvisTerminalBenchAgent"
+                "nivos.evals.backends.tb_agent:NivosTerminalBenchAgent"
             ),
             "agent_kwargs": {
                 "model_name": litellm_model,

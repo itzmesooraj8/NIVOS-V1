@@ -1,28 +1,28 @@
-"""Central, env-aware resolution of OpenJarvis' home directory.
+"""Central, env-aware resolution of Nivos' home directory.
 
-OpenJarvis keeps all of its runtime state (config, databases, caches, logs,
+Nivos keeps all of its runtime state (config, databases, caches, logs,
 credentials, skills, recipes, …) under a single root so it never clutters the
 user's home directory beyond one directory. That root is resolved here, with
 the following precedence (highest first):
 
-1. ``$OPENJARVIS_HOME`` — explicit override (also honored by the shell
+1. ``$NIVOS_HOME`` — explicit override (also honored by the shell
    installer, see ``scripts/install/install.sh``).
-2. ``$XDG_DATA_HOME/openjarvis`` — when ``$XDG_DATA_HOME`` is set, follow the
-   XDG Base Directory spec by nesting a single ``openjarvis`` directory under
+2. ``$XDG_DATA_HOME/nivos`` — when ``$XDG_DATA_HOME`` is set, follow the
+   XDG Base Directory spec by nesting a single ``nivos`` directory under
    it. We deliberately use ONE directory rather than splitting across XDG
    config/data/cache so the install tree stays self-contained and relocatable.
-3. ``~/.openjarvis`` — the historical default. With no env vars set, the
+3. ``~/.nivos`` — the historical default. With no env vars set, the
    resolved path is exactly this, so existing installs are untouched.
 
 ``config.py`` re-exports :func:`get_config_dir` results through the legacy
 ``DEFAULT_CONFIG_DIR``/``DEFAULT_CONFIG_PATH`` names (computed dynamically) so
 the ~45 modules that import those names keep working while honoring the
-override. Modules that previously hardcoded ``Path.home() / ".openjarvis"``
+override. Modules that previously hardcoded ``Path.home() / ".nivos"``
 should call :func:`get_config_dir` (or :func:`get_data_dir` /
 :func:`get_cache_dir`) instead.
 
-Defense in depth: the resolved root must never live inside the OpenJarvis
-source tree (a misconfigured ``$OPENJARVIS_HOME`` pointing at the repo would
+Defense in depth: the resolved root must never live inside the Nivos
+source tree (a misconfigured ``$NIVOS_HOME`` pointing at the repo would
 otherwise scatter runtime artifacts into the working tree). This mirrors the
 guard in ``learning/spec_search/storage/paths.py`` and fails loudly per
 REVIEW.md's no-silent-failure discipline.
@@ -33,8 +33,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-_DEFAULT_DIR_NAME = ".openjarvis"
-_XDG_SUBDIR_NAME = "openjarvis"
+_DEFAULT_DIR_NAME = ".nivos"
+_XDG_SUBDIR_NAME = "nivos"
 
 
 class ConfigurationError(RuntimeError):
@@ -42,10 +42,10 @@ class ConfigurationError(RuntimeError):
 
 
 def _find_source_root() -> Path | None:
-    """Walk upward from this module to find the OpenJarvis source root.
+    """Walk upward from this module to find the Nivos source root.
 
-    Returns the directory containing the OpenJarvis ``pyproject.toml`` (the one
-    whose ``name = "openjarvis"``), or ``None`` when running from an installed
+    Returns the directory containing the Nivos ``pyproject.toml`` (the one
+    whose ``name = "nivos"``), or ``None`` when running from an installed
     wheel rather than a source checkout.
     """
     here = Path(__file__).resolve()
@@ -56,13 +56,13 @@ def _find_source_root() -> Path | None:
                 content = py.read_text(encoding="utf-8")
             except OSError:
                 continue
-            if 'name = "openjarvis"' in content.lower():
+            if 'name = "nivos"' in content.lower():
                 return candidate
     return None
 
 
 def _reject_source_tree(path: Path) -> Path:
-    """Raise if ``path`` resolves inside the OpenJarvis source tree."""
+    """Raise if ``path`` resolves inside the Nivos source tree."""
     source_root = _find_source_root()
     if source_root is not None:
         try:
@@ -71,22 +71,22 @@ def _reject_source_tree(path: Path) -> Path:
             pass  # Good — not inside the source tree.
         else:
             raise ConfigurationError(
-                f"OpenJarvis home ({path}) is inside the source tree "
-                f"({source_root}). OpenJarvis refuses to write runtime state "
-                "inside its own repo. Set OPENJARVIS_HOME (or XDG_DATA_HOME) "
-                "to a directory outside the repo (default: ~/.openjarvis)."
+                f"Nivos home ({path}) is inside the source tree "
+                f"({source_root}). Nivos refuses to write runtime state "
+                "inside its own repo. Set NIVOS_HOME (or XDG_DATA_HOME) "
+                "to a directory outside the repo (default: ~/.nivos)."
             )
     return path
 
 
 def get_config_dir() -> Path:
-    """Resolve OpenJarvis' single root directory, honoring env overrides.
+    """Resolve Nivos' single root directory, honoring env overrides.
 
-    Precedence: ``$OPENJARVIS_HOME`` > ``$XDG_DATA_HOME/openjarvis`` >
-    ``~/.openjarvis``. The result is always absolute and is rejected if it
-    falls inside the OpenJarvis source tree.
+    Precedence: ``$NIVOS_HOME`` > ``$XDG_DATA_HOME/nivos`` >
+    ``~/.nivos``. The result is always absolute and is rejected if it
+    falls inside the Nivos source tree.
     """
-    env_home = os.environ.get("OPENJARVIS_HOME")
+    env_home = os.environ.get("NIVOS_HOME") or os.environ.get("OPENJARVIS_HOME")
     if env_home:
         resolved = Path(env_home).expanduser().resolve()
         return _reject_source_tree(resolved)
@@ -100,7 +100,7 @@ def get_config_dir() -> Path:
 
 
 def get_config_path() -> Path:
-    """Resolve the path to ``config.toml`` under the OpenJarvis root."""
+    """Resolve the path to ``config.toml`` under the Nivos root."""
     return get_config_dir() / "config.toml"
 
 
@@ -116,7 +116,7 @@ def get_data_dir() -> Path:
 def get_cache_dir() -> Path:
     """Resolve the directory for regenerable caches (eval datasets, etc.).
 
-    Lives at ``<root>/cache`` so caches stay inside the single OpenJarvis
+    Lives at ``<root>/cache`` so caches stay inside the single Nivos
     directory instead of scattering across ``~/.cache``.
     """
     return get_config_dir() / "cache"
@@ -124,7 +124,7 @@ def get_cache_dir() -> Path:
 
 def get_workspace_dir() -> Path:
     """Resolve the workspace directory for user files and sandboxed tools."""
-    env_ws = os.environ.get("NIVOS_WORKSPACE") or os.environ.get("OPENJARVIS_WORKSPACE")
+    env_ws = os.environ.get("NIVOS_WORKSPACE") or os.environ.get("NIVOS_WORKSPACE")
     if env_ws:
         ws = Path(env_ws).expanduser().resolve()
     else:

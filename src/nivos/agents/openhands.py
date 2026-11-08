@@ -1,7 +1,7 @@
 """OpenHandsAgent -- wraps the real openhands-sdk for AI-driven development.
 
 Requires the ``openhands-sdk`` package (``uv sync --extra openhands``).
-For the native CodeAct-style agent, see :mod:`openjarvis.agents.native_openhands`.
+For the native CodeAct-style agent, see :mod:`nivos.agents.native_openhands`.
 """
 
 from __future__ import annotations
@@ -9,10 +9,10 @@ from __future__ import annotations
 import os
 from typing import Any, Optional
 
-from openjarvis.agents._stubs import AgentContext, AgentResult, BaseAgent
-from openjarvis.core.events import EventBus
-from openjarvis.core.registry import AgentRegistry
-from openjarvis.engine._stubs import InferenceEngine
+from nivos.agents._stubs import AgentContext, AgentResult, BaseAgent
+from nivos.core.events import EventBus
+from nivos.core.registry import AgentRegistry
+from nivos.engine._stubs import InferenceEngine
 
 
 @AgentRegistry.register("openhands")

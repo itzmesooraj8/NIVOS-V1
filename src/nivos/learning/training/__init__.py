@@ -1,7 +1,7 @@
 """Training data extraction and fine-tuning pipelines for trace-driven learning."""
 
-from openjarvis.learning.training.data import TrainingDataMiner
-from openjarvis.learning.training.lora import (
+from nivos.learning.training.data import TrainingDataMiner
+from nivos.learning.training.lora import (
     HAS_TORCH,
     LoRATrainer,
     LoRATrainingConfig,

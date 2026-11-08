@@ -1,4 +1,4 @@
-"""``jarvis memory`` — memory management subcommands."""
+"""``nivos memory`` — memory management subcommands."""
 
 from __future__ import annotations
 
@@ -10,10 +10,10 @@ from rich.console import Console
 from rich.progress import track
 from rich.table import Table
 
-from openjarvis.core.config import load_config
-from openjarvis.core.registry import MemoryRegistry
-from openjarvis.tools.storage.chunking import ChunkConfig
-from openjarvis.tools.storage.ingest import ingest_path
+from nivos.core.config import load_config
+from nivos.core.registry import MemoryRegistry
+from nivos.tools.storage.chunking import ChunkConfig
+from nivos.tools.storage.ingest import ingest_path
 
 
 def _get_backend(backend_key: str | None = None):
@@ -22,7 +22,7 @@ def _get_backend(backend_key: str | None = None):
     key = backend_key or config.memory.default_backend
 
     # Ensure backends are registered
-    import openjarvis.tools.storage  # noqa: F401
+    import nivos.tools.storage  # noqa: F401
 
     if not MemoryRegistry.contains(key):
         raise click.ClickException(
@@ -193,13 +193,13 @@ def search(
 
 def _get_fact_store():
     """Instantiate the automatic-memory fact store from config."""
-    from openjarvis.memory.store import create_fact_store
+    from nivos.memory.store import create_fact_store
 
     config = load_config()
     mem = config.memory
     return create_fact_store(
         getattr(mem, "backend", "local"),
-        path=getattr(mem, "facts_path", "~/.openjarvis/memory_facts.jsonl"),
+        path=getattr(mem, "facts_path", "~/.nivos/memory_facts.jsonl"),
         max_facts=getattr(mem, "max_facts", 1000),
     )
 
@@ -235,7 +235,7 @@ def list_facts() -> None:
         console.print(
             "[red]⚠ quarantined[/red] facts are retained for audit but excluded "
             "from model recall because they may contain hostile input. Review "
-            "one and run [bold]jarvis memory trust <#>[/bold] to allow recall."
+            "one and run [bold]nivos memory trust <#>[/bold] to allow recall."
         )
 
 
@@ -254,7 +254,7 @@ def trust_fact(index: int) -> None:
     if not 1 <= index <= len(facts):
         console.print(
             f"[red]No fact #{index}.[/red] "
-            f"{len(facts)} fact(s) stored — see [bold]jarvis memory list[/bold]."
+            f"{len(facts)} fact(s) stored — see [bold]nivos memory list[/bold]."
         )
         raise SystemExit(1)
 

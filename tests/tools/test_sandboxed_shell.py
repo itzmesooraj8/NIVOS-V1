@@ -8,9 +8,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-import openjarvis.tools  # noqa: F401
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.tools.sandboxed_shell import SandboxedShellTool
+import nivos.tools  # noqa: F401
+from nivos.core.registry import ToolRegistry
+from nivos.tools.sandboxed_shell import SandboxedShellTool
 
 
 @pytest.fixture
@@ -24,9 +24,9 @@ def workspace_env(tmp_path, monkeypatch):
 def test_registration_and_spec():
     import importlib
     import sys
-    import openjarvis.tools as tools_pkg
+    import nivos.tools as tools_pkg
 
-    sys.modules.pop("openjarvis.tools.sandboxed_shell", None)
+    sys.modules.pop("nivos.tools.sandboxed_shell", None)
     importlib.reload(tools_pkg)
 
     assert ToolRegistry.contains("sandboxed_shell")

@@ -5,9 +5,9 @@ from __future__ import annotations
 import base64
 from typing import Any
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 
 class _BrowserSession:
@@ -104,7 +104,7 @@ class BrowserNavigateTool(BaseTool):
         # SSRF check — never skipped. check_ssrf falls back to a pure-Python
         # implementation when the Rust backend is unavailable, so an
         # uncompiled extension must not silently disable SSRF protection.
-        from openjarvis.security.ssrf import check_ssrf
+        from nivos.security.ssrf import check_ssrf
 
         ssrf_error = check_ssrf(url)
         if ssrf_error:

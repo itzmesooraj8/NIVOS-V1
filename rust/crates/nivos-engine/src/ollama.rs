@@ -1,8 +1,8 @@
 //! Ollama inference engine backend.
 
 use crate::traits::{InferenceEngine, TokenStream};
-use openjarvis_core::error::{EngineError, OpenJarvisError};
-use openjarvis_core::{GenerateResult, Message, ToolCall, Usage};
+use nivos_core::error::{EngineError, NivosError};
+use nivos_core::{GenerateResult, Message, ToolCall, Usage};
 use serde_json::Value;
 
 /// Ollama backend via its native HTTP API.
@@ -51,7 +51,7 @@ impl InferenceEngine for OllamaEngine {
         temperature: f64,
         max_tokens: i64,
         extra: Option<&Value>,
-    ) -> Result<GenerateResult, OpenJarvisError> {
+    ) -> Result<GenerateResult, NivosError> {
         let msg_dicts = crate::traits::messages_to_dicts(messages);
         let mut payload = serde_json::json!({
             "model": model,
@@ -75,21 +75,21 @@ impl InferenceEngine for OllamaEngine {
             .json(&payload)
             .send()
             .map_err(|e| {
-                OpenJarvisError::Engine(EngineError::Connection(format!(
+                NivosError::Engine(EngineError::Connection(format!(
                     "Ollama not reachable at {}: {}",
                     self.host, e
                 )))
             })?;
 
         if !resp.status().is_success() {
-            return Err(OpenJarvisError::Engine(EngineError::Http(format!(
+            return Err(NivosError::Engine(EngineError::Http(format!(
                 "Ollama returned status {}",
                 resp.status()
             ))));
         }
 
         let data: Value = resp.json().map_err(|e| {
-            OpenJarvisError::Engine(EngineError::Deserialization(e.to_string()))
+            NivosError::Engine(EngineError::Deserialization(e.to_string()))
         })?;
 
         let prompt_tokens = data["prompt_eval_count"].as_i64().unwrap_or(0);
@@ -151,7 +151,7 @@ impl InferenceEngine for OllamaEngine {
         temperature: f64,
         max_tokens: i64,
         _extra: Option<&Value>,
-    ) -> Result<TokenStream, OpenJarvisError> {
+    ) -> Result<TokenStream, NivosError> {
         let msg_dicts = crate::traits::messages_to_dicts(messages);
         let payload = serde_json::json!({
             "model": model,
@@ -167,7 +167,7 @@ impl InferenceEngine for OllamaEngine {
             .timeout(self.timeout)
             .build()
             .map_err(|e| {
-                OpenJarvisError::Engine(EngineError::Connection(e.to_string()))
+                NivosError::Engine(EngineError::Connection(e.to_string()))
             })?;
 
         let resp = async_client
@@ -176,14 +176,14 @@ impl InferenceEngine for OllamaEngine {
             .send()
             .await
             .map_err(|e| {
-                OpenJarvisError::Engine(EngineError::Connection(format!(
+                NivosError::Engine(EngineError::Connection(format!(
                     "Ollama not reachable at {}: {}",
                     self.host, e
                 )))
             })?;
 
         if !resp.status().is_success() {
-            return Err(OpenJarvisError::Engine(EngineError::Http(format!(
+            return Err(NivosError::Engine(EngineError::Http(format!(
                 "Ollama returned status {}",
                 resp.status()
             ))));
@@ -215,7 +215,7 @@ impl InferenceEngine for OllamaEngine {
                     }
                     None
                 }
-                Err(e) => Some(Err(OpenJarvisError::Engine(EngineError::Streaming(
+                Err(e) => Some(Err(NivosError::Engine(EngineError::Streaming(
                     e.to_string(),
                 )))),
             }
@@ -224,13 +224,13 @@ impl InferenceEngine for OllamaEngine {
         Ok(Box::pin(token_stream))
     }
 
-    fn list_models(&self) -> Result<Vec<String>, OpenJarvisError> {
+    fn list_models(&self) -> Result<Vec<String>, NivosError> {
         let resp = self
             .client
             .get(format!("{}/api/tags", self.host))
             .send()
             .map_err(|_| {
-                OpenJarvisError::Engine(EngineError::Connection(
+                NivosError::Engine(EngineError::Connection(
                     "Ollama not reachable".into(),
                 ))
             })?;

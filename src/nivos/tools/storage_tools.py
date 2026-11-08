@@ -9,10 +9,10 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
-from openjarvis.tools.storage._stubs import MemoryBackend
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
+from nivos.tools.storage._stubs import MemoryBackend
 
 
 @ToolRegistry.register("memory_store")
@@ -280,8 +280,8 @@ class MemoryIndexTool(BaseTool):
         try:
             from pathlib import Path
 
-            from openjarvis.tools.storage.chunking import ChunkConfig
-            from openjarvis.tools.storage.ingest import ingest_path
+            from nivos.tools.storage.chunking import ChunkConfig
+            from nivos.tools.storage.ingest import ingest_path
 
             chunk_size = params.get("chunk_size", 512)
             chunk_overlap = params.get("chunk_overlap", 64)

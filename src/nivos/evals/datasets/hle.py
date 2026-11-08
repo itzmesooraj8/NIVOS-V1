@@ -8,8 +8,8 @@ from __future__ import annotations
 import random
 from typing import Iterable, List, MutableMapping, Optional, Sequence
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
 
 # Fields whose presence signals a multimodal row.
 _MULTIMODAL_FIELDS = frozenset(

@@ -8,12 +8,12 @@ from typing import Any, Dict, List
 
 import pytest
 
-from openjarvis.core.events import EventBus
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._stubs import InferenceEngine, StreamChunk
-from openjarvis.engine.multi import MultiEngine
-from openjarvis.security.guardrails import GuardrailsEngine
-from openjarvis.telemetry.instrumented_engine import InstrumentedEngine
+from nivos.core.events import EventBus
+from nivos.core.types import Message, Role
+from nivos.engine._stubs import InferenceEngine, StreamChunk
+from nivos.engine.multi import MultiEngine
+from nivos.security.guardrails import GuardrailsEngine
+from nivos.telemetry.instrumented_engine import InstrumentedEngine
 
 # ---------------------------------------------------------------------------
 # Fake engine that yields predetermined StreamChunks via stream_full

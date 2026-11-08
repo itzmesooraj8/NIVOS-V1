@@ -5,8 +5,8 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, Optional, Tuple
 
-from openjarvis.evals.core.scorer import LLMJudgeScorer
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.scorer import LLMJudgeScorer
+from nivos.evals.core.types import EvalRecord
 
 _ANOMALY_PATTERN = re.compile(r"\bANOMAL(?:Y|OUS)\b", re.IGNORECASE)
 _NORMAL_PATTERN = re.compile(r"\bNORMAL\b", re.IGNORECASE)

@@ -5,19 +5,19 @@ one full session, then a multi-session loop with the paper's stagnation rule
 (Algorithm 1, k=5, epsilon=1%).
 
 It is *self-contained*: by default the teacher engine and the student runner
-are local fakes, so you can ``python examples/openjarvis/spec_search_quickstart.py``
+are local fakes, so you can ``python examples/nivos/spec_search_quickstart.py``
 with no API keys and no Ollama / vLLM running. Every "swap this for production"
 hookpoint is called out inline.
 
-Configuration is read from ``configs/openjarvis/examples/spec-search-quickstart.toml``
-via the regular ``openjarvis.core.config.load_config`` machinery — you can copy
-that TOML to ``~/.openjarvis/config.toml`` and tune the gate / stagnation /
+Configuration is read from ``configs/nivos/examples/spec-search-quickstart.toml``
+via the regular ``nivos.core.config.load_config`` machinery — you can copy
+that TOML to ``~/.nivos/config.toml`` and tune the gate / stagnation /
 reward knobs without editing this file.
 
 Run:
 
-    OPENJARVIS_HOME=/tmp/openjarvis-spec-search-demo \\
-        python examples/openjarvis/spec_search_quickstart.py
+    NIVOS_HOME=/tmp/nivos-spec-search-demo \\
+        python examples/nivos/spec_search_quickstart.py
 """
 
 from __future__ import annotations
@@ -30,19 +30,19 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
-from openjarvis.core.config import SpecSearchLearningConfig
-from openjarvis.learning.spec_search.composite_reward import (
+from nivos.core.config import SpecSearchLearningConfig
+from nivos.learning.spec_search.composite_reward import (
     RewardWeights,
     TrainingSample,
     score_batch,
 )
-from openjarvis.learning.spec_search.models import (
+from nivos.learning.spec_search.models import (
     BenchmarkSnapshot,
     FailureCluster,
 )
-from openjarvis.learning.spec_search.multi_session import SpecSearchLoop
-from openjarvis.learning.spec_search.orchestrator import SpecSearchOrchestrator
-from openjarvis.learning.spec_search.triggers import OnDemandTrigger
+from nivos.learning.spec_search.multi_session import SpecSearchLoop
+from nivos.learning.spec_search.orchestrator import SpecSearchOrchestrator
+from nivos.learning.spec_search.triggers import OnDemandTrigger
 
 # ---------------------------------------------------------------------------
 # Fakes — replace these with real production components.
@@ -55,7 +55,7 @@ class FakeTeacherEngine:
 
     For production, use the registry::
 
-        from openjarvis.core.registry import EngineRegistry
+        from nivos.core.registry import EngineRegistry
         engine_cls = EngineRegistry.get(cfg.teacher_engine)  # "cloud"
         engine = engine_cls(model=cfg.teacher_model)         # set ANTHROPIC_API_KEY
 
@@ -102,7 +102,7 @@ class FakeTeacherEngine:
 
 def _fake_diagnosis() -> Any:
     """A canned DiagnosisResult so the demo doesn't need a real teacher loop."""
-    from openjarvis.learning.spec_search.diagnose.runner import DiagnosisResult
+    from nivos.learning.spec_search.diagnose.runner import DiagnosisResult
 
     return DiagnosisResult(
         diagnosis_md=(
@@ -176,7 +176,7 @@ def build_orchestrator(
         benchmark_samples=[],
         # StudentRunner: production = VLLMStudentRunner(host=..., model=...)
         student_runner=MagicMock(),
-        # Judge: production = openjarvis.evals.core.scorer.LLMJudgeScorer(...)
+        # Judge: production = nivos.evals.core.scorer.LLMJudgeScorer(...)
         judge=MagicMock(),
         # SessionStore + CheckpointStore: production = real on-disk stores
         session_store=MagicMock(),
@@ -186,7 +186,7 @@ def build_orchestrator(
                 return_value=MagicMock(pre_stage_sha="demo-sha"),
             ),
         ),
-        openjarvis_home=home,
+        nivos_home=home,
         scorer=_fake_scorer_factory(),
     )
 
@@ -218,15 +218,15 @@ def demo_composite_reward(weights: RewardWeights) -> None:
 
 
 def main() -> None:
-    # In a real deployment, ``load_config()`` reads from ``~/.openjarvis/config.toml``.
+    # In a real deployment, ``load_config()`` reads from ``~/.nivos/config.toml``.
     # For a self-contained demo we synthesize the spec-search config inline so the
     # script is runnable without copying any files. To use the prebuilt TOML:
     #
-    #     from openjarvis.core.config import load_config
+    #     from nivos.core.config import load_config
     #     cfg = load_config().learning.spec_search
     #
-    # (after copying ``configs/openjarvis/examples/spec-search-quickstart.toml``
-    # to ``~/.openjarvis/config.toml``)
+    # (after copying ``configs/nivos/examples/spec-search-quickstart.toml``
+    # to ``~/.nivos/config.toml``)
 
     cfg = SpecSearchLearningConfig(
         enabled=True,
@@ -245,10 +245,10 @@ def main() -> None:
     )
 
     home = Path(
-        os.environ.get("OPENJARVIS_HOME")
-        or tempfile.mkdtemp(prefix="openjarvis-spec-search-")
+        os.environ.get("NIVOS_HOME")
+        or tempfile.mkdtemp(prefix="nivos-spec-search-")
     )
-    print(f"OPENJARVIS_HOME = {home}")
+    print(f"NIVOS_HOME = {home}")
 
     # ----- Single session ---------------------------------------------------
     orch = build_orchestrator(cfg, home)
@@ -260,7 +260,7 @@ def main() -> None:
 
     print("\n=== Single session (one diagnose / plan / execute / record) ===")
     with patch(
-        "openjarvis.learning.spec_search.orchestrator.DiagnosisRunner"
+        "nivos.learning.spec_search.orchestrator.DiagnosisRunner"
     ) as MockDiag:
         MockDiag.return_value.run.return_value = _fake_diagnosis()
         session = orch.run(OnDemandTrigger())
@@ -289,7 +289,7 @@ def main() -> None:
         f"{cfg.stagnation_k}, max_total_cost = ${cfg.max_total_cost_usd}) ==="
     )
     with patch(
-        "openjarvis.learning.spec_search.orchestrator.DiagnosisRunner"
+        "nivos.learning.spec_search.orchestrator.DiagnosisRunner"
     ) as MockDiag:
         MockDiag.return_value.run.return_value = _fake_diagnosis()
         result = loop.run()

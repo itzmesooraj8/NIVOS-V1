@@ -16,7 +16,7 @@ metadata that the paradigm needs (a problem statement vs. a question, hints,
 etc.) goes through ``context.metadata``.
 
 The original ``hybrid-local-cloud-compute`` harness is the reference
-implementation and stays untouched — these ports are the OpenJarvis-native
+implementation and stays untouched — these ports are the Nivos-native
 versions of the same paradigms.
 """
 
@@ -39,6 +39,6 @@ for _modname in (
     "baseline_local",
 ):
     try:
-        __import__(f"openjarvis.agents.hybrid.{_modname}")
+        __import__(f"nivos.agents.hybrid.{_modname}")
     except Exception as exc:  # pragma: no cover — optional deps may be missing
         logger.debug("hybrid agent %s skipped: %s", _modname, exc)

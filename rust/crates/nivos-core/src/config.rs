@@ -1,6 +1,6 @@
 //! Configuration loading and TOML deserialization.
 //!
-//! Rust translation of `src/openjarvis/core/config.py`.
+//! Rust translation of `src/nivos/core/config.py`.
 //! All config structs use `#[serde(default)]` for backward compatibility.
 
 use crate::error::ConfigError;
@@ -8,12 +8,15 @@ use crate::hardware::{detect_hardware, recommend_engine, HardwareInfo};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-/// Default config directory: `~/.openjarvis/`
+/// Default config directory: `~/.nivos/`
 pub fn default_config_dir() -> PathBuf {
-    dirs_home().join(".openjarvis")
+    if let Ok(p) = std::env::var("NIVOS_HOME").or_else(|_| std::env::var("OPENJARVIS_HOME")) {
+        return PathBuf::from(p);
+    }
+    dirs_home().join(".nivos")
 }
 
-/// Default config file path: `~/.openjarvis/config.toml`
+/// Default config file path: `~/.nivos/config.toml`
 pub fn default_config_path() -> PathBuf {
     default_config_dir().join("config.toml")
 }
@@ -775,7 +778,7 @@ pub struct SandboxConfig {
     pub wasm_memory_limit_mb: i64,
 }
 
-fn default_sandbox_image() -> String { "openjarvis-sandbox:latest".into() }
+fn default_sandbox_image() -> String { "nivos-sandbox:latest".into() }
 fn default_sandbox_timeout() -> i64 { 300 }
 fn default_max_concurrent() -> i64 { 5 }
 fn default_docker() -> String { "docker".into() }
@@ -860,7 +863,7 @@ pub struct OperatorsConfig {
     pub auto_activate: String,
 }
 
-fn default_operators_dir() -> String { "~/.openjarvis/operators".into() }
+fn default_operators_dir() -> String { "~/.nivos/operators".into() }
 
 // ---------------------------------------------------------------------------
 // Channel configs (kept minimal — channels stay in Python)
@@ -881,12 +884,12 @@ pub struct ChannelConfig {
 }
 
 // ---------------------------------------------------------------------------
-// Top-level JarvisConfig
+// Top-level NivosConfig
 // ---------------------------------------------------------------------------
 
-/// Top-level configuration for OpenJarvis.
+/// Top-level configuration for Nivos.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct JarvisConfig {
+pub struct NivosConfig {
     #[serde(skip)]
     pub hardware: HardwareInfo,
     #[serde(default)]
@@ -928,7 +931,7 @@ pub struct JarvisConfig {
 // ---------------------------------------------------------------------------
 
 /// Detect hardware, build defaults, overlay TOML overrides.
-pub fn load_config(path: Option<&Path>) -> Result<JarvisConfig, ConfigError> {
+pub fn load_config(path: Option<&Path>) -> Result<NivosConfig, ConfigError> {
     let hw = detect_hardware();
     let recommended_engine = recommend_engine(&hw);
 
@@ -938,14 +941,14 @@ pub fn load_config(path: Option<&Path>) -> Result<JarvisConfig, ConfigError> {
 
     let mut cfg = if config_path.exists() {
         let content = std::fs::read_to_string(&config_path)?;
-        let mut cfg: JarvisConfig = toml::from_str(&content)?;
+        let mut cfg: NivosConfig = toml::from_str(&content)?;
         // If the TOML didn't set a default engine, use the recommended one
         if cfg.engine.default == default_engine_name() || cfg.engine.default.is_empty() {
             cfg.engine.default = recommended_engine;
         }
         cfg
     } else {
-        let mut cfg = JarvisConfig::default();
+        let mut cfg = NivosConfig::default();
         cfg.engine.default = recommended_engine;
         cfg
     };
@@ -960,7 +963,7 @@ mod tests {
 
     #[test]
     fn test_default_config() {
-        let cfg = JarvisConfig::default();
+        let cfg = NivosConfig::default();
         assert_eq!(cfg.engine.default, "ollama");
         assert_eq!(cfg.intelligence.temperature, 0.7);
         assert_eq!(cfg.intelligence.max_tokens, 1024);
@@ -990,7 +993,7 @@ tools = "calculator,think"
 [security]
 mode = "block"
 "#;
-        let cfg: JarvisConfig = toml::from_str(toml_str).unwrap();
+        let cfg: NivosConfig = toml::from_str(toml_str).unwrap();
         assert_eq!(cfg.engine.default, "vllm");
         assert_eq!(cfg.engine.ollama.host, "http://custom:11434");
         assert_eq!(cfg.intelligence.temperature, 0.5);
@@ -1006,7 +1009,7 @@ mode = "block"
 [engine]
 default = "mlx"
 "#;
-        let cfg: JarvisConfig = toml::from_str(toml_str).unwrap();
+        let cfg: NivosConfig = toml::from_str(toml_str).unwrap();
         assert_eq!(cfg.engine.default, "mlx");
         // Everything else should be defaults
         assert_eq!(cfg.intelligence.temperature, 0.7);
@@ -1028,7 +1031,7 @@ policy = "grpo"
 accuracy_weight = 0.8
 latency_weight = 0.1
 "#;
-        let cfg: JarvisConfig = toml::from_str(toml_str).unwrap();
+        let cfg: NivosConfig = toml::from_str(toml_str).unwrap();
         assert!(cfg.learning.enabled);
         assert_eq!(cfg.learning.update_interval, 50);
         assert_eq!(cfg.learning.routing.policy, "grpo");
@@ -1045,7 +1048,7 @@ latency_weight = 0.1
 default_backend = "faiss"
 chunk_size = 256
 "#;
-        let cfg: JarvisConfig = toml::from_str(toml_str).unwrap();
+        let cfg: NivosConfig = toml::from_str(toml_str).unwrap();
         assert_eq!(cfg.tools.storage.default_backend, "faiss");
         assert_eq!(cfg.tools.storage.chunk_size, 256);
         assert_eq!(cfg.tools.storage.chunk_overlap, 64); // default

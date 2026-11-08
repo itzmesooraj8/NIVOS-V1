@@ -14,7 +14,7 @@ Three install paths are supported today:
   shallow Git history, fast-forwards the checkout, and rebuilds package metadata
   in the running environment without removing extras.
 
-We detect by inspecting ``openjarvis.__file__``. If we can't tell with
+We detect by inspecting ``nivos.__file__``. If we can't tell with
 confidence we fall back to the PyPI command — that's the most common
 case and the worst outcome is a no-op for a user who has nothing to
 pull from PyPI.
@@ -39,13 +39,13 @@ class InstallInfo:
 def detect_install() -> InstallInfo:
     """Return an :class:`InstallInfo` for the running interpreter.
 
-    Cheap: just walks the parent directories of ``openjarvis.__file__``
+    Cheap: just walks the parent directories of ``nivos.__file__``
     once and checks for marker directories. No subprocess calls.
     """
     try:
-        import openjarvis
+        import nivos
 
-        pkg_file = Path(openjarvis.__file__).resolve()
+        pkg_file = Path(nivos.__file__).resolve()
     except Exception:
         return InstallInfo(
             kind="unknown",
@@ -62,7 +62,7 @@ def detect_install() -> InstallInfo:
 
     # Editable install: a ``.git`` dir within a few parents of the
     # package source. Walk up at most ~8 levels — enough for typical
-    # ``<repo>/src/openjarvis/__init__.py`` layouts plus headroom, but
+    # ``<repo>/src/nivos/__init__.py`` layouts plus headroom, but
     # not so deep we wander into home or root.
     candidate = pkg_file.parent
     for _ in range(8):

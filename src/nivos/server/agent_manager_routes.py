@@ -7,20 +7,20 @@ import re as _re
 import threading
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from openjarvis.agents.manager import AgentManager
-from openjarvis.agents.tool_resolver import (
+from nivos.agents.manager import AgentManager
+from nivos.agents.tool_resolver import (
     BROWSER_SUB_TOOLS as _BROWSER_SUB_TOOLS,
 )
-from openjarvis.agents.tool_resolver import (
+from nivos.agents.tool_resolver import (
     build_deep_research_tools,
     instantiate_registered_tool,
     resolve_agent_tools,
     resolve_tool_specs,
 )
-from openjarvis.agents.tool_resolver import (
+from nivos.agents.tool_resolver import (
     ensure_registries_populated as _ensure_registries_populated,
 )
-from openjarvis.server.model_capabilities import is_embed_only_model
+from nivos.server.model_capabilities import is_embed_only_model
 
 try:
     from fastapi import APIRouter, HTTPException, Request
@@ -29,7 +29,7 @@ try:
 except ImportError:
     raise ImportError("fastapi and pydantic are required for server routes")
 
-logger = logging.getLogger("openjarvis.server.agent_manager")
+logger = logging.getLogger("nivos.server.agent_manager")
 _MEMORY_BACKEND_LOCK_SETUP = threading.Lock()
 _MCP_LOCK_SETUP = threading.Lock()
 
@@ -37,7 +37,7 @@ _MCP_LOCK_SETUP = threading.Lock()
 def _get_runtime_event_bus(runtime: Any = None) -> Any:
     """Return the server-owned event bus, falling back outside app runtimes."""
 
-    from openjarvis.core.events import get_event_bus
+    from nivos.core.events import get_event_bus
 
     bus = getattr(runtime, "bus", None)
     return bus if bus is not None else get_event_bus()
@@ -131,8 +131,8 @@ def _resolve_memory_backend(config: Any) -> Any:
     if config is None:
         return None
     try:
-        import openjarvis.tools.storage  # noqa: F401
-        from openjarvis.core.registry import MemoryRegistry
+        import nivos.tools.storage  # noqa: F401
+        from nivos.core.registry import MemoryRegistry
 
         key = config.memory.default_backend
         if MemoryRegistry.contains(key):
@@ -225,7 +225,7 @@ def _unregister_mcp_client(app_state: Any, client: Any) -> None:
 
 class _LightweightSystem:
     """Minimal system facade for the executor — avoids rebuilding the
-    full JarvisSystem (which picks a random model from Ollama)."""
+    full NivosSystem (which picks a random model from Ollama)."""
 
     def __init__(
         self,
@@ -289,11 +289,11 @@ def _make_lightweight_system(
     could interfere with in-flight requests).
     """
     try:
-        from openjarvis.engine._discovery import get_engine
+        from nivos.engine._discovery import get_engine
 
         cfg = config
         if cfg is None:
-            from openjarvis.core.config import load_config
+            from nivos.core.config import load_config
 
             cfg = load_config()
 
@@ -304,7 +304,7 @@ def _make_lightweight_system(
         if resolved is not None:
             plain_engine = resolved[1]
         else:
-            from openjarvis.engine.ollama import OllamaEngine
+            from nivos.engine.ollama import OllamaEngine
 
             host = cfg.engine.ollama.host if cfg else ""
             plain_engine = OllamaEngine(host=host) if host else OllamaEngine()
@@ -312,7 +312,7 @@ def _make_lightweight_system(
         # Wrap with InstrumentedEngine so agent ticks are recorded
         # in telemetry (FLOPs, energy, cost savings).
         try:
-            from openjarvis.telemetry.instrumented_engine import (
+            from nivos.telemetry.instrumented_engine import (
                 InstrumentedEngine,
             )
 
@@ -378,8 +378,8 @@ def build_tools_list() -> List[Dict[str, Any]]:
     """Build unified tools list from ToolRegistry + ChannelRegistry."""
     import os
 
-    from openjarvis.core.credentials import TOOL_CREDENTIALS
-    from openjarvis.core.registry import ChannelRegistry, ToolRegistry
+    from nivos.core.credentials import TOOL_CREDENTIALS
+    from nivos.core.registry import ChannelRegistry, ToolRegistry
 
     _ensure_registries_populated()
 
@@ -501,7 +501,7 @@ def _build_managed_system_prompt(system_prompt: str, app_config: Any) -> str:
     neither persona nor template yields an empty string, preserving the
     prior no-SYSTEM-message behavior.
     """
-    from openjarvis.prompt.builder import SystemPromptBuilder
+    from nivos.prompt.builder import SystemPromptBuilder
 
     builder = SystemPromptBuilder(
         agent_template=system_prompt or "",
@@ -533,7 +533,7 @@ def _replay_history_messages(
     regressing to fabricated tool output on later turns. Without this, only
     the assistant's text is replayed and the tool-use signal is lost (#382).
     """
-    from openjarvis.core.types import Message, Role, ToolCall
+    from nivos.core.types import Message, Role, ToolCall
 
     messages: List[Any] = []
     for m in reversed(history):
@@ -691,7 +691,7 @@ def _get_mcp_tools_locked(
         app_state._mcp_tools_cache = (openai_tools, adapters_by_name)
         return app_state._mcp_tools_cache
 
-    from openjarvis.core.config import load_config, resolve_mcp_servers
+    from nivos.core.config import load_config, resolve_mcp_servers
 
     openai_tools: List[Dict[str, Any]] = []
     adapters_by_name: Dict[str, Any] = {}
@@ -705,9 +705,9 @@ def _get_mcp_tools_locked(
     if not app_config.tools.mcp.enabled or not app_config.tools.mcp.servers:
         return openai_tools, adapters_by_name
 
-    from openjarvis.mcp.client import MCPClient
-    from openjarvis.mcp.transport import StdioTransport, StreamableHTTPTransport
-    from openjarvis.tools.mcp_adapter import MCPToolProvider
+    from nivos.mcp.client import MCPClient
+    from nivos.mcp.transport import StdioTransport, StreamableHTTPTransport
+    from nivos.tools.mcp_adapter import MCPToolProvider
 
     try:
         server_list = resolve_mcp_servers(
@@ -879,7 +879,7 @@ async def _stream_managed_agent(
 
     from starlette.background import BackgroundTask
 
-    from openjarvis.core.types import Message, Role
+    from nivos.core.types import Message, Role
 
     agent_id = agent_record["id"]
 
@@ -920,7 +920,7 @@ async def _stream_managed_agent(
     # persona files (parity with the CLI/ask path) — see #431.
     app_config = getattr(app_state, "config", None)
     if app_config is None:
-        from openjarvis.core.config import load_config
+        from nivos.core.config import load_config
 
         app_config = load_config()
 
@@ -998,7 +998,7 @@ async def _stream_managed_agent(
                 import queue
                 import time as _dr_time
 
-                from openjarvis.agents.deep_research import DeepResearchAgent
+                from nivos.agents.deep_research import DeepResearchAgent
 
                 progress_q: queue.Queue = queue.Queue()
 
@@ -1307,7 +1307,7 @@ async def _stream_managed_agent(
     if resolved_toolkit.openai_specs:
         stream_kwargs["tools"] = resolved_toolkit.openai_specs
 
-    from openjarvis.tools._stubs import ToolExecutor
+    from nivos.tools._stubs import ToolExecutor
 
     resolved_by_name = resolved_toolkit.by_name
     # Previously constructed with no capability_policy/rate_limiter/agent_id
@@ -1476,7 +1476,7 @@ async def _stream_managed_agent(
                 ]
 
                 # Add assistant message with tool_calls to conversation
-                from openjarvis.core.types import ToolCall as MsgToolCall
+                from nivos.core.types import ToolCall as MsgToolCall
 
                 assistant_msg = Message(
                     role=Role.ASSISTANT,
@@ -1735,7 +1735,7 @@ def create_agent_manager_router(
 
         def _run_tick():
             try:
-                from openjarvis.agents.executor import AgentExecutor
+                from nivos.agents.executor import AgentExecutor
 
                 _ts = getattr(app_state, "trace_store", None)
                 executor = AgentExecutor(
@@ -1858,7 +1858,7 @@ def create_agent_manager_router(
             identifier = (req.config or {}).get("identifier", "")
             if identifier:
                 try:
-                    from openjarvis.channels.imessage_daemon import (
+                    from nivos.channels.imessage_daemon import (
                         is_running,
                         run_daemon,
                     )
@@ -1870,7 +1870,7 @@ def create_agent_manager_router(
                         if engine:
                             tools = _build_deep_research_tools(engine=engine, model="")
                             if tools:
-                                from openjarvis.agents.deep_research import (
+                                from nivos.agents.deep_research import (
                                     DeepResearchAgent,
                                 )
 
@@ -1916,7 +1916,7 @@ def create_agent_manager_router(
             from_number = config.get("from_number", "")
             if api_key_id and api_secret_key:
                 try:
-                    from openjarvis.channels.sendblue import (
+                    from nivos.channels.sendblue import (
                         SendBlueChannel,
                     )
 
@@ -1935,10 +1935,10 @@ def create_agent_manager_router(
                         bridge._channels["sendblue"] = sb_channel
                     else:
                         # Create a new ChannelBridge with DeepResearch
-                        from openjarvis.server.channel_bridge import (
+                        from nivos.server.channel_bridge import (
                             ChannelBridge,
                         )
-                        from openjarvis.server.session_store import (
+                        from nivos.server.session_store import (
                             SessionStore,
                         )
 
@@ -1948,7 +1948,7 @@ def create_agent_manager_router(
                         if engine:
                             tools = _build_deep_research_tools(engine=engine, model="")
                             if tools:
-                                from openjarvis.agents.deep_research import (
+                                from nivos.agents.deep_research import (
                                     DeepResearchAgent,
                                 )
 
@@ -1976,7 +1976,7 @@ def create_agent_manager_router(
                                 )
                         bus = getattr(request.app.state, "bus", None)
                         if bus is None:
-                            from openjarvis.core.events import EventBus
+                            from nivos.core.events import EventBus
 
                             bus = EventBus()
                         bridge = ChannelBridge(
@@ -2002,10 +2002,10 @@ def create_agent_manager_router(
             app_token = config.get("app_token", "")
             if bot_token and app_token:
                 try:
-                    from openjarvis.channels.slack_daemon import (
+                    from nivos.channels.slack_daemon import (
                         start_slack_daemon,
                     )
-                    from openjarvis.channels.slack_daemon import (
+                    from nivos.channels.slack_daemon import (
                         stop_daemon as stop_slack,
                     )
 
@@ -2053,13 +2053,13 @@ def create_agent_manager_router(
             if binding:
                 ch_type = binding.get("channel_type")
                 if ch_type == "imessage":
-                    from openjarvis.channels.imessage_daemon import (
+                    from nivos.channels.imessage_daemon import (
                         stop_daemon,
                     )
 
                     stop_daemon()
                 elif ch_type == "slack":
-                    from openjarvis.channels.slack_daemon import (
+                    from nivos.channels.slack_daemon import (
                         stop_daemon as stop_slack_daemon,
                     )
 
@@ -2121,7 +2121,7 @@ def create_agent_manager_router(
             # Re-use the server's existing system (correct model/engine).
             import time as _time
 
-            from openjarvis.agents.executor import AgentExecutor
+            from nivos.agents.executor import AgentExecutor
 
             _app_state = request.app.state
             _srv_engine = getattr(_app_state, "engine", None)
@@ -2241,7 +2241,7 @@ def create_agent_manager_router(
     def trigger_learning(agent_id: str, request: Request):
         if not manager.get_agent(agent_id):
             raise HTTPException(status_code=404, detail="Agent not found")
-        from openjarvis.core.events import EventType
+        from nivos.core.events import EventType
 
         bus = _get_runtime_event_bus(request.app.state)
         bus.publish(EventType.AGENT_LEARNING_STARTED, {"agent_id": agent_id})
@@ -2254,9 +2254,9 @@ def create_agent_manager_router(
         if not manager.get_agent(agent_id):
             raise HTTPException(status_code=404, detail="Agent not found")
         try:
-            from openjarvis.core.config import load_config
-            from openjarvis.core.paths import get_config_dir
-            from openjarvis.traces.store import TraceStore
+            from nivos.core.config import load_config
+            from nivos.core.paths import get_config_dir
+            from nivos.traces.store import TraceStore
 
             config = load_config()
             store = TraceStore(
@@ -2282,9 +2282,9 @@ def create_agent_manager_router(
     @agents_router.get("/{agent_id}/traces/{trace_id}")
     def get_trace(agent_id: str, trace_id: str):
         try:
-            from openjarvis.core.config import load_config
-            from openjarvis.core.paths import get_config_dir
-            from openjarvis.traces.store import TraceStore
+            from nivos.core.config import load_config
+            from nivos.core.paths import get_config_dir
+            from nivos.traces.store import TraceStore
 
             config = load_config()
             store = TraceStore(
@@ -2389,7 +2389,7 @@ def create_agent_manager_router(
 
     @tools_router.post("/{tool_name}/credentials")
     async def save_tool_credentials(tool_name: str, request: Request):
-        from openjarvis.core.credentials import save_credential
+        from nivos.core.credentials import save_credential
 
         body = await request.json()
         saved = []
@@ -2400,14 +2400,14 @@ def create_agent_manager_router(
 
     @tools_router.delete("/{tool_name}/credentials/{key}")
     def remove_tool_credential(tool_name: str, key: str):
-        from openjarvis.core.credentials import delete_credential
+        from nivos.core.credentials import delete_credential
 
         delete_credential(tool_name, key)
         return {"deleted": key}
 
     @tools_router.get("/{tool_name}/credentials/status")
     def credential_status(tool_name: str):
-        from openjarvis.core.credentials import get_credential_status
+        from nivos.core.credentials import get_credential_status
 
         return get_credential_status(tool_name)
 

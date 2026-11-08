@@ -10,9 +10,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
-    from openjarvis.evals.core.types import EvalSuiteConfig
-    from openjarvis.operators.types import OperatorManifest
-    from openjarvis.recipes.loader import Recipe
+    from nivos.evals.core.types import EvalSuiteConfig
+    from nivos.operators.types import OperatorManifest
+    from nivos.recipes.loader import Recipe
 
 
 def recipe_to_eval_suite(
@@ -37,7 +37,7 @@ def recipe_to_eval_suite(
     Raises:
         ValueError: If no model or benchmarks can be resolved.
     """
-    from openjarvis.evals.core.types import (
+    from nivos.evals.core.types import (
         BenchmarkConfig,
         DefaultsConfig,
         EvalSuiteConfig,
@@ -64,7 +64,7 @@ def recipe_to_eval_suite(
         )
 
     has_agent = recipe.agent_type is not None
-    backend = recipe.eval_backend or ("jarvis-agent" if has_agent else "jarvis-direct")
+    backend = recipe.eval_backend or ("nivos-agent" if has_agent else "nivos-direct")
 
     model_cfg = ModelConfig(
         name=model_name,
@@ -113,7 +113,7 @@ def recipe_to_operator(recipe: Recipe) -> OperatorManifest:
     Raises:
         ValueError: If schedule information is missing.
     """
-    from openjarvis.operators.types import OperatorManifest
+    from nivos.operators.types import OperatorManifest
 
     if not recipe.schedule_type:
         raise ValueError(

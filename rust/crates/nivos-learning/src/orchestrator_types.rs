@@ -1,6 +1,6 @@
 //! Episode dataclasses for orchestrator training.
 //!
-//! Ported from Python `openjarvis.learning.orchestrator.types`.
+//! Ported from Python `nivos.learning.orchestrator.types`.
 
 use once_cell::sync::Lazy;
 use regex::Regex;

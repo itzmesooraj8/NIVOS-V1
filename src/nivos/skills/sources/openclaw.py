@@ -15,8 +15,8 @@ from typing import List
 
 import yaml
 
-from openjarvis.core.paths import get_config_dir
-from openjarvis.skills.sources.base import ResolvedSkill, SourceResolver
+from nivos.core.paths import get_config_dir
+from nivos.skills.sources.base import ResolvedSkill, SourceResolver
 
 LOGGER = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from openjarvis.core.paths import get_config_dir
+from nivos.core.paths import get_config_dir
 
 
 @dataclass

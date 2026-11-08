@@ -1,7 +1,7 @@
 """Direct cloud API router — bypasses the engine system entirely.
 
 Reads API keys from the process environment, with a legacy
-~/.openjarvis/cloud-keys.env fallback for non-desktop/manual setups. Uses
+~/.nivos/cloud-keys.env fallback for non-desktop/manual setups. Uses
 httpx directly so no cloud SDK packages are required.
 """
 
@@ -14,8 +14,8 @@ from typing import Any, Sequence
 
 import httpx
 
-from openjarvis.core.paths import get_config_dir
-from openjarvis.core.types import Message
+from nivos.core.paths import get_config_dir
+from nivos.core.types import Message
 
 # ---------------------------------------------------------------------------
 # Key / provider detection

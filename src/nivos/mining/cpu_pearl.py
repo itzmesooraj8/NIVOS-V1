@@ -16,9 +16,9 @@ import time
 import urllib.request
 from pathlib import Path
 
-from openjarvis.core.config import HardwareInfo
-from openjarvis.core.paths import get_config_dir
-from openjarvis.core.registry import MinerRegistry
+from nivos.core.config import HardwareInfo
+from nivos.core.paths import get_config_dir
+from nivos.core.registry import MinerRegistry
 
 from . import _install
 from ._constants import (
@@ -205,7 +205,7 @@ class CpuPearlProvider(MiningProvider):
 def ensure_registered() -> None:
     """Idempotently register CpuPearlProvider in MinerRegistry.
 
-    Called once at import time from ``openjarvis.mining.__init__``. Tests that
+    Called once at import time from ``nivos.mining.__init__``. Tests that
     rely on the autouse registry-clear fixture in ``tests/conftest.py`` must
     call this from a fixture or test body to re-register after the clear.
     """

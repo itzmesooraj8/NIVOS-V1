@@ -1,4 +1,4 @@
-"""``jarvis gateway start|stop|status|logs`` — multi-channel gateway management."""
+"""``nivos gateway start|stop|status|logs`` — multi-channel gateway management."""
 
 from __future__ import annotations
 
@@ -24,14 +24,14 @@ def start(install: bool) -> None:
     if install:
         import platform as plat
 
-        from openjarvis.daemon.service import (
+        from nivos.daemon.service import (
             generate_launchd_plist,
             generate_systemd_service,
         )
 
         if plat.system() == "Darwin":
             plist_path = (
-                Path.home() / "Library/LaunchAgents/com.openjarvis.gateway.plist"
+                Path.home() / "Library/LaunchAgents/com.nivos.gateway.plist"
             )
             generate_launchd_plist(plist_path)
             click.echo(f"Wrote {plist_path}")
@@ -41,7 +41,7 @@ def start(install: bool) -> None:
             )
         else:
             service_path = (
-                Path.home() / ".config/systemd/user/openjarvis-gateway.service"
+                Path.home() / ".config/systemd/user/nivos-gateway.service"
             )
             generate_systemd_service(service_path)
             click.echo(f"Wrote {service_path}")
@@ -50,7 +50,7 @@ def start(install: bool) -> None:
                 check=False,
             )
             subprocess.run(
-                ["systemctl", "--user", "enable", "--now", "openjarvis-gateway"],
+                ["systemctl", "--user", "enable", "--now", "nivos-gateway"],
                 check=False,
             )
     else:
@@ -65,12 +65,12 @@ def stop() -> None:
 
     if plat.system() == "Darwin":
         subprocess.run(
-            ["launchctl", "remove", "com.openjarvis.gateway"],
+            ["launchctl", "remove", "com.nivos.gateway"],
             check=False,
         )
     else:
         subprocess.run(
-            ["systemctl", "--user", "stop", "openjarvis-gateway"],
+            ["systemctl", "--user", "stop", "nivos-gateway"],
             check=False,
         )
     click.echo("Gateway stopped.")
@@ -83,12 +83,12 @@ def status() -> None:
 
     if plat.system() == "Darwin":
         subprocess.run(
-            ["launchctl", "list", "com.openjarvis.gateway"],
+            ["launchctl", "list", "com.nivos.gateway"],
             check=False,
         )
     else:
         subprocess.run(
-            ["systemctl", "--user", "status", "openjarvis-gateway"],
+            ["systemctl", "--user", "status", "nivos-gateway"],
             check=False,
         )
 
@@ -99,9 +99,9 @@ def logs() -> None:
     import platform as plat
 
     if plat.system() == "Darwin":
-        click.echo("Check ~/Library/Logs/com.openjarvis.gateway.log")
+        click.echo("Check ~/Library/Logs/com.nivos.gateway.log")
     else:
         subprocess.run(
-            ["journalctl", "--user", "-u", "openjarvis-gateway", "-f"],
+            ["journalctl", "--user", "-u", "nivos-gateway", "-f"],
             check=False,
         )

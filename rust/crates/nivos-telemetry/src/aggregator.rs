@@ -1,7 +1,7 @@
 //! TelemetryAggregator — read-only SQL aggregation queries.
 
 use crate::store::TelemetryStore;
-use openjarvis_core::OpenJarvisError;
+use nivos_core::NivosError;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -17,7 +17,7 @@ pub struct AggregateStats {
 pub struct TelemetryAggregator;
 
 impl TelemetryAggregator {
-    pub fn stats(_store: &TelemetryStore) -> Result<AggregateStats, OpenJarvisError> {
+    pub fn stats(_store: &TelemetryStore) -> Result<AggregateStats, NivosError> {
         Ok(AggregateStats::default())
     }
 }

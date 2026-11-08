@@ -1,4 +1,4 @@
-"""High-level Python SDK for OpenJarvis."""
+"""High-level Python SDK for Nivos."""
 
 from __future__ import annotations
 
@@ -7,14 +7,14 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import openjarvis
-from openjarvis.core.config import JarvisConfig, load_config
-from openjarvis.core.events import EventBus
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._discovery import get_engine
-from openjarvis.system import JarvisSystem, SystemBuilder
-from openjarvis.telemetry.instrumented_engine import InstrumentedEngine
-from openjarvis.telemetry.store import TelemetryStore
+import nivos
+from nivos.core.config import NivosConfig, load_config
+from nivos.core.events import EventBus
+from nivos.core.types import Message, Role
+from nivos.engine._discovery import get_engine
+from nivos.system import NivosSystem, SystemBuilder
+from nivos.telemetry.instrumented_engine import InstrumentedEngine
+from nivos.telemetry.store import TelemetryStore
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class MemoryHandle:
     """Proxy for memory operations. Lazily initializes backend."""
 
-    def __init__(self, config: JarvisConfig) -> None:
+    def __init__(self, config: NivosConfig) -> None:
         self._config = config
         self._backend: Any = None
 
@@ -30,14 +30,14 @@ class MemoryHandle:
         if self._backend is not None:
             return self._backend
 
-        import openjarvis.tools.storage  # noqa: F401
-        from openjarvis.core.registry import MemoryRegistry
+        import nivos.tools.storage  # noqa: F401
+        from nivos.core.registry import MemoryRegistry
 
         key = self._config.memory.default_backend
         if not MemoryRegistry.contains(key):
             # Register built-in backends
             try:
-                from openjarvis.tools.storage.sqlite import SQLiteMemory  # noqa: F401
+                from nivos.tools.storage.sqlite import SQLiteMemory  # noqa: F401
             except ImportError:
                 pass
 
@@ -61,8 +61,8 @@ class MemoryHandle:
         chunk_overlap: int = 64,
     ) -> Dict[str, Any]:
         """Index a file or directory into memory."""
-        from openjarvis.tools.storage.chunking import ChunkConfig
-        from openjarvis.tools.storage.ingest import ingest_path
+        from nivos.tools.storage.chunking import ChunkConfig
+        from nivos.tools.storage.ingest import ingest_path
 
         backend = self._get_backend()
         cfg = ChunkConfig(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
@@ -121,14 +121,14 @@ class MemoryHandle:
         self.close()
 
 
-class Jarvis:
-    """High-level OpenJarvis SDK.
+class Nivos:
+    """High-level Nivos SDK.
 
     Usage::
 
-        from openjarvis import Jarvis
+        from nivos import Nivos
 
-        with Jarvis() as j:
+        with Nivos() as j:
             response = j.ask("Hello, what can you do?")
             print(response)
 
@@ -136,7 +136,7 @@ class Jarvis:
         import asyncio
 
         async def main():
-            j = Jarvis()
+            j = Nivos()
             async for token in j.ask_stream("Tell me a joke"):
                 print(token, end="", flush=True)
             j.close()
@@ -144,7 +144,7 @@ class Jarvis:
         asyncio.run(main())
 
         # Or without context manager:
-        j = Jarvis()
+        j = Nivos()
         response = j.ask("Hello")
         j.close()
     """
@@ -152,7 +152,7 @@ class Jarvis:
     def __init__(
         self,
         *,
-        config: Optional[JarvisConfig] = None,
+        config: Optional[NivosConfig] = None,
         config_path: Optional[str] = None,
         engine_key: Optional[str] = None,
         model: Optional[str] = None,
@@ -185,14 +185,14 @@ class Jarvis:
                 logger.warning("Failed to initialize telemetry store: %s", exc)
 
     @property
-    def config(self) -> JarvisConfig:
+    def config(self) -> NivosConfig:
         """Return the active configuration."""
         return self._config
 
     @property
     def version(self) -> str:
-        """Return the OpenJarvis version string."""
-        return openjarvis.__version__
+        """Return the Nivos version string."""
+        return nivos.__version__
 
     def _ensure_engine(self) -> None:
         """Lazily initialize the inference engine."""
@@ -201,7 +201,7 @@ class Jarvis:
 
         # Import engines to trigger registration
         try:
-            import openjarvis.engine  # noqa: F401
+            import nivos.engine  # noqa: F401
         except ImportError:
             pass
 
@@ -216,7 +216,7 @@ class Jarvis:
         self._resolved_engine_key, engine = resolved
 
         # Apply security guardrails
-        from openjarvis.security import setup_security
+        from nivos.security import setup_security
 
         sec = setup_security(self._config, engine, self._bus)
         engine = sec.engine
@@ -228,7 +228,7 @@ class Jarvis:
         energy_monitor = None
         if self._config.telemetry.gpu_metrics:
             try:
-                from openjarvis.telemetry.energy_monitor import create_energy_monitor
+                from nivos.telemetry.energy_monitor import create_energy_monitor
 
                 energy_monitor = create_energy_monitor(
                     prefer_vendor=self._config.telemetry.energy_vendor or None,
@@ -453,9 +453,9 @@ class Jarvis:
         channel: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """Run an agent and return the result dict."""
-        import openjarvis.agents  # noqa: F401
-        from openjarvis.agents._stubs import AgentContext
-        from openjarvis.core.registry import AgentRegistry
+        import nivos.agents  # noqa: F401
+        from nivos.agents._stubs import AgentContext
+        from nivos.core.registry import AgentRegistry
 
         if not AgentRegistry.contains(agent_name):
             raise ValueError(
@@ -468,8 +468,8 @@ class Jarvis:
         # Build tools
         tool_objects: List[Any] = []
         if tools:
-            import openjarvis.tools  # noqa: F401
-            from openjarvis.cli.ask import _build_tools
+            import nivos.tools  # noqa: F401
+            from nivos.cli.ask import _build_tools
 
             tool_objects = _build_tools(
                 tools,
@@ -487,7 +487,7 @@ class Jarvis:
         if getattr(agent_cls, "accepts_tools", False):
             agent_kwargs["tools"] = tool_objects
             agent_kwargs["max_turns"] = self._config.agent.max_turns
-        from openjarvis.security.runtime import agent_security_kwargs
+        from nivos.security.runtime import agent_security_kwargs
 
         agent_kwargs.update(
             agent_security_kwargs(
@@ -519,8 +519,8 @@ class Jarvis:
                 }
             )
             # Ensure digest agent always has its required tools
-            from openjarvis.tools.digest_collect import DigestCollectTool
-            from openjarvis.tools.text_to_speech import TextToSpeechTool
+            from nivos.tools.digest_collect import DigestCollectTool
+            from nivos.tools.text_to_speech import TextToSpeechTool
 
             digest_tools = [DigestCollectTool(), TextToSpeechTool()]
             existing = agent_kwargs.get("tools", [])
@@ -532,7 +532,7 @@ class Jarvis:
         import inspect as _inspect
 
         if "prompt_builder" in _inspect.signature(agent_cls.__init__).parameters:
-            from openjarvis.prompt.builder import SystemPromptBuilder
+            from nivos.prompt.builder import SystemPromptBuilder
 
             agent_kwargs["prompt_builder"] = SystemPromptBuilder(
                 agent_template=self._config.agent.default_system_prompt or "",
@@ -541,7 +541,7 @@ class Jarvis:
             )
 
         agent_obj = agent_cls(self._engine, model_name, **agent_kwargs)
-        from openjarvis.security.runtime import wire_agent_security
+        from nivos.security.runtime import wire_agent_security
 
         wire_agent_security(
             agent_obj,
@@ -555,8 +555,8 @@ class Jarvis:
         # Context injection
         if context and self._config.agent.context_from_memory:
             try:
-                from openjarvis.cli.ask import _get_memory_backend, _get_memory_facts
-                from openjarvis.tools.storage.context import (
+                from nivos.cli.ask import _get_memory_backend, _get_memory_facts
+                from nivos.tools.storage.context import (
                     ContextConfig,
                     inject_context,
                 )
@@ -605,8 +605,8 @@ class Jarvis:
     ) -> List[Message]:
         """Inject memory context into messages."""
         try:
-            from openjarvis.cli.ask import _get_memory_backend, _get_memory_facts
-            from openjarvis.tools.storage.context import ContextConfig, inject_context
+            from nivos.cli.ask import _get_memory_backend, _get_memory_facts
+            from nivos.tools.storage.context import ContextConfig, inject_context
 
             backend = _get_memory_backend(self._config)
             facts = _get_memory_facts(self._config)
@@ -634,7 +634,7 @@ class Jarvis:
 
     def list_engines(self) -> List[str]:
         """Return a list of registered engine keys."""
-        from openjarvis.core.registry import EngineRegistry
+        from nivos.core.registry import EngineRegistry
 
         return list(EngineRegistry.keys())
 
@@ -667,11 +667,11 @@ class Jarvis:
             finally:
                 self._engine = None
 
-    def __enter__(self) -> Jarvis:
+    def __enter__(self) -> Nivos:
         return self
 
     def __exit__(self, *exc: Any) -> None:
         self.close()
 
 
-__all__ = ["Jarvis", "JarvisSystem", "MemoryHandle", "SystemBuilder"]
+__all__ = ["Nivos", "NivosSystem", "MemoryHandle", "SystemBuilder"]

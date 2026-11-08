@@ -7,8 +7,8 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Optional, Union
 
-from openjarvis.core.paths import get_config_dir
-from openjarvis.security.credential_stripper import CredentialStripper
+from nivos.core.paths import get_config_dir
+from nivos.security.credential_stripper import CredentialStripper
 
 _stripper = CredentialStripper()
 
@@ -26,7 +26,7 @@ def setup_logging(
     quiet: bool = False,
     log_file: Optional[Union[str, Path]] = None,
 ) -> logging.Logger:
-    """Configure the ``openjarvis`` logger.
+    """Configure the ``nivos`` logger.
 
     Parameters
     ----------
@@ -37,13 +37,13 @@ def setup_logging(
     log_file:
         Path for a rotating file handler.  When *verbose* is ``True``
         and no *log_file* is given, defaults to
-        ``~/.openjarvis/cli.log``.
+        ``~/.nivos/cli.log``.
 
     Returns
     -------
-    The configured ``openjarvis`` logger.
+    The configured ``nivos`` logger.
     """
-    logger = logging.getLogger("openjarvis")
+    logger = logging.getLogger("nivos")
 
     # Clear existing handlers to avoid duplication across calls
     logger.handlers.clear()
@@ -67,7 +67,7 @@ def setup_logging(
     # File handler (verbose or explicit path)
     if verbose or log_file is not None:
         if log_file is None:
-            from openjarvis.security.file_utils import secure_mkdir
+            from nivos.security.file_utils import secure_mkdir
 
             log_dir = get_config_dir()
             secure_mkdir(log_dir)

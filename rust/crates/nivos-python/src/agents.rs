@@ -4,18 +4,18 @@
 
 use crate::core::PyAgentResult;
 use crate::RUNTIME;
-use openjarvis_agents::OjAgent;
-use openjarvis_engine::rig_adapter::RigModelAdapter;
-use openjarvis_engine::Engine;
+use nivos_agents::OjAgent;
+use nivos_engine::rig_adapter::RigModelAdapter;
+use nivos_engine::Engine;
 use pyo3::prelude::*;
 use std::sync::Arc;
 
 type DefaultAdapter = RigModelAdapter<Engine>;
 
 enum AgentEnum {
-    Simple(openjarvis_agents::SimpleAgent<DefaultAdapter>),
-    Orchestrator(openjarvis_agents::OrchestratorAgent<DefaultAdapter>),
-    NativeReAct(openjarvis_agents::NativeReActAgent<DefaultAdapter>),
+    Simple(nivos_agents::SimpleAgent<DefaultAdapter>),
+    Orchestrator(nivos_agents::OrchestratorAgent<DefaultAdapter>),
+    NativeReAct(nivos_agents::NativeReActAgent<DefaultAdapter>),
 }
 
 impl AgentEnum {
@@ -38,8 +38,8 @@ impl AgentEnum {
     async fn run(
         &self,
         input: &str,
-        context: Option<&openjarvis_core::AgentContext>,
-    ) -> Result<openjarvis_core::AgentResult, openjarvis_core::OpenJarvisError> {
+        context: Option<&nivos_core::AgentContext>,
+    ) -> Result<nivos_core::AgentResult, nivos_core::NivosError> {
         match self {
             AgentEnum::Simple(a) => a.run(input, context).await,
             AgentEnum::Orchestrator(a) => a.run(input, context).await,
@@ -49,8 +49,8 @@ impl AgentEnum {
 }
 
 fn make_adapter(engine_key: &str, model: &str) -> PyResult<DefaultAdapter> {
-    let config = openjarvis_core::JarvisConfig::default();
-    let engine = openjarvis_engine::get_engine_static(&config, Some(engine_key))
+    let config = nivos_core::NivosConfig::default();
+    let engine = nivos_engine::get_engine_static(&config, Some(engine_key))
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
     Ok(RigModelAdapter::new(Arc::new(engine), model.to_string()))
 }
@@ -72,7 +72,7 @@ impl PySimpleAgent {
         temperature: f64,
     ) -> PyResult<Self> {
         let adapter = make_adapter(engine_key, model)?;
-        let agent = openjarvis_agents::SimpleAgent::new(adapter, system_prompt, temperature);
+        let agent = nivos_agents::SimpleAgent::new(adapter, system_prompt, temperature);
         Ok(Self { inner: AgentEnum::Simple(agent) })
     }
 
@@ -113,8 +113,8 @@ impl PyOrchestratorAgent {
         temperature: f64,
     ) -> PyResult<Self> {
         let adapter = make_adapter(engine_key, model)?;
-        let executor = Arc::new(openjarvis_tools::ToolExecutor::new(None, None));
-        let agent = openjarvis_agents::OrchestratorAgent::new(
+        let executor = Arc::new(nivos_tools::ToolExecutor::new(None, None));
+        let agent = nivos_agents::OrchestratorAgent::new(
             adapter, system_prompt, executor, max_turns, temperature,
         );
         Ok(Self { inner: AgentEnum::Orchestrator(agent) })
@@ -156,8 +156,8 @@ impl PyNativeReActAgent {
         temperature: f64,
     ) -> PyResult<Self> {
         let adapter = make_adapter(engine_key, model)?;
-        let executor = Arc::new(openjarvis_tools::ToolExecutor::new(None, None));
-        let agent = openjarvis_agents::NativeReActAgent::new(
+        let executor = Arc::new(nivos_tools::ToolExecutor::new(None, None));
+        let agent = nivos_agents::NativeReActAgent::new(
             adapter, executor, max_turns, temperature,
         );
         Ok(Self { inner: AgentEnum::NativeReAct(agent) })
@@ -199,15 +199,15 @@ impl PyNativeOpenHandsAgent {
         max_turns: usize,
         temperature: f64,
     ) -> PyResult<Self> {
-        let config = openjarvis_core::JarvisConfig::default();
-        let engine = openjarvis_engine::get_engine_static(&config, Some(engine_key))
+        let config = nivos_core::NivosConfig::default();
+        let engine = nivos_engine::get_engine_static(&config, Some(engine_key))
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
-        let adapter = openjarvis_engine::rig_adapter::RigModelAdapter::new(
+        let adapter = nivos_engine::rig_adapter::RigModelAdapter::new(
             Arc::new(engine),
             model.to_string(),
         );
-        let executor = Arc::new(openjarvis_tools::ToolExecutor::new(None, None));
-        let agent = openjarvis_agents::NativeOpenHandsAgent::new(
+        let executor = Arc::new(nivos_tools::ToolExecutor::new(None, None));
+        let agent = nivos_agents::NativeOpenHandsAgent::new(
             adapter,
             executor,
             max_turns,
@@ -280,39 +280,39 @@ impl PyMonitorOperativeAgent {
         compression_threshold: usize,
         truncation_limit: usize,
     ) -> PyResult<Self> {
-        let config = openjarvis_core::JarvisConfig::default();
-        let engine = openjarvis_engine::get_engine_static(&config, Some(engine_key))
+        let config = nivos_core::NivosConfig::default();
+        let engine = nivos_engine::get_engine_static(&config, Some(engine_key))
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
-        let adapter = openjarvis_engine::rig_adapter::RigModelAdapter::new(
+        let adapter = nivos_engine::rig_adapter::RigModelAdapter::new(
             Arc::new(engine),
             model.to_string(),
         );
-        let executor = Arc::new(openjarvis_tools::ToolExecutor::new(None, None));
+        let executor = Arc::new(nivos_tools::ToolExecutor::new(None, None));
 
         let mem_ext = match memory_extraction {
-            "scratchpad" => openjarvis_agents::MemoryExtraction::Scratchpad,
-            "structured_json" => openjarvis_agents::MemoryExtraction::StructuredJson,
-            "none" => openjarvis_agents::MemoryExtraction::None,
-            _ => openjarvis_agents::MemoryExtraction::CausalityGraph,
+            "scratchpad" => nivos_agents::MemoryExtraction::Scratchpad,
+            "structured_json" => nivos_agents::MemoryExtraction::StructuredJson,
+            "none" => nivos_agents::MemoryExtraction::None,
+            _ => nivos_agents::MemoryExtraction::CausalityGraph,
         };
         let obs_comp = match observation_compression {
-            "truncate" => openjarvis_agents::ObservationCompression::Truncate,
-            "none" => openjarvis_agents::ObservationCompression::None,
-            _ => openjarvis_agents::ObservationCompression::Summarize,
+            "truncate" => nivos_agents::ObservationCompression::Truncate,
+            "none" => nivos_agents::ObservationCompression::None,
+            _ => nivos_agents::ObservationCompression::Summarize,
         };
         let ret_strat = match retrieval_strategy {
-            "keyword" => openjarvis_agents::RetrievalStrategy::Keyword,
-            "semantic" => openjarvis_agents::RetrievalStrategy::Semantic,
-            "none" => openjarvis_agents::RetrievalStrategy::None,
-            _ => openjarvis_agents::RetrievalStrategy::HybridWithSelfEval,
+            "keyword" => nivos_agents::RetrievalStrategy::Keyword,
+            "semantic" => nivos_agents::RetrievalStrategy::Semantic,
+            "none" => nivos_agents::RetrievalStrategy::None,
+            _ => nivos_agents::RetrievalStrategy::HybridWithSelfEval,
         };
         let task_dec = match task_decomposition {
-            "monolithic" => openjarvis_agents::TaskDecomposition::Monolithic,
-            "hierarchical" => openjarvis_agents::TaskDecomposition::Hierarchical,
-            _ => openjarvis_agents::TaskDecomposition::Phased,
+            "monolithic" => nivos_agents::TaskDecomposition::Monolithic,
+            "hierarchical" => nivos_agents::TaskDecomposition::Hierarchical,
+            _ => nivos_agents::TaskDecomposition::Phased,
         };
 
-        let monitor_config = openjarvis_agents::MonitorConfig {
+        let monitor_config = nivos_agents::MonitorConfig {
             memory_extraction: mem_ext,
             observation_compression: obs_comp,
             retrieval_strategy: ret_strat,
@@ -321,7 +321,7 @@ impl PyMonitorOperativeAgent {
             truncation_limit,
         };
 
-        let agent = openjarvis_agents::MonitorOperativeAgent::new(
+        let agent = nivos_agents::MonitorOperativeAgent::new(
             adapter,
             executor,
             max_turns,
@@ -355,7 +355,7 @@ impl PyMonitorOperativeAgent {
 /// Python wrapper for LoopGuard.
 #[pyclass(name = "LoopGuard")]
 pub struct PyLoopGuard {
-    inner: openjarvis_agents::LoopGuard,
+    inner: nivos_agents::LoopGuard,
 }
 
 #[pymethods]
@@ -364,7 +364,7 @@ impl PyLoopGuard {
     #[pyo3(signature = (max_identical=50, max_ping_pong=4, poll_budget=100))]
     fn new(max_identical: usize, max_ping_pong: usize, poll_budget: usize) -> Self {
         Self {
-            inner: openjarvis_agents::LoopGuard::new(max_identical, max_ping_pong, poll_budget),
+            inner: nivos_agents::LoopGuard::new(max_identical, max_ping_pong, poll_budget),
         }
     }
 

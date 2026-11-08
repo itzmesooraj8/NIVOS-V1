@@ -15,20 +15,20 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from openjarvis.learning.spec_search.diagnose.teacher_agent import (
+from nivos.learning.spec_search.diagnose.teacher_agent import (
     TeacherAgent,
 )
-from openjarvis.learning.spec_search.diagnose.tools import (
+from nivos.learning.spec_search.diagnose.tools import (
     build_diagnostic_tools,
 )
-from openjarvis.learning.spec_search.diagnose.types import ToolCallRecord
-from openjarvis.learning.spec_search.models import FailureCluster
+from nivos.learning.spec_search.diagnose.types import ToolCallRecord
+from nivos.learning.spec_search.models import FailureCluster
 
 logger = logging.getLogger(__name__)
 
 _SYSTEM_PROMPT = """\
 You are a meta-engineer analyzing the performance of a local AI assistant \
-called OpenJarvis. Your job is to diagnose why the local student model fails \
+called Nivos. Your job is to diagnose why the local student model fails \
 on certain tasks and identify root cause patterns.
 
 IMPORTANT — OUTPUT REQUIREMENT: You MUST end your response with a JSON array \
@@ -106,7 +106,7 @@ class DiagnosisRunner:
     session_id :
         Current session id.
     config :
-        Dict with config_path and openjarvis_home.
+        Dict with config_path and nivos_home.
     max_turns :
         Max teacher tool calls (default 30).
     max_cost_usd :

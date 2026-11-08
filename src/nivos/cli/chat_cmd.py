@@ -1,4 +1,4 @@
-"""``jarvis chat`` — interactive multi-turn chat REPL."""
+"""``nivos chat`` — interactive multi-turn chat REPL."""
 
 from __future__ import annotations
 
@@ -11,20 +11,20 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.markup import escape
 
-from openjarvis.cli._runtime_panel import runtime_cli_options
-from openjarvis.cli._tool_names import resolve_tool_names
-from openjarvis.cli._voice_chat import VOICE_EXIT, VoiceSession, read_voice_input, speak
-from openjarvis.core.config import load_config
-from openjarvis.core.events import EventBus
-from openjarvis.core.types import Message, Role
-from openjarvis.memory import publish_completed_exchange
+from nivos.cli._runtime_panel import runtime_cli_options
+from nivos.cli._tool_names import resolve_tool_names
+from nivos.cli._voice_chat import VOICE_EXIT, VoiceSession, read_voice_input, speak
+from nivos.core.config import load_config
+from nivos.core.events import EventBus
+from nivos.core.types import Message, Role
+from nivos.memory import publish_completed_exchange
 
 logger = logging.getLogger(__name__)
 
 
 def _safe_rich_label(value: object) -> str:
     """Strip terminal controls and escape Rich markup in dynamic labels."""
-    from openjarvis.cli._model_switch import sanitize_model_id
+    from nivos.cli._model_switch import sanitize_model_id
 
     return escape(sanitize_model_id(str(value)))
 
@@ -55,8 +55,8 @@ def _read_input(prompt: str = "You> ") -> Optional[str]:
     is_flag=True,
     default=False,
     help=(
-        "Show the model list before chat. Bare ``jarvis`` already does this on a TTY "
-        "unless JARVIS_SKIP_MODEL_PICK=1."
+        "Show the model list before chat. Bare ``nivos`` already does this on a TTY "
+        "unless NIVOS_SKIP_MODEL_PICK=1."
     ),
 )
 @click.option("-a", "--agent", "agent_name", default=None, help="Agent type.")
@@ -67,7 +67,7 @@ def _read_input(prompt: str = "You> ") -> Optional[str]:
     "persona_name",
     default=None,
     help=(
-        "Named persona dir under ~/.openjarvis/personas/<name>/ "
+        "Named persona dir under ~/.nivos/personas/<name>/ "
         "(overrides config). Pass 'none' to disable all persona files."
     ),
 )
@@ -96,8 +96,8 @@ def chat(
 
     Model: omit ``-m`` to use ``[intelligence] model_chat`` if set, else
     ``default_model``; ``-m smart`` is the same. Use ``--pick-model`` to open the
-    engine list first (bare ``jarvis`` does this on a TTY unless
-    ``JARVIS_SKIP_MODEL_PICK=1``).
+    engine list first (bare ``nivos`` does this on a TTY unless
+    ``NIVOS_SKIP_MODEL_PICK=1``).
 
     Commands during chat:
       /quit, /exit  — end session
@@ -124,8 +124,8 @@ def chat(
     )
 
     # Resolve engine
-    from openjarvis.engine import get_engine
-    from openjarvis.intelligence import register_builtin_models
+    from nivos.engine import get_engine
+    from nivos.intelligence import register_builtin_models
 
     register_builtin_models()
 
@@ -135,7 +135,7 @@ def chat(
         sys.exit(1)
 
     engine_name, engine = resolved
-    from openjarvis.cli._model_switch import (
+    from nivos.cli._model_switch import (
         interactive_pick_model,
         resolve_chat_cli_model,
         tty_wants_model_picker,
@@ -163,7 +163,7 @@ def chat(
         console.print("[red]No model available.[/red]")
         sys.exit(1)
 
-    from openjarvis.cli._runtime_panel import (
+    from nivos.cli._runtime_panel import (
         ChatRuntimeOptions,
         interactive_pick_runtime_options,
         tty_wants_runtime_panel,
@@ -189,7 +189,7 @@ def chat(
     # Interactive chat is a first-class tool execution path. Apply the same
     # configured engine guardrails, RBAC, rate limiting, and audit bus as ask,
     # serve, and the SDK before constructing any agent.
-    from openjarvis.security import setup_security
+    from nivos.security import setup_security
 
     security = setup_security(config, engine, bus)
     engine = security.engine
@@ -199,8 +199,8 @@ def chat(
     agent_key = agent_name or config.agent.default_agent
     if agent_key and agent_key != "none":
         try:
-            import openjarvis.agents  # noqa: F401 — trigger registration
-            from openjarvis.core.registry import AgentRegistry
+            import nivos.agents  # noqa: F401 — trigger registration
+            from nivos.core.registry import AgentRegistry
 
             if AgentRegistry.contains(agent_key):
                 agent_cls = AgentRegistry.get(agent_key)
@@ -213,9 +213,9 @@ def chat(
                         getattr(config.agent, "tools", None),
                     )
                     if tool_names_list:
-                        import openjarvis.tools  # noqa: F401 — trigger registration
-                        from openjarvis.core.registry import ToolRegistry
-                        from openjarvis.tools._stubs import BaseTool
+                        import nivos.tools  # noqa: F401 — trigger registration
+                        from nivos.core.registry import ToolRegistry
+                        from nivos.tools._stubs import BaseTool
 
                         tool_instances = []
                         for tname in tool_names_list:
@@ -224,7 +224,7 @@ def chat(
                                 if isinstance(tcls, type) and issubclass(
                                     tcls, BaseTool
                                 ):
-                                    from openjarvis.tools._paths import file_tool_kwargs
+                                    from nivos.tools._paths import file_tool_kwargs
 
                                     tool_instances.append(
                                         tcls(**file_tool_kwargs(tname, config))
@@ -246,7 +246,7 @@ def chat(
                     kwargs["interactive"] = True
                     kwargs["confirm_callback"] = _confirm
 
-                from openjarvis.security.runtime import agent_security_kwargs
+                from nivos.security.runtime import agent_security_kwargs
 
                 kwargs.update(
                     agent_security_kwargs(
@@ -263,7 +263,7 @@ def chat(
                     "prompt_builder"
                     in _inspect.signature(agent_cls.__init__).parameters
                 ):
-                    from openjarvis.prompt.builder import SystemPromptBuilder
+                    from nivos.prompt.builder import SystemPromptBuilder
 
                     kwargs["prompt_builder"] = SystemPromptBuilder(
                         agent_template=config.agent.default_system_prompt or "",
@@ -272,7 +272,7 @@ def chat(
                     )
 
                 agent = agent_cls(engine, model, **kwargs)
-                from openjarvis.security.runtime import wire_agent_security
+                from nivos.security.runtime import wire_agent_security
 
                 wire_agent_security(
                     agent,
@@ -313,22 +313,22 @@ def chat(
     )
 
     # Background-work status banner (disappears after first user message)
-    from openjarvis.cli._bg_state import get_status
-    from openjarvis.cli._chat_banner import render_startup_banner
+    from nivos.cli._bg_state import get_status
+    from nivos.cli._chat_banner import render_startup_banner
 
     _banner = render_startup_banner(get_status())
     if _banner:
         console.print(f"[dim cyan]{_banner}[/dim cyan]")
 
     # Completion-notification dispatcher (fires once per task per session)
-    from openjarvis.cli._chat_notifications import NotificationDispatcher
+    from nivos.cli._chat_notifications import NotificationDispatcher
 
     _notifications = NotificationDispatcher(get_status())
 
     # Automatic long-term memory — extracts durable facts in the background.
     memory_service = None
     try:
-        from openjarvis.memory import build_memory_service
+        from nivos.memory import build_memory_service
 
         memory_service = build_memory_service(config, engine, model, event_bus=bus)
         if memory_service is not None:
@@ -343,13 +343,13 @@ def chat(
     # previous sessions are immediately available without a manual index step.
     memory_backend = None
     if config.agent.context_from_memory:
-        from openjarvis.cli.ask import _get_memory_backend
+        from nivos.cli.ask import _get_memory_backend
 
         memory_backend = _get_memory_backend(config)
 
     # Conversation state
     if not system_prompt:
-        from openjarvis.prompt.builder import SystemPromptBuilder
+        from nivos.prompt.builder import SystemPromptBuilder
 
         builder = SystemPromptBuilder(
             agent_template=config.agent.default_system_prompt or "",
@@ -437,8 +437,8 @@ def chat(
         agent_context_message = None
         if config.agent.context_from_memory:
             try:
-                from openjarvis.memory import load_configured_facts
-                from openjarvis.tools.storage.context import (
+                from nivos.memory import load_configured_facts
+                from nivos.tools.storage.context import (
                     ContextConfig,
                     inject_context,
                 )
@@ -470,7 +470,7 @@ def chat(
         # Generate response even when optional memory context is unavailable.
         try:
             if agent is not None:
-                from openjarvis.agents._stubs import AgentContext
+                from nivos.agents._stubs import AgentContext
 
                 agent_context = AgentContext()
                 if agent_context_message is not None:

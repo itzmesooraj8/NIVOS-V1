@@ -11,12 +11,12 @@ import json
 import logging
 from typing import Any, List, Optional
 
-from openjarvis.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
-from openjarvis.core.events import EventBus
-from openjarvis.core.registry import AgentRegistry
-from openjarvis.core.types import Message, Role, ToolCall, ToolResult
-from openjarvis.engine._stubs import InferenceEngine
-from openjarvis.tools._stubs import BaseTool
+from nivos.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
+from nivos.core.events import EventBus
+from nivos.core.registry import AgentRegistry
+from nivos.core.types import Message, Role, ToolCall, ToolResult
+from nivos.engine._stubs import InferenceEngine
+from nivos.tools._stubs import BaseTool
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ class OperativeAgent(ToolUsingAgent):
             sys_parts.append(f"\n## Previous State\n{previous_state}")
 
         system_prompt = "\n\n".join(sys_parts) if sys_parts else None
-        # Honor SOUL.md / MEMORY.md / USER.md persona files like `jarvis ask`,
+        # Honor SOUL.md / MEMORY.md / USER.md persona files like `nivos ask`,
         # appended so the operative's own instructions are preserved (#376).
         system_prompt = self._apply_persona(system_prompt)
 

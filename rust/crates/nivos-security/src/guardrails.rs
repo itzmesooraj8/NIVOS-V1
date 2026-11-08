@@ -2,9 +2,9 @@
 
 use crate::scanner::{PIIScanner, SecretScanner};
 use crate::types::{RedactionMode, ScanResult};
-use openjarvis_core::error::OpenJarvisError;
-use openjarvis_core::{EventBus, EventType, GenerateResult, Message};
-use openjarvis_engine::traits::{InferenceEngine, TokenStream};
+use nivos_core::error::NivosError;
+use nivos_core::{EventBus, EventType, GenerateResult, Message};
+use nivos_engine::traits::{InferenceEngine, TokenStream};
 use serde_json::Value;
 use std::sync::Arc;
 
@@ -57,7 +57,7 @@ impl<E: InferenceEngine> GuardrailsEngine<E> {
         text: &str,
         result: &ScanResult,
         direction: &str,
-    ) -> Result<String, OpenJarvisError> {
+    ) -> Result<String, NivosError> {
         let finding_dicts: Vec<Value> = result
             .findings
             .iter()
@@ -114,8 +114,8 @@ impl<E: InferenceEngine> GuardrailsEngine<E> {
                     );
                     bus.publish(EventType::SecurityBlock, data);
                 }
-                Err(OpenJarvisError::Security(
-                    openjarvis_core::error::SecurityError::Blocked(format!(
+                Err(NivosError::Security(
+                    nivos_core::error::SecurityError::Blocked(format!(
                         "Security scan blocked {}: {} finding(s) detected",
                         direction,
                         result.findings.len()
@@ -139,7 +139,7 @@ impl<E: InferenceEngine> InferenceEngine for GuardrailsEngine<E> {
         temperature: f64,
         max_tokens: i64,
         extra: Option<&Value>,
-    ) -> Result<GenerateResult, OpenJarvisError> {
+    ) -> Result<GenerateResult, NivosError> {
         if self.scan_input {
             for msg in messages {
                 if !msg.content.is_empty() {
@@ -173,13 +173,13 @@ impl<E: InferenceEngine> InferenceEngine for GuardrailsEngine<E> {
         temperature: f64,
         max_tokens: i64,
         extra: Option<&Value>,
-    ) -> Result<TokenStream, OpenJarvisError> {
+    ) -> Result<TokenStream, NivosError> {
         self.engine
             .stream(messages, model, temperature, max_tokens, extra)
             .await
     }
 
-    fn list_models(&self) -> Result<Vec<String>, OpenJarvisError> {
+    fn list_models(&self) -> Result<Vec<String>, NivosError> {
         self.engine.list_models()
     }
 
@@ -206,7 +206,7 @@ mod tests {
             _temperature: f64,
             _max_tokens: i64,
             _extra: Option<&Value>,
-        ) -> Result<GenerateResult, OpenJarvisError> {
+        ) -> Result<GenerateResult, NivosError> {
             Ok(GenerateResult {
                 content: "Response with sk-test1234567890abcdefghij".into(),
                 model: model.into(),
@@ -220,10 +220,10 @@ mod tests {
             _temperature: f64,
             _max_tokens: i64,
             _extra: Option<&Value>,
-        ) -> Result<TokenStream, OpenJarvisError> {
+        ) -> Result<TokenStream, NivosError> {
             Ok(Box::pin(futures::stream::empty()))
         }
-        fn list_models(&self) -> Result<Vec<String>, OpenJarvisError> {
+        fn list_models(&self) -> Result<Vec<String>, NivosError> {
             Ok(vec!["mock-model".into()])
         }
         fn health(&self) -> bool {
@@ -262,6 +262,6 @@ mod tests {
         let err = guardrails
             .generate(&[Message::user("Hi")], "mock", 0.7, 100, None)
             .unwrap_err();
-        assert!(matches!(err, OpenJarvisError::Security(_)));
+        assert!(matches!(err, NivosError::Security(_)));
     }
 }

@@ -26,7 +26,7 @@ On a TTY (unless skipped):
 
 Skip picker:
 
-- `JARVIS_SKIP_MODEL_PICK=1`
+- `NIVOS_SKIP_MODEL_PICK=1`
 - `nivos chat` without bare `nivos` (picker only auto-runs on bare `nivos` unless `--pick-model`)
 - `nivos chat --pick-model` forces the list
 
@@ -39,7 +39,7 @@ After model selection, optional prompts:
 
 Skip panel:
 
-- `JARVIS_SKIP_RUNTIME_PANEL=1`
+- `NIVOS_SKIP_RUNTIME_PANEL=1`
 - `--skip-runtime-panel`
 - `--num-ctx` / `--num-gpu` (values applied directly, no prompts)
 

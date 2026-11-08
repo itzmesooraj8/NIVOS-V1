@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import tomllib
-from openjarvis.cli import _analytics_consent
+from nivos.cli import _analytics_consent
 
 
 def test_ask_analytics_consent_always_false() -> None:

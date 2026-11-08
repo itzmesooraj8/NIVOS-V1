@@ -18,8 +18,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.types import ToolCall, ToolResult
+from nivos.core.events import EventBus, EventType
+from nivos.core.types import ToolCall, ToolResult
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,7 @@ class _BoundedToolRunner:
             for index in range(self._max_workers):
                 thread = threading.Thread(
                     target=self._worker,
-                    name=f"openjarvis-tool-{index}",
+                    name=f"nivos-tool-{index}",
                     daemon=True,
                 )
                 thread.start()
@@ -158,7 +158,7 @@ class BaseTool(ABC):
 
     def to_openai_function(self) -> Dict[str, Any]:
         """Convert to OpenAI function-calling format."""
-        from openjarvis.tools.description_loader import (
+        from nivos.tools.description_loader import (
             get_tool_description_override,
         )
 
@@ -218,7 +218,7 @@ class ToolExecutor:
         # even though no single caller threads ``_taint`` through by hand.
         # Without this the taint module is present but dormant end-to-end.
         try:
-            from openjarvis.security.taint import TaintSet
+            from nivos.security.taint import TaintSet
 
             self._session_taint: Any = TaintSet()
         except Exception:
@@ -227,7 +227,7 @@ class ToolExecutor:
         # Scan untrusted (non-local) tool output for prompt-injection before it
         # is handed back to the model. Off unless the scanner imports cleanly.
         try:
-            from openjarvis.security.injection_scanner import InjectionScanner
+            from nivos.security.injection_scanner import InjectionScanner
 
             self._injection_scanner: Any = InjectionScanner()
         except Exception:
@@ -236,7 +236,7 @@ class ToolExecutor:
     def begin_session(self, content: List[str] | None = None) -> None:
         """Reset taint for one conversation and seed it from its history."""
         try:
-            from openjarvis.security.taint import TaintSet, auto_detect_taint
+            from nivos.security.taint import TaintSet, auto_detect_taint
 
             taint = TaintSet()
             for text in content or []:
@@ -329,7 +329,7 @@ class ToolExecutor:
         # not turn a privileged built-in into an unguarded tool.
         required_capabilities = list(tool.spec.required_capabilities)
         if self._capability_policy is not None:
-            from openjarvis.security.capabilities import canonical_tool_capabilities
+            from nivos.security.capabilities import canonical_tool_capabilities
 
             for cap in canonical_tool_capabilities(tool):
                 cap_value = cap.value if hasattr(cap, "value") else cap
@@ -367,7 +367,7 @@ class ToolExecutor:
         # earlier tool outputs — so "read a secret, then http_request it out"
         # is blocked even when no caller passes ``_taint`` explicitly.
         try:
-            from openjarvis.security.taint import TaintSet, check_taint
+            from nivos.security.taint import TaintSet, check_taint
 
             call_taint = params.get("_taint") if isinstance(params, dict) else None
             effective = call_taint if isinstance(call_taint, TaintSet) else TaintSet()
@@ -477,7 +477,7 @@ class ToolExecutor:
         # tools surfaced.
         if result.success:
             try:
-                from openjarvis.security.taint import TaintSet, auto_detect_taint
+                from nivos.security.taint import TaintSet, auto_detect_taint
 
                 detected = auto_detect_taint(result.content)
                 if detected and detected.labels:
@@ -616,7 +616,7 @@ def build_tool_descriptions(
     if not tools:
         return "No tools available."
 
-    from openjarvis.tools.description_loader import (
+    from nivos.tools.description_loader import (
         get_tool_description_override,
     )
 

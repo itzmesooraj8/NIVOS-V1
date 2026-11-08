@@ -49,9 +49,9 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
-from openjarvis.core.paths import get_cache_dir
-from openjarvis.evals.core.scorer import Scorer
-from openjarvis.evals.core.types import EvalRecord
+from nivos.core.paths import get_cache_dir
+from nivos.evals.core.scorer import Scorer
+from nivos.evals.core.types import EvalRecord
 
 logger = logging.getLogger(__name__)
 
@@ -168,7 +168,7 @@ def _patch_modal_cgroup_v2() -> None:
     _m._hybrid_cgroup_patched = True  # type: ignore[attr-defined]
 
 
-_CGROUP_SOURCE_SENTINEL = "_OPENJARVIS_CGROUP_V2_PATCH_APPLIED"
+_CGROUP_SOURCE_SENTINEL = "_NIVOS_CGROUP_V2_PATCH_APPLIED"
 
 
 def _patch_modal_sandbox_source() -> None:
@@ -325,10 +325,10 @@ def extract_patch(text: str) -> Optional[str]:
 def _harness_cache_dir() -> Path:
     """Where the swebench subprocess writes its report JSON + logs/ tree.
 
-    Consolidated under the env-aware OpenJarvis cache root
-    (``<openjarvis-home>/cache/swebench``) so it never pollutes the project
-    root or scatters across ``$HOME``. Honors ``OPENJARVIS_HOME`` /
-    ``XDG_DATA_HOME`` via :func:`openjarvis.core.paths.get_cache_dir`.
+    Consolidated under the env-aware Nivos cache root
+    (``<nivos-home>/cache/swebench``) so it never pollutes the project
+    root or scatters across ``$HOME``. Honors ``NIVOS_HOME`` /
+    ``XDG_DATA_HOME`` via :func:`nivos.core.paths.get_cache_dir`.
     """
     cache = get_cache_dir() / "swebench"
     cache.mkdir(parents=True, exist_ok=True)
@@ -341,10 +341,10 @@ def _find_report(
     """Find the harness's report JSON for one instance.
 
     swebench writes ``<model_name_or_path>.<run_id>.json`` inside the
-    subprocess CWD. We use ``model_name_or_path="openjarvis-harness"``;
+    subprocess CWD. We use ``model_name_or_path="nivos-harness"``;
     ``run_id`` is built by :func:`_build_run_id`.
     """
-    fname = f"openjarvis-harness.{run_id}.json"
+    fname = f"nivos-harness.{run_id}.json"
     p = cache / fname
     if not p.exists():
         return None
@@ -415,7 +415,7 @@ def _run_harness(
     # globs by filename. If a prior subprocess crashed mid-run (or was
     # killed by timeout) and left a stale JSON, we'd silently read that
     # old verdict as the current result. Delete it up front.
-    stale = cache / f"openjarvis-harness.{run_id}.json"
+    stale = cache / f"nivos-harness.{run_id}.json"
     if stale.exists():
         try:
             stale.unlink()
@@ -429,7 +429,7 @@ def _run_harness(
             json.dumps(
                 {
                     "instance_id": instance_id,
-                    "model_name_or_path": "openjarvis-harness",
+                    "model_name_or_path": "nivos-harness",
                     "model_patch": patch,
                 }
             )

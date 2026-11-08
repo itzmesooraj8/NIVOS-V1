@@ -5,8 +5,8 @@ from __future__ import annotations
 import os
 from typing import List, Optional
 
-from openjarvis.core.registry import SpeechRegistry
-from openjarvis.speech._stubs import SpeechBackend, TranscriptionResult
+from nivos.core.registry import SpeechRegistry
+from nivos.speech._stubs import SpeechBackend, TranscriptionResult
 
 try:
     from deepgram import DeepgramClient, PrerecordedOptions

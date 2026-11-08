@@ -32,7 +32,7 @@ def resolve_allowed_dirs(allowed_dirs: Optional[List[str]]) -> List[str]:
     or unreadable configuration must never silently remove a restriction.
     """
     if allowed_dirs is None:
-        from openjarvis.core.config import load_config
+        from nivos.core.config import load_config
 
         allowed_dirs = load_config().security.allowed_dirs
     return validate_allowed_dirs(allowed_dirs)

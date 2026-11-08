@@ -67,7 +67,7 @@ class RateLimiter:
         self._buckets: Dict[str, TokenBucket] = {}
         self._lock = threading.Lock()
 
-        from openjarvis._rust_bridge import get_rust_module
+        from nivos._rust_bridge import get_rust_module
 
         _rust = get_rust_module()
         self._rust_impl = _rust.RateLimiter(

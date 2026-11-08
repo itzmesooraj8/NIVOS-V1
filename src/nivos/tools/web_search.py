@@ -1,6 +1,6 @@
 """Web search tool — You.com or Tavily, with a DuckDuckGo fallback.
 
-Engine selection is explicit (``engine=`` or ``OPENJARVIS_WEB_SEARCH_ENGINE``)
+Engine selection is explicit (``engine=`` or ``NIVOS_WEB_SEARCH_ENGINE``)
 rather than a chain of ``try``/``except`` layers. The default, ``"auto"``,
 resolves to whichever engine the environment can actually serve, preferring an
 API-backed engine over the DuckDuckGo HTML scrape:
@@ -26,11 +26,11 @@ import os
 from typing import Any
 from urllib.parse import urljoin
 
-from openjarvis import __version__
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.security.ssrf import check_ssrf
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos import __version__
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.security.ssrf import check_ssrf
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ FIRECRAWL_API_KEY_ENV = "FIRECRAWL_API_KEY"
 # queries to its own configured search backend.
 FIRECRAWL_API_URL_ENV = "FIRECRAWL_API_URL"
 FIRECRAWL_DEFAULT_API_URL = "https://api.firecrawl.dev"
-FIRECRAWL_ORIGIN = "openjarvis"
+FIRECRAWL_ORIGIN = "nivos"
 # PDFs are billed per page, and only the first max_chars of the markdown are
 # kept, so parsing stops after a few pages.
 FIRECRAWL_PDF_MAX_PAGES = 3
@@ -64,16 +64,16 @@ FIRECRAWL_SCRAPE_TIMEOUT_MS = 45000
 FIRECRAWL_SNIPPET_CHARS = 500
 FIRECRAWL_KEYS_URL = (
     "https://www.firecrawl.dev/app/api-keys"
-    "?utm_source=openjarvis&utm_medium=integration"
+    "?utm_source=nivos&utm_medium=integration"
 )
 
-ENGINE_ENV = "OPENJARVIS_WEB_SEARCH_ENGINE"
+ENGINE_ENV = "NIVOS_WEB_SEARCH_ENGINE"
 ENGINES = ("auto", "youcom", "tavily", "duckduckgo", "serply", "firecrawl")
 
-# Identifies OpenJarvis to You.com. The keyless tier carries no API key, so the
+# Identifies Nivos to You.com. The keyless tier carries no API key, so the
 # User-Agent is the only attribution signal; sent to You.com hosts only.
 YOUCOM_USER_AGENT = (
-    f"openjarvis/{__version__} youdotcom-integration/open-jarvis-openjarvis"
+    f"nivos/{__version__} youdotcom-integration/nivos-nivos"
 )
 
 _MAX_FETCH_REDIRECTS = 5
@@ -84,7 +84,7 @@ _REDIRECT_STATUS_CODES = frozenset({301, 302, 303, 307, 308})
 _KEYLESS_LIMIT_STATUSES = (402, 429)
 YOUCOM_PLATFORM_URL = (
     "https://you.com/platform"
-    "?utm_source=open-jarvis-openjarvis&utm_medium=oss_integration"
+    "?utm_source=nivos-nivos&utm_medium=oss_integration"
     "&utm_campaign=2026-09-oss-integrations&utm_content=error-message"
 )
 _KEY_UPGRADE_HINT = (
@@ -120,7 +120,7 @@ class WebSearchTool(BaseTool):
 
         ``api_key`` remains the Tavily key, positionally, for backwards
         compatibility. ``engine`` is one of :data:`ENGINES`; when omitted it
-        comes from ``OPENJARVIS_WEB_SEARCH_ENGINE`` and defaults to ``"auto"``.
+        comes from ``NIVOS_WEB_SEARCH_ENGINE`` and defaults to ``"auto"``.
         An unknown engine name falls back to ``"auto"`` with a warning rather
         than raising, so a typo in the environment cannot break tool loading.
         """
@@ -254,7 +254,7 @@ class WebSearchTool(BaseTool):
             follow_redirects=False,
             timeout=30.0,
             headers={
-                "User-Agent": "Mozilla/5.0 (compatible; OpenJarvis/1.0; +https://github.com/openjarvis)"
+                "User-Agent": "Mozilla/5.0 (compatible; Nivos/1.0; +https://github.com/nivos)"
             },
         ) as client:
             for _ in range(_MAX_FETCH_REDIRECTS + 1):

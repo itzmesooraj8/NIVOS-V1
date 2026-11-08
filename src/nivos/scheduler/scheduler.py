@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
 
-from openjarvis.scheduler.store import SchedulerStore
+from nivos.scheduler.store import SchedulerStore
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ class TaskScheduler:
     store:
         The persistence backend.
     system:
-        Optional ``JarvisSystem`` instance for executing prompts.
+        Optional ``NivosSystem`` instance for executing prompts.
     poll_interval:
         Seconds between poll cycles (default 60).
     bus:
@@ -113,7 +113,7 @@ class TaskScheduler:
             return
         self._stop_event.clear()
         self._thread = threading.Thread(
-            target=self._poll_loop, daemon=True, name="jarvis-scheduler"
+            target=self._poll_loop, daemon=True, name="nivos-scheduler"
         )
         self._thread.start()
         logger.info("Scheduler started (poll_interval=%ds)", self._poll_interval)
@@ -321,7 +321,7 @@ class TaskScheduler:
             from croniter import croniter  # type: ignore[import-untyped]
         except ImportError as exc:
             raise RuntimeError(
-                "croniter is required for cron schedules; reinstall OpenJarvis"
+                "croniter is required for cron schedules; reinstall Nivos"
             ) from exc
 
         if now.tzinfo is None:

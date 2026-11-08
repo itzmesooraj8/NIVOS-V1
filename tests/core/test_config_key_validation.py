@@ -6,7 +6,7 @@ from typing import get_args, get_origin
 
 import pytest
 
-from openjarvis.core.config import validate_config_key
+from nivos.core.config import validate_config_key
 
 
 class TestValidateConfigKey:

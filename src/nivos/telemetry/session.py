@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Deque, List, Optional
 
 if TYPE_CHECKING:
-    from openjarvis.telemetry.energy_monitor import EnergyMonitor
+    from nivos.telemetry.energy_monitor import EnergyMonitor
 
 logger = logging.getLogger(__name__)
 

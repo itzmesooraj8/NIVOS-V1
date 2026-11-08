@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List
 
-from openjarvis.server.savings import CLOUD_PRICING
+from nivos.server.savings import CLOUD_PRICING
 
 
 @dataclass(slots=True)

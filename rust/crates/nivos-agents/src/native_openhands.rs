@@ -8,8 +8,8 @@
 use crate::loop_guard::LoopGuard;
 use crate::traits::OjAgent;
 use crate::utils::strip_think_tags;
-use openjarvis_core::{AgentContext, AgentResult, OpenJarvisError, ToolResult};
-use openjarvis_tools::executor::ToolExecutor;
+use nivos_core::{AgentContext, AgentResult, NivosError, ToolResult};
+use nivos_tools::executor::ToolExecutor;
 use regex::Regex;
 use rig::agent::AgentBuilder;
 use rig::completion::message::Message as RigMessage;
@@ -158,17 +158,17 @@ impl<M: CompletionModel + 'static> OjAgent for NativeOpenHandsAgent<M> {
         &self,
         input: &str,
         context: Option<&AgentContext>,
-    ) -> Result<AgentResult, OpenJarvisError> {
+    ) -> Result<AgentResult, NivosError> {
         let mut history: Vec<RigMessage> = context
             .map(|ctx| {
                 ctx.conversation
                     .messages
                     .iter()
                     .filter_map(|m| match m.role {
-                        openjarvis_core::Role::User => {
+                        nivos_core::Role::User => {
                             Some(RigMessage::user(&m.content))
                         }
-                        openjarvis_core::Role::Assistant => {
+                        nivos_core::Role::Assistant => {
                             Some(RigMessage::assistant(&m.content))
                         }
                         _ => None,
@@ -187,7 +187,7 @@ impl<M: CompletionModel + 'static> OjAgent for NativeOpenHandsAgent<M> {
                 .chat(&current_input, history.clone())
                 .await
                 .map_err(|e| {
-                    OpenJarvisError::Agent(openjarvis_core::error::AgentError::Execution(
+                    NivosError::Agent(nivos_core::error::AgentError::Execution(
                         e.to_string(),
                     ))
                 })?;
@@ -283,8 +283,8 @@ impl<M: CompletionModel + 'static> OjAgent for NativeOpenHandsAgent<M> {
 mod tests {
     use super::*;
 
-    use openjarvis_engine::rig_adapter::RigModelAdapter;
-    type OpenHandsAgent = NativeOpenHandsAgent<RigModelAdapter<openjarvis_engine::Engine>>;
+    use nivos_engine::rig_adapter::RigModelAdapter;
+    type OpenHandsAgent = NativeOpenHandsAgent<RigModelAdapter<nivos_engine::Engine>>;
 
     #[test]
     fn test_parse_action() {

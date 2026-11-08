@@ -16,10 +16,10 @@ from typing import Any
 
 import httpx
 
-from openjarvis.core.credentials import get_tool_credential
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.credentials import get_tool_credential
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 _TOOL_NAME = "fx_macro_data"
 _API_KEY_ENV = "FXMACRODATA_API_KEY"

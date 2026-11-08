@@ -10,19 +10,19 @@ from typing import Any, Dict, List
 
 import httpx
 
-from openjarvis.core.registry import EngineRegistry
-from openjarvis.core.types import Message
-from openjarvis.engine._base import (
+from nivos.core.registry import EngineRegistry
+from nivos.core.types import Message
+from nivos.engine._base import (
     EngineConnectionError,
     InferenceEngine,
     estimate_prompt_tokens,
     messages_to_dicts,
 )
-from openjarvis.engine._http_async import (
+from nivos.engine._http_async import (
     STREAM_TRANSPORT_ERRORS,
     AsyncHTTPEngineMixin,
 )
-from openjarvis.engine._stubs import StreamChunk
+from nivos.engine._stubs import StreamChunk
 
 logger = logging.getLogger(__name__)
 
@@ -71,14 +71,14 @@ def _is_control_token_only_args(raw_args: Any) -> bool:
 
 
 def _default_num_ctx() -> int:
-    """Default context window (tokens). Override with ``JARVIS_NUM_CTX``.
+    """Default context window (tokens). Override with ``NIVOS_NUM_CTX``.
 
     Raised above Ollama's 4k default so an image (which costs many tokens)
     plus a real conversation fit. 16k is comfortable for small models on a
     typical consumer GPU.
     """
     try:
-        return int(os.environ.get("JARVIS_NUM_CTX", "16384"))
+        return int(os.environ.get("NIVOS_NUM_CTX", "16384"))
     except ValueError:
         return 16384
 
@@ -183,7 +183,7 @@ class OllamaEngine(AsyncHTTPEngineMixin, InferenceEngine):
         # Apply structured output / JSON mode
         response_format = kwargs.get("response_format")
         if response_format is not None:
-            from openjarvis.engine._stubs import ResponseFormat
+            from nivos.engine._stubs import ResponseFormat
 
             if isinstance(response_format, ResponseFormat):
                 payload["format"] = "json"

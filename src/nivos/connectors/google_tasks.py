@@ -11,11 +11,11 @@ from typing import Any, Dict, Iterator, Optional
 
 import httpx
 
-from openjarvis.connectors._stubs import BaseConnector, Document, SyncStatus
-from openjarvis.connectors.google_auth import call_with_refresh
-from openjarvis.connectors.oauth import load_tokens, resolve_google_credentials
-from openjarvis.core.config import DEFAULT_CONFIG_DIR
-from openjarvis.core.registry import ConnectorRegistry
+from nivos.connectors._stubs import BaseConnector, Document, SyncStatus
+from nivos.connectors.google_auth import call_with_refresh
+from nivos.connectors.oauth import load_tokens, resolve_google_credentials
+from nivos.core.config import DEFAULT_CONFIG_DIR
+from nivos.core.registry import ConnectorRegistry
 
 _TASKS_API_BASE = "https://tasks.googleapis.com/tasks/v1"
 _DEFAULT_CREDENTIALS_PATH = str(DEFAULT_CONFIG_DIR / "connectors" / "google_tasks.json")

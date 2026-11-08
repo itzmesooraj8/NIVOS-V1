@@ -2,7 +2,7 @@
 
 Registers connectors for timed re-sync and runs them on a configurable
 interval.  Designed to be long-lived (daemon thread) inside a running
-OpenJarvis server process.
+Nivos server process.
 
 Typical usage::
 
@@ -25,8 +25,8 @@ import logging
 import threading
 from typing import Dict, List, Optional
 
-from openjarvis.connectors._stubs import BaseConnector
-from openjarvis.connectors.sync_engine import SyncEngine
+from nivos.connectors._stubs import BaseConnector
+from nivos.connectors.sync_engine import SyncEngine
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class SyncScheduler:
     Parameters
     ----------
     sync_engine:
-        The :class:`~openjarvis.connectors.sync_engine.SyncEngine` used to
+        The :class:`~nivos.connectors.sync_engine.SyncEngine` used to
         drive each connector's sync (handles checkpointing).
     interval_seconds:
         How often (in seconds) to sync all connected connectors.
@@ -61,7 +61,7 @@ class SyncScheduler:
         Parameters
         ----------
         connector:
-            Any :class:`~openjarvis.connectors._stubs.BaseConnector` instance.
+            Any :class:`~nivos.connectors._stubs.BaseConnector` instance.
             Only connected connectors are synced during each cycle.
         """
         self._connectors.append(connector)

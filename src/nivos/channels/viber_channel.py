@@ -6,13 +6,13 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
-from openjarvis.channels._stubs import (
+from nivos.channels._stubs import (
     BaseChannel,
     ChannelHandler,
     ChannelStatus,
 )
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.registry import ChannelRegistry
+from nivos.core.events import EventBus, EventType
+from nivos.core.registry import ChannelRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class ViberChannel(BaseChannel):
         bus: Optional[EventBus] = None,
     ) -> None:
         self._auth_token = auth_token or os.environ.get("VIBER_AUTH_TOKEN", "")
-        self._name = name or os.environ.get("VIBER_BOT_NAME", "OpenJarvis")
+        self._name = name or os.environ.get("VIBER_BOT_NAME", "Nivos")
         self._avatar = avatar or os.environ.get("VIBER_BOT_AVATAR", "")
         self._bus = bus
         self._handlers: List[ChannelHandler] = []

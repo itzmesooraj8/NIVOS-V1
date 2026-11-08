@@ -43,20 +43,20 @@ import sys
 import types
 from typing import Any, Dict, List, Optional, Tuple
 
-from openjarvis.agents._stubs import AgentContext
-from openjarvis.agents.hybrid._base import (
+from nivos.agents._stubs import AgentContext
+from nivos.agents.hybrid._base import (
     WEB_SEARCH_COST_PER_CALL,
     LocalCloudAgent,
     build_web_search_tool,
     tavily_search_context,
     web_search_cfg,
 )
-from openjarvis.agents.hybrid._openai_retry import (
+from nivos.agents.hybrid._openai_retry import (
     patch_openai_globally as _patch_openai_globally,
 )
-from openjarvis.agents.hybrid._prices import NO_TEMP_PREFIXES, default_max_output_tokens
-from openjarvis.agents.hybrid.mini_swe_agent import run_swe_agent_loop
-from openjarvis.core.registry import AgentRegistry
+from nivos.agents.hybrid._prices import NO_TEMP_PREFIXES, default_max_output_tokens
+from nivos.agents.hybrid.mini_swe_agent import run_swe_agent_loop
+from nivos.core.registry import AgentRegistry
 
 MINIONS_SWE_PLANNER_SYS = (
     "You are the cloud supervisor in a Minions setup. The small local model "
@@ -416,7 +416,7 @@ def _prefetch_context(
             tools=[build_web_search_tool(max_uses)],
             tool_choice={"type": "any"},
         )
-        from openjarvis.agents.hybrid._prices import cost as _cost_usd
+        from nivos.agents.hybrid._prices import cost as _cost_usd
 
         out.update(
             text=text,

@@ -8,19 +8,19 @@ import threading
 import time
 from typing import TYPE_CHECKING, Any
 
-from openjarvis.agents._stubs import AgentResult
-from openjarvis.agents.errors import (
+from nivos.agents._stubs import AgentResult
+from nivos.agents.errors import (
     AgentTickError,
     EscalateError,
     FatalError,
     classify_error,
     retry_delay,
 )
-from openjarvis.agents.tool_resolver import resolve_agent_tools
-from openjarvis.core.events import EventBus, EventType
+from nivos.agents.tool_resolver import resolve_agent_tools
+from nivos.core.events import EventBus, EventType
 
 if TYPE_CHECKING:
-    from openjarvis.agents.manager import AgentManager
+    from nivos.agents.manager import AgentManager
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +111,7 @@ def _tool_calls_for_storage(result: AgentResult) -> list[dict[str, Any]] | None:
 class AgentExecutor:
     """Executes a single tick for a managed agent.
 
-    Constructor receives a JarvisSystem reference for access to engine,
+    Constructor receives a NivosSystem reference for access to engine,
     tools, config, memory backends, and all other primitives.
     """
 
@@ -129,7 +129,7 @@ class AgentExecutor:
         self._toolkit_local = threading.local()
 
     def set_system(self, system: Any) -> None:
-        """Deferred system injection — called after JarvisSystem is constructed."""
+        """Deferred system injection — called after NivosSystem is constructed."""
         self._system = system
 
     def _set_activity(self, agent_id: str, activity: str) -> None:
@@ -147,7 +147,7 @@ class AgentExecutor:
         tools: list[str] | None = None,
     ) -> Any:
         """Run a one-shot agent turn with no lifecycle tracking."""
-        from openjarvis.core.registry import AgentRegistry
+        from nivos.core.registry import AgentRegistry
 
         agent_cls = AgentRegistry.get(agent_type)
         engine = (
@@ -167,10 +167,10 @@ class AgentExecutor:
         # tools. A SimpleAgent cannot call them, so resolve the requested tools
         # and use the standard secured function-calling agent for this
         # ephemeral turn instead of silently ignoring ``tools``.
-        import openjarvis.tools  # noqa: F401
-        from openjarvis.agents.orchestrator import OrchestratorAgent
-        from openjarvis.core.registry import ToolRegistry
-        from openjarvis.tools._stubs import BaseTool
+        import nivos.tools  # noqa: F401
+        from nivos.agents.orchestrator import OrchestratorAgent
+        from nivos.core.registry import ToolRegistry
+        from nivos.tools._stubs import BaseTool
 
         instances = []
         for name in tools:
@@ -180,7 +180,7 @@ class AgentExecutor:
             if isinstance(registered, BaseTool):
                 instances.append(registered)
             elif isinstance(registered, type) and issubclass(registered, BaseTool):
-                from openjarvis.tools._paths import file_tool_kwargs
+                from nivos.tools._paths import file_tool_kwargs
 
                 instances.append(
                     registered(
@@ -366,7 +366,7 @@ class AgentExecutor:
 
     def _invoke_agent_impl(self, agent: dict) -> AgentResult:
         """Implementation split out so the wrapper owns resolver lifetime."""
-        from openjarvis.agents import AgentRegistry
+        from nivos.agents import AgentRegistry
 
         agent_type = agent.get("agent_type", "monitor_operative")
         agent_cls = AgentRegistry.get(agent_type)
@@ -379,10 +379,10 @@ class AgentExecutor:
             getattr(agent_cls, "supports_managed_tool_fallback", False)
         )
 
-        # Resolve engine + model from JarvisSystem
+        # Resolve engine + model from NivosSystem
         engine = self._system.engine if self._system else None
         if engine is None:
-            raise FatalError("No engine available in JarvisSystem")
+            raise FatalError("No engine available in NivosSystem")
         model = _resolve_tick_model(config, self._system)
         if not model:
             raise FatalError("No model configured for agent")
@@ -400,8 +400,8 @@ class AgentExecutor:
         router_policy_key = config.get("router_policy")
         if router_policy_key and self._system:
             try:
-                from openjarvis.core.registry import RouterPolicyRegistry
-                from openjarvis.learning.routing.router import (
+                from nivos.core.registry import RouterPolicyRegistry
+                from nivos.learning.routing.router import (
                     build_routing_context,
                 )
 
@@ -440,7 +440,7 @@ class AgentExecutor:
 
             if not mcp_tools:
                 try:
-                    from openjarvis.tools.mcp_adapter import MCPToolAdapter
+                    from nivos.tools.mcp_adapter import MCPToolAdapter
 
                     pool = (
                         getattr(
@@ -485,7 +485,7 @@ class AgentExecutor:
             # same capability for immediate/scheduled ticks instead of
             # silently discarding the resolved toolkit for SimpleAgent and
             # other explicitly compatible non-tool classes.
-            from openjarvis.agents.orchestrator import OrchestratorAgent
+            from nivos.agents.orchestrator import OrchestratorAgent
 
             execution_agent_cls = OrchestratorAgent
             logger.info(
@@ -522,7 +522,7 @@ class AgentExecutor:
                 agent_kwargs["rate_limiter"] = rate_limiter
         agent_kwargs["agent_id"] = agent["id"]
         # Propagate confirmation policy from the AgentExecutor down to the
-        # agent's own ToolExecutor. Set by CLI paths like `jarvis agents ask`
+        # agent's own ToolExecutor. Set by CLI paths like `nivos agents ask`
         # so non-interactive runs can auto-approve tool execution.
         if getattr(self, "_confirm_callback", None) is not None:
             agent_kwargs["interactive"] = True
@@ -566,13 +566,13 @@ class AgentExecutor:
                     self._system, "memory_backend", None
                 )
             # Wire SOUL.md / MEMORY.md / USER.md persona files into persistent
-            # agents, mirroring the one-shot `jarvis ask` path so they no
+            # agents, mirroring the one-shot `nivos ask` path so they no
             # longer apply to CLI calls only (#376).
             cfg = getattr(self._system, "config", None)
             if _accepts("prompt_builder") and (
                 cfg is not None or sys_prompt is not None
             ):
-                from openjarvis.prompt.builder import SystemPromptBuilder
+                from nivos.prompt.builder import SystemPromptBuilder
 
                 state_kwargs["prompt_builder"] = SystemPromptBuilder(
                     agent_template=(
@@ -616,7 +616,7 @@ class AgentExecutor:
         # Re-apply runtime security after constructor fallbacks and inject the
         # managed UUID into both direct-operation agents and ToolExecutors.
         # The trace subscriber also relies on this identity.
-        from openjarvis.security.runtime import wire_agent_security
+        from nivos.security.runtime import wire_agent_security
 
         wire_agent_security(
             agent_instance,
@@ -689,7 +689,7 @@ class AgentExecutor:
             )
 
         # Build AgentContext with memory results from FTS5 backend
-        from openjarvis.agents._stubs import AgentContext
+        from nivos.agents._stubs import AgentContext
 
         agent_ctx = AgentContext()
         memory_results = []
@@ -701,7 +701,7 @@ class AgentExecutor:
             and self._system.config.agent.context_from_memory
         ):
             try:
-                from openjarvis.tools.storage.context import (
+                from nivos.tools.storage.context import (
                     ContextConfig,
                     format_context,
                 )
@@ -780,7 +780,7 @@ class AgentExecutor:
         """Build structured error detail for trace metadata."""
         import traceback
 
-        from openjarvis.agents.errors import (
+        from nivos.agents.errors import (
             EscalateError,
             FatalError,
             suggest_action,
@@ -946,7 +946,7 @@ class AgentExecutor:
         trace_steps: list[dict[str, Any]],
     ) -> None:
         """Persist an execution trace to the trace store."""
-        from openjarvis.core.types import StepType, Trace, TraceStep
+        from nivos.core.types import StepType, Trace, TraceStep
 
         steps = []
         for s in trace_steps:

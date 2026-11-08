@@ -37,12 +37,12 @@ python examples/deep_research/research.py "climate policy trends" \
 
 ## How It Works
 
-The script creates a `Jarvis` instance and delegates the research task to an `OrchestratorAgent` with five tools wired in. The orchestrator iterates through multiple tool-calling turns, deciding at each step whether to search, store, think, or synthesize.
+The script creates a `Nivos` instance and delegates the research task to an `OrchestratorAgent` with five tools wired in. The orchestrator iterates through multiple tool-calling turns, deciding at each step whether to search, store, think, or synthesize.
 
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant J as Jarvis SDK
+    participant J as Nivos SDK
     participant O as OrchestratorAgent
     participant W as web_search
     participant T as think
@@ -73,11 +73,11 @@ Each turn the orchestrator decides which tool to call based on what it has learn
 ## The Script
 
 ```python title="examples/deep_research/research.py" hl_lines="9 10 11 12 13"
-from openjarvis import Jarvis
+from nivos import Nivos
 
 tools = ["web_search", "think", "file_write", "memory_store", "memory_search"]
 
-j = Jarvis(model="qwen3:8b", engine_key="ollama")  # (1)!
+j = Nivos(model="qwen3:8b", engine_key="ollama")  # (1)!
 try:
     response = j.ask(
         "Research the following topic in depth and produce a report:\n\nquantum computing",
@@ -91,7 +91,7 @@ finally:
     j.close()
 ```
 
-1. Creates a `Jarvis` instance targeting the local Ollama engine with `qwen3:8b`. Both parameters are optional — omitting them uses auto-detected defaults from `~/.openjarvis/config.toml`.
+1. Creates a `Nivos` instance targeting the local Ollama engine with `qwen3:8b`. Both parameters are optional — omitting them uses auto-detected defaults from `~/.nivos/config.toml`.
 2. Selects the `OrchestratorAgent`, which runs a multi-turn tool-calling loop rather than a single round-trip.
 3. The tool list is passed directly to the agent. All five tools are registered in the tool registry and need no further configuration.
 4. The system prompt instructs the model to cite sources and distinguish facts from emerging claims.
@@ -150,8 +150,8 @@ finally:
 The companion `research.toml` in `examples/deep_research/` expresses the same setup declaratively. You can load it programmatically with `load_recipe()` and pass the result to `SystemBuilder`:
 
 ```python title="Using the recipe"
-from openjarvis.recipes import load_recipe
-from openjarvis import SystemBuilder
+from nivos.recipes import load_recipe
+from nivos import SystemBuilder
 
 recipe = load_recipe("examples/deep_research/research.toml")
 system = SystemBuilder(**recipe.to_builder_kwargs()).build()
@@ -194,4 +194,4 @@ python examples/deep_research/research.py "your topic" --max-turns 20
 
 - [Architecture: Agents](../architecture/agents.md) — agent hierarchy (`BaseAgent`, `ToolUsingAgent`, `OrchestratorAgent`) and the `accepts_tools` mechanism
 - [Architecture: Tools and Memory](../architecture/memory.md) — tool registry, MCP adapter, and the `ToolExecutor` dispatch pipeline
-- [Getting Started: Configuration](../getting-started/configuration.md) — how to configure engines and models in `~/.openjarvis/config.toml`
+- [Getting Started: Configuration](../getting-started/configuration.md) — how to configure engines and models in `~/.nivos/config.toml`

@@ -8,7 +8,7 @@ import sys
 
 import click
 
-from openjarvis.core.config import DEFAULT_CONFIG_PATH
+from nivos.core.config import DEFAULT_CONFIG_PATH
 
 
 @click.group("tunnel", invoke_without_command=True)

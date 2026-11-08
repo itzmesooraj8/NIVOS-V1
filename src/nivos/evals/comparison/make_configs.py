@@ -1,7 +1,7 @@
 """CLI for generating framework-comparison eval configs from `_template.toml`.
 
 Usage:
-    python -m openjarvis.evals.comparison.make_configs \\
+    python -m nivos.evals.comparison.make_configs \\
         --framework hermes --model qwen-9b --benchmark gaia
 """
 
@@ -19,8 +19,8 @@ import click
 # ---------------------------------------------------------------------------
 
 FRAMEWORKS: Dict[str, Dict[str, str]] = {
-    "openjarvis": {"backend_id": "jarvis-agent"},
-    "openjarvis-distilled": {"backend_id": "jarvis-agent"},
+    "nivos": {"backend_id": "nivos-agent"},
+    "nivos-distilled": {"backend_id": "nivos-agent"},
     "hermes": {"backend_id": "hermes"},
     "openclaw": {"backend_id": "openclaw"},
 }

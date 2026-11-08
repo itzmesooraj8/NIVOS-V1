@@ -5,9 +5,9 @@ from __future__ import annotations
 import sqlite3
 from typing import Any
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 
 @ToolRegistry.register("calendar_upcoming")
@@ -22,12 +22,12 @@ class CalendarUpcomingTool(BaseTool):
         # tools package, so importing the connector here at module load time
         # creates a connector -> tools -> connector cycle and can skip these
         # registry decorators depending on import order.
-        from openjarvis.connectors.apple_calendar import AppleCalendarConnector
+        from nivos.connectors.apple_calendar import AppleCalendarConnector
 
         return AppleCalendarConnector().mcp_tools()[0]
 
     def execute(self, **params: Any) -> ToolResult:
-        from openjarvis.connectors.apple_calendar import AppleCalendarConnector
+        from nivos.connectors.apple_calendar import AppleCalendarConnector
 
         days_ahead = max(0, int(params.get("days_ahead", 7)))
         connector = AppleCalendarConnector(days_ahead=days_ahead, days_behind=0)
@@ -49,12 +49,12 @@ class CalendarSearchTool(BaseTool):
 
     @property
     def spec(self) -> ToolSpec:
-        from openjarvis.connectors.apple_calendar import AppleCalendarConnector
+        from nivos.connectors.apple_calendar import AppleCalendarConnector
 
         return AppleCalendarConnector().mcp_tools()[1]
 
     def execute(self, **params: Any) -> ToolResult:
-        from openjarvis.connectors.apple_calendar import (
+        from nivos.connectors.apple_calendar import (
             _SEARCH_QUERY,
             AppleCalendarConnector,
             _open_db,

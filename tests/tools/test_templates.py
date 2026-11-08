@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from openjarvis.tools.templates.loader import ToolTemplate, discover_templates
+from nivos.tools.templates.loader import ToolTemplate, discover_templates
 
 
 class TestToolTemplate:

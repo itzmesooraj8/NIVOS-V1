@@ -7,9 +7,9 @@ import os
 from collections.abc import AsyncIterator, Sequence
 from typing import Any, Dict, List
 
-from openjarvis.core.registry import EngineRegistry
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._base import InferenceEngine, estimate_prompt_tokens
+from nivos.core.registry import EngineRegistry
+from nivos.core.types import Message, Role
+from nivos.engine._base import InferenceEngine, estimate_prompt_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -67,13 +67,13 @@ class GemmaCppEngine(InferenceEngine):
                 raise FileNotFoundError(
                     "gemma.cpp model_path not configured. Download weights "
                     "from Kaggle and set GEMMA_CPP_MODEL_PATH or configure "
-                    "[engine.gemma_cpp] in ~/.openjarvis/config.toml"
+                    "[engine.gemma_cpp] in ~/.nivos/config.toml"
                 )
             if not self._tokenizer_path:
                 raise FileNotFoundError(
                     "gemma.cpp tokenizer_path not configured. Set "
                     "GEMMA_CPP_TOKENIZER_PATH or configure "
-                    "[engine.gemma_cpp] in ~/.openjarvis/config.toml"
+                    "[engine.gemma_cpp] in ~/.nivos/config.toml"
                 )
             Gemma = _import_pygemma()
             self._gemma = Gemma()

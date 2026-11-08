@@ -7,9 +7,9 @@ import sqlite3
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 # ---------------------------------------------------------------------------
 # SQL validation helpers
@@ -197,7 +197,7 @@ class DatabaseQueryTool(BaseTool):
     ) -> ToolResult:
         # Validate db_path against sensitive file policy
         if db_path:
-            from openjarvis.security.file_policy import is_sensitive_file
+            from nivos.security.file_policy import is_sensitive_file
 
             p = Path(db_path)
             if is_sensitive_file(p):

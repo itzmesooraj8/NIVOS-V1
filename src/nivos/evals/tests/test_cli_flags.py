@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from click.testing import CliRunner
 
-from openjarvis.evals.cli import main
+from nivos.evals.cli import main
 
 
 class TestCompactFlag:

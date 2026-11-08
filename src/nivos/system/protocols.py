@@ -1,29 +1,29 @@
-"""Structural protocols for substituting fakes in place of JarvisSystem."""
+"""Structural protocols for substituting fakes in place of NivosSystem."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, List, Optional, Protocol
 
 if TYPE_CHECKING:
-    from openjarvis.core.config import JarvisConfig
-    from openjarvis.core.events import EventBus
-    from openjarvis.engine._stubs import InferenceEngine
-    from openjarvis.security.capabilities import CapabilityPolicy
-    from openjarvis.sessions.session import SessionStore
-    from openjarvis.tools._stubs import BaseTool
-    from openjarvis.tools.storage._stubs import MemoryBackend
-    from openjarvis.traces.collector import TraceCollector
-    from openjarvis.traces.store import TraceStore
+    from nivos.core.config import NivosConfig
+    from nivos.core.events import EventBus
+    from nivos.engine._stubs import InferenceEngine
+    from nivos.security.capabilities import CapabilityPolicy
+    from nivos.sessions.session import SessionStore
+    from nivos.tools._stubs import BaseTool
+    from nivos.tools.storage._stubs import MemoryBackend
+    from nivos.traces.collector import TraceCollector
+    from nivos.traces.store import TraceStore
 
 
 class OrchestratorDeps(Protocol):
-    """Minimum surface of JarvisSystem that QueryOrchestrator depends on.
+    """Minimum surface of NivosSystem that QueryOrchestrator depends on.
 
     Tests can satisfy this with a lightweight class — no need to construct
-    the full JarvisSystem dataclass or materialize every subsystem.
+    the full NivosSystem dataclass or materialize every subsystem.
     """
 
-    config: JarvisConfig
+    config: NivosConfig
     bus: EventBus
     engine: InferenceEngine
     engine_key: str

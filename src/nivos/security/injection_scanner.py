@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass
 from typing import List
 
-from openjarvis.security.types import ScanFinding, ThreatLevel
+from nivos.security.types import ScanFinding, ThreatLevel
 
 logger = logging.getLogger(__name__)
 
@@ -134,12 +134,12 @@ class InjectionScanner:
         # Prefer the Rust backend, but fall back to the pure-Python patterns
         # above when the compiled extension was not built (mirrors the
         # RUST_AVAILABLE-consulting fallback pattern used by security.ssrf).
-        from openjarvis._rust_bridge import RUST_AVAILABLE
+        from nivos._rust_bridge import RUST_AVAILABLE
 
         self._rust_impl = None
         if RUST_AVAILABLE:
             try:
-                from openjarvis._rust_bridge import get_rust_module
+                from nivos._rust_bridge import get_rust_module
 
                 self._rust_impl = get_rust_module().InjectionScanner()
             except Exception:  # noqa: BLE001 - Python scanner remains available
@@ -152,7 +152,7 @@ class InjectionScanner:
         """Scan text for injection patterns (Rust backend, else Python)."""
         if self._rust_impl is not None:
             try:
-                from openjarvis._rust_bridge import injection_result_from_json
+                from nivos._rust_bridge import injection_result_from_json
 
                 return injection_result_from_json(self._rust_impl.scan(text))
             except Exception:  # noqa: BLE001 - fail over to equivalent patterns

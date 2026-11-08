@@ -1,7 +1,7 @@
-"""Read background-work state from ``~/.openjarvis/.state/``.
+"""Read background-work state from ``~/.nivos/.state/``.
 
 Pure-function reader used by the chat banner, completion-notification
-dispatcher, and ``jarvis doctor``.  No side effects — safe to call
+dispatcher, and ``nivos doctor``.  No side effects — safe to call
 between every chat turn.
 """
 
@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Optional
 
-from openjarvis.core import config
+from nivos.core import config
 
 
 @dataclass(slots=True)
@@ -54,7 +54,7 @@ def get_status(home: Optional[Path] = None) -> BgStatus:
     # one. Fall back to the runtime import check so those installs don't show
     # "building" forever (and a stale ``extension-failed`` doesn't lie once the
     # extension has actually been built).
-    from openjarvis import _rust_bridge
+    from nivos import _rust_bridge
 
     if (state_dir / "extension-built").exists() or _rust_bridge.RUST_AVAILABLE:
         status.rust_extension = "ready"

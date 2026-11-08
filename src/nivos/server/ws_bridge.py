@@ -6,7 +6,7 @@ import asyncio
 import logging
 from typing import Any
 
-from openjarvis.core.events import Event, EventBus, EventType
+from nivos.core.events import Event, EventBus, EventType
 
 try:
     from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -65,7 +65,7 @@ def create_ws_router(event_bus: EventBus) -> Any:
 
     @router.websocket("/v1/agents/events")
     async def agent_events(websocket: WebSocket) -> None:
-        from openjarvis.server.auth_middleware import authenticate_websocket
+        from nivos.server.auth_middleware import authenticate_websocket
 
         expected_key = getattr(websocket.app.state, "api_key", "")
         authorized, subprotocol = authenticate_websocket(websocket, expected_key)

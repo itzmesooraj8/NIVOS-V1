@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from openjarvis.core.registry import EngineRegistry
-from openjarvis.engine._openai_compat import _OpenAICompatibleEngine
+from nivos.core.registry import EngineRegistry
+from nivos.engine._openai_compat import _OpenAICompatibleEngine
 
 _ENGINES = {
     "vllm": ("VLLMEngine", "http://localhost:8000", "/v1"),
@@ -46,7 +46,7 @@ class OpenAICompatEngine(_OpenAICompatibleEngine):
     """Generic engine for an explicitly-provided OpenAI-compatible endpoint.
 
     Deliberately NOT registered in ``EngineRegistry``: it is only ever
-    constructed with an explicit host (e.g. ``jarvis eval --base-url``), so
+    constructed with an explicit host (e.g. ``nivos eval --base-url``), so
     registering it would just add a useless localhost discovery probe and
     interact with the per-test registry wipe.
     """

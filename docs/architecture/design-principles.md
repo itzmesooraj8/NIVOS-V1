@@ -50,8 +50,8 @@ Adding a new implementation requires two things: implement the ABC and register 
 All extensible components use the **`@XRegistry.register("name")` decorator** pattern. Registration happens at import time, and no factory function or configuration file needs modification.
 
 ```python
-from openjarvis.core.registry import EngineRegistry
-from openjarvis.engine._stubs import InferenceEngine
+from nivos.core.registry import EngineRegistry
+from nivos.engine._stubs import InferenceEngine
 
 @EngineRegistry.register("my-engine")
 class MyEngine(InferenceEngine):
@@ -103,9 +103,9 @@ Cloud engines (OpenAI, Anthropic, Google) are available through the optional `cl
 
 ```python
 # This works without any network connection
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis(engine_key="ollama")  # Local Ollama server
+j = Nivos(engine_key="ollama")  # Local Ollama server
 response = j.ask("Hello")
 ```
 
@@ -138,7 +138,7 @@ This recommendation is written to `config.toml` during `nivos init` and used as 
 
 ```bash
 nivos init --force
-# Detects hardware, writes ~/.openjarvis/config.toml with:
+# Detects hardware, writes ~/.nivos/config.toml with:
 # [engine]
 # default = "vllm"  # (for A100)
 ```
@@ -190,12 +190,12 @@ nivos telemetry export --json  # Export all records
 
 ## 6. Python-First
 
-Nivos provides a **clean Python API** through the `Jarvis` class. There is no framework lock-in -- the SDK is a standard Python package with dataclass-based types and no required web framework.
+Nivos provides a **clean Python API** through the `Nivos` class. There is no framework lock-in -- the SDK is a standard Python package with dataclass-based types and no required web framework.
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis()
+j = Nivos()
 response = j.ask("Hello")
 
 # Full control

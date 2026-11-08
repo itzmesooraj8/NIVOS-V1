@@ -6,13 +6,13 @@ from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, List, Optional, Sequence
 
-from openjarvis.core.events import EventType, get_event_bus
-from openjarvis.core.types import Message, Role
-from openjarvis.memory.store import RECALLABLE_TRUST_TIERS
-from openjarvis.tools.storage._stubs import MemoryBackend, RetrievalResult
+from nivos.core.events import EventType, get_event_bus
+from nivos.core.types import Message, Role
+from nivos.memory.store import RECALLABLE_TRUST_TIERS
+from nivos.tools.storage._stubs import MemoryBackend, RetrievalResult
 
 if TYPE_CHECKING:
-    from openjarvis.memory.store import Fact
+    from nivos.memory.store import Fact
 
 
 @dataclass(slots=True)

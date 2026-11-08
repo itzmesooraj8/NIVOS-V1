@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from openjarvis.evals.core.config import EvalConfigError, expand_suite, load_eval_config
-from openjarvis.evals.core.types import (
+from nivos.evals.core.config import EvalConfigError, expand_suite, load_eval_config
+from nivos.evals.core.types import (
     BenchmarkConfig,
     DefaultsConfig,
     EvalSuiteConfig,
@@ -74,7 +74,7 @@ class TestDataclassDefaults:
 
     def test_benchmark_config_defaults(self):
         b = BenchmarkConfig(name="supergpqa")
-        assert b.backend == "jarvis-direct"
+        assert b.backend == "nivos-direct"
         assert b.max_samples is None
         assert b.split is None
         assert b.agent is None
@@ -152,13 +152,13 @@ class TestLoadEvalConfig:
 
             [[benchmarks]]
             name = "supergpqa"
-            backend = "jarvis-direct"
+            backend = "nivos-direct"
             max_samples = 100
             split = "test"
 
             [[benchmarks]]
             name = "gaia"
-            backend = "jarvis-agent"
+            backend = "nivos-agent"
             agent = "orchestrator"
             tools = ["calc", "think"]
             judge_model = "gpt-4o"
@@ -236,7 +236,7 @@ class TestLoadEvalConfig:
             name = "qwen3:8b"
 
             [[benchmarks]]
-            backend = "jarvis-direct"
+            backend = "nivos-direct"
         """,
         )
         with pytest.raises(EvalConfigError, match="'name' field"):
@@ -576,10 +576,10 @@ class TestExpandSuite:
     def test_backend_from_benchmark(self):
         suite = EvalSuiteConfig(
             models=[ModelConfig(name="m1")],
-            benchmarks=[BenchmarkConfig(name="gaia", backend="jarvis-agent")],
+            benchmarks=[BenchmarkConfig(name="gaia", backend="nivos-agent")],
         )
         configs = expand_suite(suite)
-        assert configs[0].backend == "jarvis-agent"
+        assert configs[0].backend == "nivos-agent"
 
     def test_expand_returns_run_config_type(self):
         suite = EvalSuiteConfig(
@@ -658,7 +658,7 @@ class TestCLIConfig:
     def test_run_missing_benchmark_and_config(self):
         from click.testing import CliRunner
 
-        from openjarvis.evals.cli import main
+        from nivos.evals.cli import main
 
         runner = CliRunner()
         result = runner.invoke(main, ["run", "-m", "qwen3:8b"])
@@ -668,7 +668,7 @@ class TestCLIConfig:
     def test_run_missing_model_and_config(self):
         from click.testing import CliRunner
 
-        from openjarvis.evals.cli import main
+        from nivos.evals.cli import main
 
         runner = CliRunner()
         result = runner.invoke(main, ["run", "-b", "supergpqa"])
@@ -678,7 +678,7 @@ class TestCLIConfig:
     def test_run_config_file_not_found(self):
         from click.testing import CliRunner
 
-        from openjarvis.evals.cli import main
+        from nivos.evals.cli import main
 
         runner = CliRunner()
         result = runner.invoke(main, ["run", "--config", "/nonexistent.toml"])
@@ -694,7 +694,7 @@ class TestCLIConfig:
 
         from click.testing import CliRunner
 
-        from openjarvis.evals.cli import main
+        from nivos.evals.cli import main
 
         p = _write_toml(
             tmp_path,
@@ -711,7 +711,7 @@ class TestCLIConfig:
         )
 
         runner = CliRunner()
-        with patch("openjarvis.evals.cli._run_single", side_effect=Exception("mock")):
+        with patch("nivos.evals.cli._run_single", side_effect=Exception("mock")):
             result = runner.invoke(main, ["run", "--config", str(p)])
 
         # Should print suite info before failing

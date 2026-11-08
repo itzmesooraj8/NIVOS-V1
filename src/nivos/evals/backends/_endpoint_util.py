@@ -1,6 +1,6 @@
 """Shared helper for targeting an explicit OpenAI-compatible endpoint.
 
-Used by the first-party eval backends (jarvis-direct, jarvis-agent) when
+Used by the first-party eval backends (nivos-direct, nivos-agent) when
 ``--base-url`` is given: the eval must use exactly that endpoint, with no
 silent fallback to whatever other engine discovery happens to find.
 """
@@ -23,7 +23,7 @@ def build_endpoint_engine(
     Pre-flight health-checks the endpoint and raises a loud, actionable
     error when it is unreachable — engine discovery is never consulted.
     """
-    from openjarvis.engine.openai_compat_engines import (
+    from nivos.engine.openai_compat_engines import (
         OpenAICompatEngine,
         normalize_openai_base_url,
     )
@@ -44,7 +44,7 @@ def build_endpoint_engine(
             f"(GET {host}/v1/models failed). Is an OpenAI-compatible server "
             "(e.g. `vllm serve`) running at that address? If it requires "
             "authentication (HTTP 401), pass --api-key or set "
-            "JARVIS_BACKEND_API_KEY."
+            "NIVOS_BACKEND_API_KEY."
         )
     return engine
 

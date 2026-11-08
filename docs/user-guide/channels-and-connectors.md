@@ -298,7 +298,7 @@ We recommend creating **one Slack app** that handles both. The App Manifest belo
 
 8. **(Optional) Set the app icon:**
    - Go to Basic Information → Display Information
-   - Upload the [Nivos icon](https://github.com/nivos/nivos/blob/main/assets/openjarvis-slack-icon.jpg)
+   - Upload the [Nivos icon](https://github.com/nivos/nivos/blob/main/assets/nivos-slack-icon.jpg)
 
 ### Required Bot Token Scopes (reference)
 
@@ -540,14 +540,14 @@ Same as Apple Notes — requires Full Disk Access.
 |-------|----------|
 | "Connected — no data synced yet" | The connector authenticated but hasn't synced. Try running `uv run nivos deep-research-setup --skip-chat` to trigger a sync. |
 | Data seems stale | Connectors sync on demand. Run the setup command or click "Reconnect" to re-sync. |
-| Want to reset a connector | Click "Reconnect" in the Channels tab, or delete the credential file at `~/.openjarvis/connectors/{connector}.json` |
+| Want to reset a connector | Click "Reconnect" in the Channels tab, or delete the credential file at `~/.nivos/connectors/{connector}.json` |
 
 ### Where credentials are stored
 
-All credentials are saved locally at `~/.openjarvis/connectors/` with file permissions `0600` (owner-only read/write). No credentials are sent to any server — everything stays on your device.
+All credentials are saved locally at `~/.nivos/connectors/` with file permissions `0600` (owner-only read/write). No credentials are sent to any server — everything stays on your device.
 
 ```
-~/.openjarvis/connectors/
+~/.nivos/connectors/
 ├── gmail_imap.json    # Gmail email + app password
 ├── gdrive.json        # Google Drive OAuth tokens
 ├── gcalendar.json     # Google Calendar OAuth tokens

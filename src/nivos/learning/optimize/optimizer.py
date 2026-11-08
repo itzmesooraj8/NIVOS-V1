@@ -16,10 +16,10 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     tomli_w = None  # type: ignore[assignment]
 
-from openjarvis.learning.optimize.llm_optimizer import LLMOptimizer
-from openjarvis.learning.optimize.store import OptimizationStore
-from openjarvis.learning.optimize.trial_runner import TrialRunner
-from openjarvis.learning.optimize.types import (
+from nivos.learning.optimize.llm_optimizer import LLMOptimizer
+from nivos.learning.optimize.store import OptimizationStore
+from nivos.learning.optimize.trial_runner import TrialRunner
+from nivos.learning.optimize.types import (
     ObjectiveSpec,
     OptimizationRun,
     SearchSpace,
@@ -165,7 +165,7 @@ class OptimizationEngine:
         """
         run_id = uuid.uuid4().hex[:16]
         # Detect benchmark name(s) from the trial runner
-        from openjarvis.learning.optimize.trial_runner import MultiBenchTrialRunner
+        from nivos.learning.optimize.trial_runner import MultiBenchTrialRunner
 
         benchmark_name = getattr(self.trial_runner, "benchmark", "")
         benchmark_names: List[str] = []
@@ -213,12 +213,12 @@ class OptimizationEngine:
             elif result.per_benchmark:
                 # Multi-benchmark composite: build a synthetic summary
                 # for analysis from per_benchmark data
-                from openjarvis.evals.core.types import RunSummary as _RS
+                from nivos.evals.core.types import RunSummary as _RS
 
                 synth = _RS(
                     benchmark="multi",
                     category="multi",
-                    backend="jarvis-agent",
+                    backend="nivos-agent",
                     model=result.config.params.get("intelligence.model", ""),
                     accuracy=result.accuracy,
                     mean_latency_seconds=result.mean_latency_seconds,

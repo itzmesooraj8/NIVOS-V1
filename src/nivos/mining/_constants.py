@@ -1,4 +1,4 @@
-# src/openjarvis/mining/_constants.py
+# src/nivos/mining/_constants.py
 """Constants for the Pearl mining subsystem.
 
 Pinned Pearl ref OJ has tested against. Bumped per OJ release after
@@ -9,13 +9,13 @@ section 7.3 for the rev-bump workflow.
 
 from __future__ import annotations
 
-from openjarvis.core.paths import get_config_dir
+from nivos.core.paths import get_config_dir
 
 PEARL_REPO = "https://github.com/pearl-research-labs/pearl.git"
 # TODO at implementation time: replace with the specific commit/tag verified
 # against H100. Document the chosen ref in the OJ release notes.
 PEARL_PINNED_REF = "master"
-PEARL_IMAGE_TAG = f"openjarvis/pearl-miner:{PEARL_PINNED_REF}"
+PEARL_IMAGE_TAG = f"nivos/pearl-miner:{PEARL_PINNED_REF}"
 
 # Default Pearl-blessed model. Overridable via [mining.extra].model.
 DEFAULT_PEARL_MODEL = "pearl-ai/Llama-3.3-70B-Instruct-pearl"

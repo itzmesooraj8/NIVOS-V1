@@ -10,8 +10,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-from openjarvis.core.events import Event, EventBus, EventType
-from openjarvis.core.types import TelemetryRecord
+from nivos.core.events import Event, EventBus, EventType
+from nivos.core.types import TelemetryRecord
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +188,7 @@ class TelemetryStore:
 
         self._db_path = str(db_path)
         if self._db_path != ":memory:":
-            from openjarvis.security.file_utils import secure_create
+            from nivos.security.file_utils import secure_create
 
             secure_create(Path(self._db_path))
         self._conn = sqlite3.connect(self._db_path, check_same_thread=False)

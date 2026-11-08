@@ -7,9 +7,9 @@ import subprocess
 from pathlib import Path
 from typing import Any, List
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 # Maximum output size per stream (100 KB)
 _MAX_OUTPUT_BYTES = 102_400
@@ -148,7 +148,7 @@ class ShellExecTool(BaseTool):
                 env[key] = val
 
         try:
-            from openjarvis._rust_bridge import get_rust_module
+            from nivos._rust_bridge import get_rust_module
 
             _rust = get_rust_module()
             output = _rust.ShellExecTool().execute(command, working_dir)

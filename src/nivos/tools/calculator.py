@@ -7,9 +7,9 @@ import math
 import operator
 from typing import Any
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 # Allowed binary operators
 _BINOPS = {
@@ -92,7 +92,7 @@ def _safe_eval_node(node: ast.AST) -> Any:
 def safe_eval(expression: str) -> float:
     """Evaluate a math expression safely — Rust backend with Python fallback."""
     try:
-        from openjarvis._rust_bridge import get_rust_module
+        from nivos._rust_bridge import get_rust_module
 
         _rust = get_rust_module()
         return float(_rust.CalculatorTool().execute(expression))

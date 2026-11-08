@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from openjarvis.tools.storage.chunking import Chunk, ChunkConfig, chunk_text
+from nivos.tools.storage.chunking import Chunk, ChunkConfig, chunk_text
 
 # Directories to skip when walking a tree
 _SKIP_DIRS = frozenset(
@@ -197,7 +197,7 @@ def ingest_path(
             continue
 
         # Skip sensitive files (secrets, credentials, keys)
-        from openjarvis.security.file_policy import is_sensitive_file
+        from nivos.security.file_policy import is_sensitive_file
 
         if is_sensitive_file(child):
             continue

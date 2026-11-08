@@ -77,7 +77,7 @@ def check_ssrf(url: str) -> Optional[str]:
     guard is security-critical, so it must never be silently skipped — or
     crash with ``ImportError`` — merely because Rust was not built.
     """
-    from openjarvis._rust_bridge import RUST_AVAILABLE, get_rust_module
+    from nivos._rust_bridge import RUST_AVAILABLE, get_rust_module
 
     if RUST_AVAILABLE:
         return get_rust_module().check_ssrf(url)
@@ -143,11 +143,11 @@ def _check_ssrf_python(url: str) -> Optional[str]:
         # Fail CLOSED: an unresolvable name must not be waved through. On an
         # exposed server, a permissive fallback is an SSRF hole; a legitimate
         # transient DNS failure is better surfaced as a block than as a
-        # silent bypass. Override with OPENJARVIS_SSRF_FAIL_OPEN=1 only for
+        # silent bypass. Override with NIVOS_SSRF_FAIL_OPEN=1 only for
         # trusted, non-exposed local use.
         import os as _os
 
-        if _os.environ.get("OPENJARVIS_SSRF_FAIL_OPEN", "").lower() in (
+        if _os.environ.get("NIVOS_SSRF_FAIL_OPEN", "").lower() in (
             "1",
             "true",
             "yes",

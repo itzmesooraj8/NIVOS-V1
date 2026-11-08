@@ -1,4 +1,4 @@
-"""CLI for the OpenJarvis evaluation framework."""
+"""CLI for the Nivos evaluation framework."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from openjarvis.evals.core.display import (
+from nivos.evals.core.display import (
     print_banner,
     print_completion,
     print_full_results,
@@ -156,8 +156,8 @@ BENCHMARKS = {
 }
 
 BACKENDS = {
-    "jarvis-direct": "Engine-level inference (local or cloud)",
-    "jarvis-agent": "Agent-level inference with tool calling",
+    "nivos-direct": "Engine-level inference (local or cloud)",
+    "nivos-agent": "Agent-level inference with tool calling",
     "hermes": "Real Hermes Agent (Nous Research) via subprocess",
     "openclaw": "Real OpenClaw via Node subprocess",
 }
@@ -192,7 +192,7 @@ def _build_backend(
 
     - For "hermes" and "openclaw" they are REQUIRED — these foreign
       frameworks always call out to an external endpoint.
-    - "jarvis-direct" and "jarvis-agent" honor them when
+    - "nivos-direct" and "nivos-agent" honor them when
       ``first_party_endpoint`` is True (the CLI ``--base-url`` path): the
       eval targets exactly that endpoint — no engine-discovery fallback —
       and fails fast if it is unreachable. Suite mode passes
@@ -205,10 +205,10 @@ def _build_backend(
     else:
         fp_base_url, fp_api_key = base_url, api_key
 
-    if backend_name == "jarvis-agent":
-        from openjarvis.evals.backends.jarvis_agent import JarvisAgentBackend
+    if backend_name == "nivos-agent":
+        from nivos.evals.backends.nivos_agent import NivosAgentBackend
 
-        return JarvisAgentBackend(
+        return NivosAgentBackend(
             engine_key=engine_key,
             agent_name=agent_name,
             tools=tools,
@@ -219,10 +219,10 @@ def _build_backend(
             base_url=fp_base_url,
             api_key=fp_api_key,
         )
-    elif backend_name == "jarvis-direct":
-        from openjarvis.evals.backends.jarvis_direct import JarvisDirectBackend
+    elif backend_name == "nivos-direct":
+        from nivos.evals.backends.nivos_direct import NivosDirectBackend
 
-        return JarvisDirectBackend(
+        return NivosDirectBackend(
             engine_key=engine_key,
             telemetry=telemetry,
             gpu_metrics=gpu_metrics,
@@ -230,7 +230,7 @@ def _build_backend(
             api_key=fp_api_key,
         )
     elif backend_name == "hermes":
-        from openjarvis.evals.backends.external import HermesBackend
+        from nivos.evals.backends.external import HermesBackend
 
         if not base_url or not api_key:
             raise click.UsageError(
@@ -243,7 +243,7 @@ def _build_backend(
             api_key=api_key,
         )
     elif backend_name == "openclaw":
-        from openjarvis.evals.backends.external import OpenClawBackend
+        from nivos.evals.backends.external import OpenClawBackend
 
         if not base_url or not api_key:
             raise click.UsageError(
@@ -264,166 +264,166 @@ def _build_backend(
 def _build_dataset(benchmark: str, subset: str | None = None):
     """Construct the dataset provider for a benchmark."""
     if benchmark == "supergpqa":
-        from openjarvis.evals.datasets.supergpqa import SuperGPQADataset
+        from nivos.evals.datasets.supergpqa import SuperGPQADataset
 
         return SuperGPQADataset()
     elif benchmark == "gpqa":
-        from openjarvis.evals.datasets.gpqa import GPQADataset
+        from nivos.evals.datasets.gpqa import GPQADataset
 
         return GPQADataset()
     elif benchmark == "mmlu-pro":
-        from openjarvis.evals.datasets.mmlu_pro import MMLUProDataset
+        from nivos.evals.datasets.mmlu_pro import MMLUProDataset
 
         return MMLUProDataset()
     elif benchmark == "math500":
-        from openjarvis.evals.datasets.math500 import MATH500Dataset
+        from nivos.evals.datasets.math500 import MATH500Dataset
 
         return MATH500Dataset()
     elif benchmark == "natural-reasoning":
-        from openjarvis.evals.datasets.natural_reasoning import NaturalReasoningDataset
+        from nivos.evals.datasets.natural_reasoning import NaturalReasoningDataset
 
         return NaturalReasoningDataset()
     elif benchmark == "hle":
-        from openjarvis.evals.datasets.hle import HLEDataset
+        from nivos.evals.datasets.hle import HLEDataset
 
         return HLEDataset()
     elif benchmark == "simpleqa":
-        from openjarvis.evals.datasets.simpleqa import SimpleQADataset
+        from nivos.evals.datasets.simpleqa import SimpleQADataset
 
         return SimpleQADataset()
     elif benchmark == "wildchat":
-        from openjarvis.evals.datasets.wildchat import WildChatDataset
+        from nivos.evals.datasets.wildchat import WildChatDataset
 
         return WildChatDataset()
     elif benchmark == "ipw":
-        from openjarvis.evals.datasets.ipw_mixed import IPWDataset
+        from nivos.evals.datasets.ipw_mixed import IPWDataset
 
         return IPWDataset()
     elif benchmark == "gaia":
-        from openjarvis.evals.datasets.gaia import GAIADataset
+        from nivos.evals.datasets.gaia import GAIADataset
 
         return GAIADataset()
     elif benchmark == "frames":
-        from openjarvis.evals.datasets.frames import FRAMESDataset
+        from nivos.evals.datasets.frames import FRAMESDataset
 
         return FRAMESDataset()
     elif benchmark == "swebench":
-        from openjarvis.evals.datasets.swebench import SWEBenchDataset
+        from nivos.evals.datasets.swebench import SWEBenchDataset
 
         return SWEBenchDataset()
     elif benchmark == "swefficiency":
-        from openjarvis.evals.datasets.swefficiency import SWEfficiencyDataset
+        from nivos.evals.datasets.swefficiency import SWEfficiencyDataset
 
         return SWEfficiencyDataset()
     elif benchmark == "terminalbench":
-        from openjarvis.evals.datasets.terminalbench import TerminalBenchDataset
+        from nivos.evals.datasets.terminalbench import TerminalBenchDataset
 
         return TerminalBenchDataset()
     elif benchmark == "terminalbench-native":
-        from openjarvis.evals.datasets.terminalbench_native import (
+        from nivos.evals.datasets.terminalbench_native import (
             TerminalBenchNativeDataset,
         )
 
         return TerminalBenchNativeDataset()
     elif benchmark == "terminalbench-v2.1":
-        from openjarvis.evals.datasets.terminalbench_v2_1 import (
+        from nivos.evals.datasets.terminalbench_v2_1 import (
             TerminalBenchV21Dataset,
         )
 
         return TerminalBenchV21Dataset()
     elif benchmark == "email_triage":
-        from openjarvis.evals.datasets.email_triage import EmailTriageDataset
+        from nivos.evals.datasets.email_triage import EmailTriageDataset
 
         return EmailTriageDataset()
     elif benchmark == "morning_brief":
-        from openjarvis.evals.datasets.morning_brief import MorningBriefDataset
+        from nivos.evals.datasets.morning_brief import MorningBriefDataset
 
         return MorningBriefDataset()
     elif benchmark == "research_mining":
-        from openjarvis.evals.datasets.research_mining import ResearchMiningDataset
+        from nivos.evals.datasets.research_mining import ResearchMiningDataset
 
         return ResearchMiningDataset()
     elif benchmark == "knowledge_base":
-        from openjarvis.evals.datasets.knowledge_base import KnowledgeBaseDataset
+        from nivos.evals.datasets.knowledge_base import KnowledgeBaseDataset
 
         return KnowledgeBaseDataset()
     elif benchmark == "coding_task":
-        from openjarvis.evals.datasets.coding_task import CodingTaskDataset
+        from nivos.evals.datasets.coding_task import CodingTaskDataset
 
         return CodingTaskDataset()
     elif benchmark == "loghub":
-        from openjarvis.evals.datasets.loghub import LogHubDataset
+        from nivos.evals.datasets.loghub import LogHubDataset
 
         return LogHubDataset()
     elif benchmark == "ama-bench":
-        from openjarvis.evals.datasets.ama_bench import AMABenchDataset
+        from nivos.evals.datasets.ama_bench import AMABenchDataset
 
         return AMABenchDataset()
     elif benchmark == "lifelong-agent":
-        from openjarvis.evals.datasets.lifelong_agent import LifelongAgentDataset
+        from nivos.evals.datasets.lifelong_agent import LifelongAgentDataset
 
         return LifelongAgentDataset(subset=subset or "db_bench")
     elif benchmark == "deepplanning":
-        from openjarvis.evals.datasets.deepplanning import DeepPlanningDataset
+        from nivos.evals.datasets.deepplanning import DeepPlanningDataset
 
         return DeepPlanningDataset()
     elif benchmark == "paperarena":
-        from openjarvis.evals.datasets.paperarena import PaperArenaDataset
+        from nivos.evals.datasets.paperarena import PaperArenaDataset
 
         return PaperArenaDataset()
     elif benchmark == "webchorearena":
-        from openjarvis.evals.datasets.webchorearena import WebChoreArenaDataset
+        from nivos.evals.datasets.webchorearena import WebChoreArenaDataset
 
         return WebChoreArenaDataset()
     elif benchmark == "workarena":
-        from openjarvis.evals.datasets.workarena import WorkArenaDataset
+        from nivos.evals.datasets.workarena import WorkArenaDataset
 
         return WorkArenaDataset()
     elif benchmark == "coding_assistant":
-        from openjarvis.evals.datasets.coding_assistant import CodingAssistantDataset
+        from nivos.evals.datasets.coding_assistant import CodingAssistantDataset
 
         return CodingAssistantDataset()
     elif benchmark == "security_scanner":
-        from openjarvis.evals.datasets.security_scanner import SecurityScannerDataset
+        from nivos.evals.datasets.security_scanner import SecurityScannerDataset
 
         return SecurityScannerDataset()
     elif benchmark == "daily_digest":
-        from openjarvis.evals.datasets.daily_digest import DailyDigestDataset
+        from nivos.evals.datasets.daily_digest import DailyDigestDataset
 
         return DailyDigestDataset()
     elif benchmark == "doc_qa":
-        from openjarvis.evals.datasets.doc_qa import DocQADataset
+        from nivos.evals.datasets.doc_qa import DocQADataset
 
         return DocQADataset()
     elif benchmark == "browser_assistant":
-        from openjarvis.evals.datasets.browser_assistant import BrowserAssistantDataset
+        from nivos.evals.datasets.browser_assistant import BrowserAssistantDataset
 
         return BrowserAssistantDataset()
     elif benchmark == "pinchbench":
-        from openjarvis.evals.datasets.pinchbench import PinchBenchDataset
+        from nivos.evals.datasets.pinchbench import PinchBenchDataset
 
         return PinchBenchDataset(path=subset)
     elif benchmark == "taubench":
-        from openjarvis.evals.datasets.taubench import TauBenchDataset
+        from nivos.evals.datasets.taubench import TauBenchDataset
 
         domains = subset.split(",") if subset else None
         return TauBenchDataset(domains=domains)
     elif benchmark == "livecodebench":
-        from openjarvis.evals.datasets.livecodebench import LiveCodeBenchDataset
+        from nivos.evals.datasets.livecodebench import LiveCodeBenchDataset
 
         return LiveCodeBenchDataset()
     elif benchmark in ("liveresearch", "deepresearch"):
-        from openjarvis.evals.datasets.liveresearch import LiveResearchBenchDataset
+        from nivos.evals.datasets.liveresearch import LiveResearchBenchDataset
 
         return LiveResearchBenchDataset(path=subset)
     elif benchmark == "liveresearchbench":
-        from openjarvis.evals.datasets.liveresearchbench import (
+        from nivos.evals.datasets.liveresearchbench import (
             LiveResearchBenchDataset as LRBDataset,
         )
 
         return LRBDataset()
     elif benchmark == "toolcall15":
-        from openjarvis.evals.datasets.toolcall15 import ToolCall15Dataset
+        from nivos.evals.datasets.toolcall15 import ToolCall15Dataset
 
         return ToolCall15Dataset()
     else:
@@ -433,161 +433,161 @@ def _build_dataset(benchmark: str, subset: str | None = None):
 def _build_scorer(benchmark: str, judge_backend, judge_model: str):
     """Construct the scorer for a benchmark."""
     if benchmark == "supergpqa":
-        from openjarvis.evals.scorers.supergpqa_mcq import SuperGPQAScorer
+        from nivos.evals.scorers.supergpqa_mcq import SuperGPQAScorer
 
         return SuperGPQAScorer(judge_backend, judge_model)
     elif benchmark == "gpqa":
-        from openjarvis.evals.scorers.gpqa_mcq import GPQAScorer
+        from nivos.evals.scorers.gpqa_mcq import GPQAScorer
 
         return GPQAScorer(judge_backend, judge_model)
     elif benchmark == "mmlu-pro":
-        from openjarvis.evals.scorers.mmlu_pro_mcq import MMLUProScorer
+        from nivos.evals.scorers.mmlu_pro_mcq import MMLUProScorer
 
         return MMLUProScorer(judge_backend, judge_model)
     elif benchmark == "math500" or benchmark == "natural-reasoning":
-        from openjarvis.evals.scorers.reasoning_judge import ReasoningJudgeScorer
+        from nivos.evals.scorers.reasoning_judge import ReasoningJudgeScorer
 
         return ReasoningJudgeScorer(judge_backend, judge_model)
     elif benchmark == "hle":
-        from openjarvis.evals.scorers.hle_judge import HLEScorer
+        from nivos.evals.scorers.hle_judge import HLEScorer
 
         return HLEScorer(judge_backend, judge_model)
     elif benchmark == "simpleqa":
-        from openjarvis.evals.scorers.simpleqa_judge import SimpleQAScorer
+        from nivos.evals.scorers.simpleqa_judge import SimpleQAScorer
 
         return SimpleQAScorer(judge_backend, judge_model)
     elif benchmark == "wildchat":
-        from openjarvis.evals.scorers.wildchat_judge import WildChatScorer
+        from nivos.evals.scorers.wildchat_judge import WildChatScorer
 
         return WildChatScorer(judge_backend, judge_model)
     elif benchmark == "ipw":
-        from openjarvis.evals.scorers.ipw_mixed import IPWMixedScorer
+        from nivos.evals.scorers.ipw_mixed import IPWMixedScorer
 
         return IPWMixedScorer(judge_backend, judge_model)
     elif benchmark == "gaia":
-        from openjarvis.evals.scorers.gaia_exact import GAIAScorer
+        from nivos.evals.scorers.gaia_exact import GAIAScorer
 
         return GAIAScorer(judge_backend, judge_model)
     elif benchmark == "frames":
-        from openjarvis.evals.scorers.frames_judge import FRAMESScorer
+        from nivos.evals.scorers.frames_judge import FRAMESScorer
 
         return FRAMESScorer(judge_backend, judge_model)
     elif benchmark == "swebench":
-        from openjarvis.evals.scorers.swebench_structural import SWEBenchScorer
+        from nivos.evals.scorers.swebench_structural import SWEBenchScorer
 
         return SWEBenchScorer(judge_backend, judge_model)
     elif benchmark == "swefficiency":
-        from openjarvis.evals.scorers.swefficiency_structural import SWEfficiencyScorer
+        from nivos.evals.scorers.swefficiency_structural import SWEfficiencyScorer
 
         return SWEfficiencyScorer(judge_backend, judge_model)
     elif benchmark == "terminalbench":
-        from openjarvis.evals.scorers.terminalbench_judge import TerminalBenchScorer
+        from nivos.evals.scorers.terminalbench_judge import TerminalBenchScorer
 
         return TerminalBenchScorer(judge_backend, judge_model)
     elif benchmark == "terminalbench-native":
-        from openjarvis.evals.scorers.terminalbench_native_structural import (
+        from nivos.evals.scorers.terminalbench_native_structural import (
             TerminalBenchNativeScorer,
         )
 
         return TerminalBenchNativeScorer(judge_backend, judge_model)
     elif benchmark == "terminalbench-v2.1":
-        from openjarvis.evals.scorers.terminalbench_v2_1 import (
+        from nivos.evals.scorers.terminalbench_v2_1 import (
             TerminalBenchV21Scorer,
         )
 
         return TerminalBenchV21Scorer(judge_backend, judge_model)
     elif benchmark == "email_triage":
-        from openjarvis.evals.scorers.email_triage import EmailTriageScorer
+        from nivos.evals.scorers.email_triage import EmailTriageScorer
 
         return EmailTriageScorer(judge_backend, judge_model)
     elif benchmark == "morning_brief":
-        from openjarvis.evals.scorers.morning_brief import MorningBriefScorer
+        from nivos.evals.scorers.morning_brief import MorningBriefScorer
 
         return MorningBriefScorer(judge_backend, judge_model)
     elif benchmark == "research_mining":
-        from openjarvis.evals.scorers.research_mining import ResearchMiningScorer
+        from nivos.evals.scorers.research_mining import ResearchMiningScorer
 
         return ResearchMiningScorer(judge_backend, judge_model)
     elif benchmark == "knowledge_base":
-        from openjarvis.evals.scorers.knowledge_base import KnowledgeBaseScorer
+        from nivos.evals.scorers.knowledge_base import KnowledgeBaseScorer
 
         return KnowledgeBaseScorer(judge_backend, judge_model)
     elif benchmark == "coding_task":
-        from openjarvis.evals.scorers.coding_task import CodingTaskScorer
+        from nivos.evals.scorers.coding_task import CodingTaskScorer
 
         return CodingTaskScorer(judge_backend, judge_model)
     elif benchmark == "loghub":
-        from openjarvis.evals.scorers.loghub_scorer import LogHubScorer
+        from nivos.evals.scorers.loghub_scorer import LogHubScorer
 
         return LogHubScorer(judge_backend, judge_model)
     elif benchmark == "ama-bench":
-        from openjarvis.evals.scorers.ama_bench_judge import AMABenchScorer
+        from nivos.evals.scorers.ama_bench_judge import AMABenchScorer
 
         return AMABenchScorer(judge_backend, judge_model)
     elif benchmark == "lifelong-agent":
-        from openjarvis.evals.scorers.lifelong_agent_scorer import LifelongAgentScorer
+        from nivos.evals.scorers.lifelong_agent_scorer import LifelongAgentScorer
 
         return LifelongAgentScorer(judge_backend, judge_model)
     elif benchmark == "deepplanning":
-        from openjarvis.evals.scorers.deepplanning_scorer import DeepPlanningScorer
+        from nivos.evals.scorers.deepplanning_scorer import DeepPlanningScorer
 
         return DeepPlanningScorer(judge_backend, judge_model)
     elif benchmark == "paperarena":
-        from openjarvis.evals.scorers.paperarena_judge import PaperArenaScorer
+        from nivos.evals.scorers.paperarena_judge import PaperArenaScorer
 
         return PaperArenaScorer(judge_backend, judge_model)
     elif benchmark == "webchorearena":
-        from openjarvis.evals.scorers.webchorearena_scorer import WebChoreArenaScorer
+        from nivos.evals.scorers.webchorearena_scorer import WebChoreArenaScorer
 
         return WebChoreArenaScorer(judge_backend, judge_model)
     elif benchmark == "workarena":
-        from openjarvis.evals.scorers.workarena_scorer import WorkArenaScorer
+        from nivos.evals.scorers.workarena_scorer import WorkArenaScorer
 
         return WorkArenaScorer(judge_backend, judge_model)
     elif benchmark == "coding_assistant":
-        from openjarvis.evals.scorers.coding_assistant import CodingAssistantScorer
+        from nivos.evals.scorers.coding_assistant import CodingAssistantScorer
 
         return CodingAssistantScorer(judge_backend, judge_model)
     elif benchmark == "security_scanner":
-        from openjarvis.evals.scorers.security_scanner import SecurityScannerScorer
+        from nivos.evals.scorers.security_scanner import SecurityScannerScorer
 
         return SecurityScannerScorer(judge_backend, judge_model)
     elif benchmark == "daily_digest":
-        from openjarvis.evals.scorers.daily_digest import DailyDigestScorer
+        from nivos.evals.scorers.daily_digest import DailyDigestScorer
 
         return DailyDigestScorer(judge_backend, judge_model)
     elif benchmark == "doc_qa":
-        from openjarvis.evals.scorers.doc_qa import DocQAScorer
+        from nivos.evals.scorers.doc_qa import DocQAScorer
 
         return DocQAScorer(judge_backend, judge_model)
     elif benchmark == "browser_assistant":
-        from openjarvis.evals.scorers.browser_assistant import BrowserAssistantScorer
+        from nivos.evals.scorers.browser_assistant import BrowserAssistantScorer
 
         return BrowserAssistantScorer(judge_backend, judge_model)
     elif benchmark == "pinchbench":
-        from openjarvis.evals.scorers.pinchbench import PinchBenchScorer
+        from nivos.evals.scorers.pinchbench import PinchBenchScorer
 
         return PinchBenchScorer(judge_backend, judge_model)
     elif benchmark == "taubench":
-        from openjarvis.evals.scorers.taubench import TauBenchScorer
+        from nivos.evals.scorers.taubench import TauBenchScorer
 
         return TauBenchScorer(judge_backend, judge_model)
     elif benchmark == "livecodebench":
-        from openjarvis.evals.scorers.livecodebench import LiveCodeBenchScorer
+        from nivos.evals.scorers.livecodebench import LiveCodeBenchScorer
 
         return LiveCodeBenchScorer(judge_backend, judge_model)
     elif benchmark in ("liveresearch", "deepresearch"):
-        from openjarvis.evals.scorers.liveresearch import LiveResearchBenchScorer
+        from nivos.evals.scorers.liveresearch import LiveResearchBenchScorer
 
         return LiveResearchBenchScorer(judge_backend, judge_model)
     elif benchmark == "liveresearchbench":
-        from openjarvis.evals.scorers.liveresearchbench import (
+        from nivos.evals.scorers.liveresearchbench import (
             LiveResearchBenchScorer as LRBScorer,
         )
 
         return LRBScorer(judge_backend, judge_model)
     elif benchmark == "toolcall15":
-        from openjarvis.evals.scorers.toolcall15 import ToolCall15Scorer
+        from nivos.evals.scorers.toolcall15 import ToolCall15Scorer
 
         return ToolCall15Scorer(judge_backend, judge_model)
     else:
@@ -602,10 +602,10 @@ def _build_judge_backend(judge_model: str, engine_key: str = "cloud"):
     LLM-judge scorers will raise a clear error when they actually try
     to use the backend rather than failing at startup.
     """
-    from openjarvis.evals.backends.jarvis_direct import JarvisDirectBackend
+    from nivos.evals.backends.nivos_direct import NivosDirectBackend
 
     try:
-        return JarvisDirectBackend(engine_key=engine_key)
+        return NivosDirectBackend(engine_key=engine_key)
     except RuntimeError as exc:
         LOGGER.warning(
             "Judge backend (%s) unavailable: %s — "
@@ -641,7 +641,7 @@ def _build_trackers(config) -> list:
     trackers = []
     if getattr(config, "wandb_project", ""):
         try:
-            from openjarvis.evals.trackers.wandb_tracker import WandbTracker
+            from nivos.evals.trackers.wandb_tracker import WandbTracker
 
             trackers.append(
                 WandbTracker(
@@ -657,7 +657,7 @@ def _build_trackers(config) -> list:
             ) from exc
     if getattr(config, "sheets_spreadsheet_id", ""):
         try:
-            from openjarvis.evals.trackers.sheets_tracker import SheetsTracker
+            from nivos.evals.trackers.sheets_tracker import SheetsTracker
 
             trackers.append(
                 SheetsTracker(
@@ -683,12 +683,12 @@ def _run_terminalbench_native(
 ) -> object:
     """Run TerminalBench V2.1 natively via terminal-bench Harness.
 
-    ``base_url`` (from ``--base-url`` / JARVIS_BACKEND_BASE_URL) targets an
+    ``base_url`` (from ``--base-url`` / NIVOS_BACKEND_BASE_URL) targets an
     already-running OpenAI-compatible endpoint; when unset, the legacy local
     vLLM default (http://localhost:8000/v1) is used.
     """
-    from openjarvis.engine.openai_compat_engines import normalize_openai_base_url
-    from openjarvis.evals.backends.terminalbench_native import (
+    from nivos.engine.openai_compat_engines import normalize_openai_base_url
+    from nivos.evals.backends.terminalbench_native import (
         TerminalBenchNativeBackend,
         summarize_benchmark_results,
     )
@@ -780,7 +780,7 @@ def _run_single(
     explicitly deferred. The CLI single-run path (``suite_mode=False``)
     honors ``--base-url``/``--api-key`` for every backend.
     """
-    from openjarvis.evals.core.runner import EvalRunner
+    from nivos.evals.core.runner import EvalRunner
 
     if console is None:
         console = Console()
@@ -789,12 +789,12 @@ def _run_single(
     base_url = (
         getattr(config, "base_url", None)
         or _metadata.get("base_url")
-        or os.environ.get("JARVIS_BACKEND_BASE_URL")
+        or os.environ.get("NIVOS_BACKEND_BASE_URL")
     )
     api_key = (
         getattr(config, "api_key", None)
         or _metadata.get("api_key")
-        or os.environ.get("JARVIS_BACKEND_API_KEY")
+        or os.environ.get("NIVOS_BACKEND_API_KEY")
     )
 
     # TerminalBench V2.1 native: use terminal-bench Harness directly
@@ -876,9 +876,9 @@ def _run_agentic(
     import asyncio
     from pathlib import Path as _Path
 
-    from openjarvis.evals.core.agentic_runner import AgenticRunner
-    from openjarvis.evals.core.event_recorder import EventRecorder
-    from openjarvis.evals.core.export import (
+    from nivos.evals.core.agentic_runner import AgenticRunner
+    from nivos.evals.core.event_recorder import EventRecorder
+    from nivos.evals.core.export import (
         export_artifacts_manifest,
         export_jsonl,
         export_summary_json,
@@ -919,7 +919,7 @@ def _run_agentic(
             )
 
     # Build agent via SystemBuilder
-    from openjarvis.system import SystemBuilder
+    from nivos.system import SystemBuilder
 
     builder = SystemBuilder()
     if config.engine_key:
@@ -935,12 +935,12 @@ def _run_agentic(
     # Build TelemetrySession (optional — only if energy monitoring available)
     telemetry_session = None
     try:
-        from openjarvis.core.config import load_config
-        from openjarvis.telemetry.energy_monitor import create_energy_monitor
-        from openjarvis.telemetry.session import TelemetrySession
+        from nivos.core.config import load_config
+        from nivos.telemetry.energy_monitor import create_energy_monitor
+        from nivos.telemetry.session import TelemetrySession
 
         # The eval config carries only a telemetry on/off flag, so the
-        # estimate opt-in has to come from the user's JarvisConfig.
+        # estimate opt-in has to come from the user's NivosConfig.
         allow_estimates = load_config().telemetry.allow_energy_estimates
         monitor = create_energy_monitor(allow_estimates=allow_estimates)
         if monitor is not None:
@@ -1019,7 +1019,7 @@ def _run_agentic(
 
     # Try HF dataset export (optional)
     try:
-        from openjarvis.evals.core.export import export_hf_dataset
+        from nivos.evals.core.export import export_hf_dataset
 
         hf_path = run_dir / "hf_dataset"
         export_hf_dataset(traces, hf_path)
@@ -1126,7 +1126,7 @@ def _run_from_config(
     model_filter: str | None = None,
 ) -> None:
     """Load a TOML config and run the full models x benchmarks matrix."""
-    from openjarvis.evals.core.config import expand_suite, load_eval_config
+    from nivos.evals.core.config import expand_suite, load_eval_config
 
     console = Console()
 
@@ -1185,7 +1185,7 @@ def _run_from_config(
 
 @click.group()
 def main():
-    """OpenJarvis Evaluation Framework."""
+    """Nivos Evaluation Framework."""
 
 
 @main.command()
@@ -1206,7 +1206,7 @@ def main():
 )
 @click.option(
     "--backend",
-    default="jarvis-direct",
+    default="nivos-direct",
     type=click.Choice(list(BACKENDS.keys())),
     help="Inference backend",
 )
@@ -1215,9 +1215,9 @@ def main():
     default=None,
     help=(
         "OpenAI-compatible endpoint for the model under eval. Required for "
-        "hermes/openclaw; for jarvis-direct/jarvis-agent/terminalbench-native "
+        "hermes/openclaw; for nivos-direct/nivos-agent/terminalbench-native "
         "it bypasses engine discovery and targets this URL directly "
-        "(env: JARVIS_BACKEND_BASE_URL)."
+        "(env: NIVOS_BACKEND_BASE_URL)."
     ),
 )
 @click.option(
@@ -1226,7 +1226,7 @@ def main():
     help=(
         "API key for the --base-url endpoint, sent as a Bearer token. "
         "Required for hermes/openclaw; optional for first-party backends "
-        "(env: JARVIS_BACKEND_API_KEY)."
+        "(env: NIVOS_BACKEND_API_KEY)."
     ),
 )
 @click.option("-m", "--model", default=None, help="Model identifier")
@@ -1241,7 +1241,7 @@ def main():
     "--agent",
     "agent_name",
     default="orchestrator",
-    help="Agent name for jarvis-agent backend",
+    help="Agent name for nivos-agent backend",
 )
 @click.option("--tools", default="", help="Comma-separated tool names")
 @click.option(
@@ -1391,7 +1391,7 @@ def run(
             "Missing option '-m' / '--model' (required when --config is not provided)"
         )
 
-    from openjarvis.evals.core.types import RunConfig
+    from nivos.evals.core.types import RunConfig
 
     tool_list = [t.strip() for t in tools.split(",") if t.strip()] if tools else []
 
@@ -1432,11 +1432,11 @@ def run(
         sheets_worksheet=sheets_worksheet,
         sheets_credentials_path=sheets_credentials_path,
         episode_mode=episode_mode,
-        base_url=base_url or os.environ.get("JARVIS_BACKEND_BASE_URL"),
-        api_key=api_key or os.environ.get("JARVIS_BACKEND_API_KEY"),
+        base_url=base_url or os.environ.get("NIVOS_BACKEND_BASE_URL"),
+        api_key=api_key or os.environ.get("NIVOS_BACKEND_API_KEY"),
         metadata={
-            "base_url": base_url or os.environ.get("JARVIS_BACKEND_BASE_URL"),
-            "api_key": api_key or os.environ.get("JARVIS_BACKEND_API_KEY"),
+            "base_url": base_url or os.environ.get("NIVOS_BACKEND_BASE_URL"),
+            "api_key": api_key or os.environ.get("NIVOS_BACKEND_API_KEY"),
         },
     )
 
@@ -1504,8 +1504,8 @@ def run_all(
     """Run all benchmarks."""
     _setup_logging(verbose)
 
-    from openjarvis.evals.core.runner import EvalRunner
-    from openjarvis.evals.core.types import RunConfig
+    from nivos.evals.core.runner import EvalRunner
+    from nivos.evals.core.types import RunConfig
 
     console = Console()
 
@@ -1529,7 +1529,7 @@ def run_all(
 
         config = RunConfig(
             benchmark=bench_name,
-            backend="jarvis-direct",
+            backend="nivos-direct",
             model=model,
             max_samples=max_samples,
             max_workers=max_workers,
@@ -1539,7 +1539,7 @@ def run_all(
             seed=seed,
         )
 
-        eval_backend = _build_backend("jarvis-direct", engine_key, "orchestrator", [])
+        eval_backend = _build_backend("nivos-direct", engine_key, "orchestrator", [])
         dataset = _build_dataset(bench_name)
         judge_backend = _build_judge_backend(judge_model, engine_key="cloud")
         scorer = _build_scorer(bench_name, judge_backend, judge_model)
@@ -1661,7 +1661,7 @@ def reparse_judge(jsonl_path, out_path, in_place, summary_out):
     import statistics
     from pathlib import Path as _Path
 
-    from openjarvis.evals.scorers.liveresearch import rescore_from_metadata
+    from nivos.evals.scorers.liveresearch import rescore_from_metadata
 
     in_path = _Path(jsonl_path)
     if in_place:

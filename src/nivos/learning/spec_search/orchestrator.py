@@ -14,12 +14,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-from openjarvis.learning.spec_search.diagnose.runner import DiagnosisRunner
-from openjarvis.learning.spec_search.execute.base import ApplyContext
-from openjarvis.learning.spec_search.execute.loop import _build_registry
-from openjarvis.learning.spec_search.gate.benchmark_gate import BenchmarkGate
-from openjarvis.learning.spec_search.gate.cold_start import check_readiness
-from openjarvis.learning.spec_search.models import (
+from nivos.learning.spec_search.diagnose.runner import DiagnosisRunner
+from nivos.learning.spec_search.execute.base import ApplyContext
+from nivos.learning.spec_search.execute.loop import _build_registry
+from nivos.learning.spec_search.gate.benchmark_gate import BenchmarkGate
+from nivos.learning.spec_search.gate.cold_start import check_readiness
+from nivos.learning.spec_search.models import (
     AutonomyMode,
     BenchmarkSnapshot,
     EditOutcome,
@@ -27,8 +27,8 @@ from openjarvis.learning.spec_search.models import (
     LearningSession,
     SessionStatus,
 )
-from openjarvis.learning.spec_search.pending_queue import PendingQueue
-from openjarvis.learning.spec_search.plan.planner import LearningPlanner
+from nivos.learning.spec_search.pending_queue import PendingQueue
+from nivos.learning.spec_search.plan.planner import LearningPlanner
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class SpecSearchOrchestrator:
         judge: Any,
         session_store: Any,
         checkpoint_store: Any,
-        openjarvis_home: Path,
+        nivos_home: Path,
         scorer: Callable[..., BenchmarkSnapshot] | None = None,
     ) -> "SpecSearchOrchestrator":
         """Build a single-session orchestrator from a SpecSearchLearningConfig.
@@ -60,8 +60,8 @@ class SpecSearchOrchestrator:
         come from ``config``; runtime primitives that cannot be expressed in
         TOML (engine instances, trace store, judge, etc.) must be injected.
 
-        See ``configs/openjarvis/examples/spec-search-quickstart.toml`` for
-        the TOML schema and ``examples/openjarvis/spec_search_quickstart.py``
+        See ``configs/nivos/examples/spec-search-quickstart.toml`` for
+        the TOML schema and ``examples/nivos/spec_search_quickstart.py``
         for an end-to-end wiring example.
         """
         autonomy = AutonomyMode(config.autonomy_mode)
@@ -74,7 +74,7 @@ class SpecSearchOrchestrator:
             judge=judge,
             session_store=session_store,
             checkpoint_store=checkpoint_store,
-            openjarvis_home=openjarvis_home,
+            nivos_home=nivos_home,
             autonomy_mode=autonomy,
             scorer=scorer,
             benchmark_version=config.benchmark_version,
@@ -97,7 +97,7 @@ class SpecSearchOrchestrator:
         judge: Any,
         session_store: Any,
         checkpoint_store: Any,
-        openjarvis_home: Path,
+        nivos_home: Path,
         autonomy_mode: AutonomyMode = AutonomyMode.TIERED,
         scorer: Callable[..., BenchmarkSnapshot] | None = None,
         benchmark_version: str = "personal_v1",
@@ -116,7 +116,7 @@ class SpecSearchOrchestrator:
         self._judge = judge
         self._session_store = session_store
         self._checkpoint_store = checkpoint_store
-        self._home = Path(openjarvis_home)
+        self._home = Path(nivos_home)
         self._autonomy = autonomy_mode
         self._scorer = scorer
         self._bench_version = benchmark_version
@@ -197,7 +197,7 @@ class SpecSearchOrchestrator:
                 session_id=session_id,
                 config={
                     "config_path": self._home / "config.toml",
-                    "openjarvis_home": self._home,
+                    "nivos_home": self._home,
                 },
                 max_turns=self._max_tool_calls,
                 max_cost_usd=self._max_cost,
@@ -239,7 +239,7 @@ class SpecSearchOrchestrator:
             self._session_store.save_session(session)
 
             ctx = ApplyContext(
-                openjarvis_home=self._home,
+                nivos_home=self._home,
                 session_id=session_id,
             )
             registry = _build_registry()

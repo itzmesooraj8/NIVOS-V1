@@ -7,7 +7,7 @@ use super::hybrid::HybridMemory;
 use super::knowledge_graph::KnowledgeGraphMemory;
 use super::sqlite::SQLiteMemory;
 use super::traits::MemoryBackend;
-use openjarvis_core::{OpenJarvisError, RetrievalResult};
+use nivos_core::{NivosError, RetrievalResult};
 use serde_json::Value;
 
 /// Closed enum of all supported memory/storage backends.
@@ -43,7 +43,7 @@ impl MemoryBackend for MemoryBackendEnum {
         content: &str,
         source: &str,
         metadata: Option<&Value>,
-    ) -> Result<String, OpenJarvisError> {
+    ) -> Result<String, NivosError> {
         delegate_memory!(self, store, content, source, metadata)
     }
 
@@ -51,19 +51,19 @@ impl MemoryBackend for MemoryBackendEnum {
         &self,
         query: &str,
         top_k: usize,
-    ) -> Result<Vec<RetrievalResult>, OpenJarvisError> {
+    ) -> Result<Vec<RetrievalResult>, NivosError> {
         delegate_memory!(self, retrieve, query, top_k)
     }
 
-    fn delete(&self, doc_id: &str) -> Result<bool, OpenJarvisError> {
+    fn delete(&self, doc_id: &str) -> Result<bool, NivosError> {
         delegate_memory!(self, delete, doc_id)
     }
 
-    fn clear(&self) -> Result<(), OpenJarvisError> {
+    fn clear(&self) -> Result<(), NivosError> {
         delegate_memory!(self, clear)
     }
 
-    fn count(&self) -> Result<usize, OpenJarvisError> {
+    fn count(&self) -> Result<usize, NivosError> {
         delegate_memory!(self, count)
     }
 }

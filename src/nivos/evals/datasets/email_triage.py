@@ -9,8 +9,8 @@ from __future__ import annotations
 import random
 from typing import Iterable, List, Optional
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
 
 _PROMPT_TEMPLATE = """You are an AI email assistant. Analyze the following email and provide:
 1. Urgency level: critical, high, medium, or low
@@ -163,7 +163,7 @@ _EMAILS = [
         "sender": "ops@company.com",
         "subject": "SSL certificate expiring in 7 days",
         "date": "2025-12-05 08:00",
-        "body": "The SSL certificate for api.openjarvis.dev expires on December 12. Auto-renewal is configured but failed last time due to DNS validation issues. Please verify the CNAME record is correct and trigger a manual renewal if needed.",
+        "body": "The SSL certificate for api.nivos.dev expires on December 12. Auto-renewal is configured but failed last time due to DNS validation issues. Please verify the CNAME record is correct and trigger a manual renewal if needed.",
         "urgency": "high",
         "category": "action",
     },

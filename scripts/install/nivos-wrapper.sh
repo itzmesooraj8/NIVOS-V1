@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# jarvis-wrapper.sh — symlinked to ~/.local/bin/jarvis.
-# Activates the managed venv and execs the real jarvis CLI.
+# nivos-wrapper.sh — symlinked to ~/.local/bin/nivos.
+# Activates the managed venv and execs the real nivos CLI.
 
-OPENJARVIS_HOME="${OPENJARVIS_HOME:-$HOME/.openjarvis}"
-VENV="$OPENJARVIS_HOME/.venv"
+NIVOS_HOME="${NIVOS_HOME:-$HOME/.nivos}"
+VENV="$NIVOS_HOME/.venv"
 
 if [[ ! -d "$VENV" ]]; then
-    echo "jarvis: venv not found at $VENV" >&2
-    echo "Re-run the installer: curl -fsSL https://open-jarvis.github.io/OpenJarvis/install.sh | bash" >&2
+    echo "nivos: venv not found at $VENV" >&2
+    echo "Re-run the installer: curl -fsSL https://nivos.github.io/Nivos/install.sh | bash" >&2
     exit 1
 fi
 
-exec "$VENV/bin/jarvis" "$@"
+exec "$VENV/bin/nivos" "$@"

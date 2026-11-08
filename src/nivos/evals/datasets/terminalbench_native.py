@@ -10,8 +10,8 @@ import random
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
 
 try:
     from terminal_bench.dataset import Dataset as _TBDataset
@@ -164,7 +164,7 @@ class TerminalBenchNativeDataset(DatasetProvider):
     def create_task_env(self, record):
         """Return a TerminalBenchTaskEnv for the given record."""
         try:
-            from openjarvis.evals.execution.terminalbench_env import (
+            from nivos.evals.execution.terminalbench_env import (
                 TerminalBenchTaskEnv,
             )
 

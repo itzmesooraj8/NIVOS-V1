@@ -17,10 +17,10 @@ import hashlib
 import time
 from typing import TYPE_CHECKING, Iterable, Optional
 
-from openjarvis.connectors._stubs import Attachment, Document
-from openjarvis.connectors.chunker import SemanticChunker
-from openjarvis.connectors.embeddings import OllamaEmbedder
-from openjarvis.connectors.store import KnowledgeStore
+from nivos.connectors._stubs import Attachment, Document
+from nivos.connectors.chunker import SemanticChunker
+from nivos.connectors.embeddings import OllamaEmbedder
+from nivos.connectors.store import KnowledgeStore
 
 
 def _namespace_thread_id(source: str, thread_id: Optional[str]) -> Optional[str]:
@@ -58,7 +58,7 @@ def _content_hash(text: str) -> str:
 
 
 if TYPE_CHECKING:
-    from openjarvis.connectors.attachment_store import AttachmentStore
+    from nivos.connectors.attachment_store import AttachmentStore
 
 
 class IngestionPipeline:

@@ -13,9 +13,9 @@ from typing import Any, Dict, Iterator, List, Optional
 
 import httpx
 
-from openjarvis.connectors._stubs import BaseConnector, Document, SyncStatus
-from openjarvis.core.config import DEFAULT_CONFIG_DIR
-from openjarvis.core.registry import ConnectorRegistry
+from nivos.connectors._stubs import BaseConnector, Document, SyncStatus
+from nivos.core.config import DEFAULT_CONFIG_DIR
+from nivos.core.registry import ConnectorRegistry
 
 _DEFAULT_TOKEN_PATH = str(DEFAULT_CONFIG_DIR / "connectors" / "github.json")
 
@@ -62,7 +62,7 @@ class GitHubNotificationsConnector(BaseConnector):
         # Do not create/overwrite a credential file until GitHub accepts the
         # token for the exact API this connector consumes.
         _github_api_get(token, params={"per_page": "1"})
-        from openjarvis.security.file_utils import secure_write_json
+        from nivos.security.file_utils import secure_write_json
 
         secure_write_json(self._token_path, {"token": token})
 

@@ -1,4 +1,4 @@
-# src/openjarvis/mining/_docker.py
+# src/nivos/mining/_docker.py
 """Pearl Docker container orchestration.
 
 See spec ``docs/design/2026-05-05-vllm-pearl-mining-integration-design.md``
@@ -15,17 +15,17 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from openjarvis.mining._stubs import MiningConfig
+    from nivos.mining._stubs import MiningConfig
 
-from openjarvis.mining._constants import (
+from nivos.mining._constants import (
     PEARL_CACHE_DIR,
     PEARL_IMAGE_TAG,
     PEARL_PINNED_REF,
     PEARL_REPO,
 )
 
-CONTAINER_NAME = "openjarvis-pearl-miner"
-LOCAL_MODEL_BIND_PATH = "/models/openjarvis-local-pearl-model"
+CONTAINER_NAME = "nivos-pearl-miner"
+LOCAL_MODEL_BIND_PATH = "/models/nivos-local-pearl-model"
 
 _SECRET_LOG_PATTERNS = (
     (re.compile(r"(rpc_password:\s*)\S+", re.IGNORECASE), r"\1[REDACTED]"),
@@ -261,7 +261,7 @@ class PearlDockerLauncher:
         if password is None:
             raise ConfigurationError(
                 f"environment variable {password_env!r} is not set; "
-                f"set it before running `jarvis mine start`"
+                f"set it before running `nivos mine start`"
             )
 
         hf_token_env = extra.get("hf_token_env", "HF_TOKEN")

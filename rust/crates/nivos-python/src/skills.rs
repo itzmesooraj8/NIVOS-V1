@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 
 #[pyclass(name = "SkillManifest")]
 pub struct PySkillManifest {
-    inner: openjarvis_skills::SkillManifest,
+    inner: nivos_skills::SkillManifest,
 }
 
 #[pymethods]
@@ -49,7 +49,7 @@ impl PySkillManifest {
 
     fn verify_signature(&self, public_key_hex: &str) -> bool {
         match parse_public_key_hex(public_key_hex) {
-            Some(key_bytes) => openjarvis_skills::verify_signature(&self.inner, &key_bytes),
+            Some(key_bytes) => nivos_skills::verify_signature(&self.inner, &key_bytes),
             None => false,
         }
     }
@@ -75,7 +75,7 @@ fn parse_public_key_hex(public_key_hex: &str) -> Option<Vec<u8>> {
 
 #[pyfunction]
 pub fn load_skill(toml_str: &str) -> PyResult<PySkillManifest> {
-    let manifest = openjarvis_skills::load_skill(toml_str)
+    let manifest = nivos_skills::load_skill(toml_str)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e))?;
     Ok(PySkillManifest { inner: manifest })
 }

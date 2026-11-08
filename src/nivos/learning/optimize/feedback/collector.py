@@ -5,8 +5,8 @@ from __future__ import annotations
 import time
 from typing import Any, Dict, List, Optional
 
-from openjarvis.core.types import Trace
-from openjarvis.learning.optimize.feedback.judge import TraceJudge
+from nivos.core.types import Trace
+from nivos.learning.optimize.feedback.judge import TraceJudge
 
 
 class FeedbackCollector:

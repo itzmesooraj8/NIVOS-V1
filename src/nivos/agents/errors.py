@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from openjarvis.engine._base import looks_like_context_length_error
+from nivos.engine._base import looks_like_context_length_error
 
 
 class AgentTickError(Exception):

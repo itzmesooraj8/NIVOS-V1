@@ -2,7 +2,7 @@
 
 Per-task Docker container + scoring lifecycle. Intended to be used as a
 context manager by the eval runner so that the agent has a live
-container to interact with through :mod:`openjarvis.tools.docker_shell_exec`.
+container to interact with through :mod:`nivos.tools.docker_shell_exec`.
 
 On ``__enter__``:
     * Pulls / runs the task's docker image with ``sleep infinity``.
@@ -43,7 +43,7 @@ class TerminalBenchV21TaskEnv:
     # Context manager
     # ------------------------------------------------------------------
     def __enter__(self) -> "TerminalBenchV21TaskEnv":
-        from openjarvis.tools.docker_shell_exec import set_active_container
+        from nivos.tools.docker_shell_exec import set_active_container
 
         docker_image = self._metadata.get("docker_image")
         task_dir = self._metadata.get("task_dir")
@@ -107,7 +107,7 @@ class TerminalBenchV21TaskEnv:
         Test execution + reward reading lives on the scorer, which runs
         *inside* this context manager (while the container is still up).
         """
-        from openjarvis.tools.docker_shell_exec import set_active_container
+        from nivos.tools.docker_shell_exec import set_active_container
 
         set_active_container(None)
         if self._container:

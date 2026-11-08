@@ -2,7 +2,7 @@
 
 Run with::
 
-    python -m openjarvis.mining._miner_loop_main \
+    python -m nivos.mining._miner_loop_main \
         --gateway-host 127.0.0.1 --gateway-port 8337 \
         --m 256 --n 128 --k 1024 --rank 32
 
@@ -27,7 +27,7 @@ import logging
 import sys
 from typing import Any
 
-logger = logging.getLogger("openjarvis.mining.miner_loop")
+logger = logging.getLogger("nivos.mining.miner_loop")
 
 # Backoff after a failed mining round before retrying. Short enough that
 # transient gateway errors don't stall mining; long enough not to spin.
@@ -208,7 +208,7 @@ async def _main_loop(args: argparse.Namespace) -> None:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(prog="openjarvis.mining._miner_loop_main")
+    p = argparse.ArgumentParser(prog="nivos.mining._miner_loop_main")
     p.add_argument("--gateway-host", default="127.0.0.1")
     p.add_argument("--gateway-port", type=int, default=8337)
     p.add_argument("--m", type=int, default=256)

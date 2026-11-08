@@ -1,4 +1,4 @@
-"""WorkflowEngine — executes a WorkflowGraph against a JarvisSystem."""
+"""WorkflowEngine — executes a WorkflowGraph against a NivosSystem."""
 
 from __future__ import annotations
 
@@ -6,9 +6,9 @@ import concurrent.futures
 import time
 from typing import Any, Dict, List, Optional
 
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.workflow.graph import WorkflowGraph
-from openjarvis.workflow.types import (
+from nivos.core.events import EventBus, EventType
+from nivos.workflow.graph import WorkflowGraph
+from nivos.workflow.types import (
     NodeType,
     WorkflowNode,
     WorkflowResult,
@@ -39,7 +39,7 @@ class WorkflowEngine:
     def run(
         self,
         graph: WorkflowGraph,
-        system: Any = None,  # JarvisSystem
+        system: Any = None,  # NivosSystem
         *,
         initial_input: str = "",
         context: Optional[Dict[str, Any]] = None,
@@ -246,7 +246,7 @@ class WorkflowEngine:
         tool_name = node.config.get("tool_name", "")
         tool_args = node.config.get("tool_args", "{}")
         if system and system.tool_executor:
-            from openjarvis.core.types import ToolCall
+            from nivos.core.types import ToolCall
 
             tc = ToolCall(id=f"wf_{node.id}", name=tool_name, arguments=tool_args)
             tr = system.tool_executor.execute(tc)
@@ -282,7 +282,7 @@ class WorkflowEngine:
         # beyond a fixed set of safe builtins, so escape vectors are
         # unreachable by construction. Anything it cannot evaluate raises and
         # is treated as a false condition (unchanged fail-safe behavior).
-        from openjarvis.tools.templates.loader import safe_eval_expr
+        from nivos.tools.templates.loader import safe_eval_expr
 
         try:
             result = str(safe_eval_expr(expr, {"outputs": outputs}))

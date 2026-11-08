@@ -14,9 +14,9 @@ import time
 import uuid
 from typing import Any, Dict
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +181,7 @@ class AgentSendTool(BaseTool):
 
         # Publish event if event bus is available
         try:
-            from openjarvis.core.events import EventType, get_event_bus
+            from nivos.core.events import EventType, get_event_bus
 
             bus = get_event_bus()
             bus.publish(

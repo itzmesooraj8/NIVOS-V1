@@ -18,10 +18,10 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import yaml
 
-from openjarvis.core.paths import get_cache_dir
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.splits import apply_split
-from openjarvis.evals.core.types import EvalRecord
+from nivos.core.paths import get_cache_dir
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.splits import apply_split
+from nivos.evals.core.types import EvalRecord
 
 LOGGER = logging.getLogger(__name__)
 
@@ -208,7 +208,7 @@ class PinchBenchDataset(DatasetProvider):
         self._judge_model = judge_model
 
     def create_task_env(self, record: EvalRecord):
-        from openjarvis.evals.execution.pinchbench_env import PinchBenchTaskEnv
+        from nivos.evals.execution.pinchbench_env import PinchBenchTaskEnv
 
         return PinchBenchTaskEnv(
             record,

@@ -11,9 +11,9 @@ import logging
 import re
 from typing import Any, Dict, Optional, Tuple
 
-from openjarvis.evals.core.scorer import LLMJudgeScorer
-from openjarvis.evals.core.types import EvalRecord
-from openjarvis.evals.scorers.reasoning_judge import reasoning_exact_match
+from nivos.evals.core.scorer import LLMJudgeScorer
+from nivos.evals.core.types import EvalRecord
+from nivos.evals.scorers.reasoning_judge import reasoning_exact_match
 
 LOGGER = logging.getLogger(__name__)
 

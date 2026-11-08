@@ -25,7 +25,7 @@ Three subset scoring strategies matching the original:
 
 IMPORTANT: Single-shot scoring is DEGRADED and will always emit warnings.
 The original benchmark is multi-turn interactive.  Use ``episode_mode=True``
-with the ``jarvis-agent`` backend for faithful evaluation.
+with the ``nivos-agent`` backend for faithful evaluation.
 """
 
 from __future__ import annotations
@@ -39,8 +39,8 @@ import sqlite3
 import subprocess
 from typing import Any, Dict, List, Optional, Tuple
 
-from openjarvis.evals.core.scorer import Scorer
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.scorer import Scorer
+from nivos.evals.core.types import EvalRecord
 
 logger = logging.getLogger(__name__)
 

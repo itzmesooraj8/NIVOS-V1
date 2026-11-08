@@ -9,13 +9,13 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from openjarvis.agents.digest_store import DigestStore
-from openjarvis.cli.digest_cmd import (
+from nivos.agents.digest_store import DigestStore
+from nivos.cli.digest_cmd import (
     _cancel_scheduler_tasks,
     _create_scheduler_task,
     _save_digest_schedule,
 )
-from openjarvis.core.config import load_config
+from nivos.core.config import load_config
 
 
 class ScheduleUpdate(BaseModel):
@@ -26,11 +26,11 @@ class ScheduleUpdate(BaseModel):
 
 
 def _generate_digest_sync() -> str:
-    """Generate a digest with the whole Jarvis lifecycle on one worker."""
-    from openjarvis.sdk import Jarvis
+    """Generate a digest with the whole Nivos lifecycle on one worker."""
+    from nivos.sdk import Nivos
 
-    with Jarvis() as jarvis:
-        return jarvis.ask("Generate my morning digest", agent="morning_digest")
+    with Nivos() as nivos:
+        return nivos.ask("Generate my morning digest", agent="morning_digest")
 
 
 def create_digest_router(*, db_path: str = "") -> APIRouter:

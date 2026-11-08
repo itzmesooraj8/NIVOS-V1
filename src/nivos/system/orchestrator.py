@@ -5,11 +5,11 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from openjarvis.core.types import Message, Role
-from openjarvis.tools._stubs import BaseTool
+from nivos.core.types import Message, Role
+from nivos.tools._stubs import BaseTool
 
 if TYPE_CHECKING:
-    from openjarvis.system.protocols import OrchestratorDeps
+    from nivos.system.protocols import OrchestratorDeps
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +42,8 @@ class QueryOrchestrator:
 
         if context and s.config.agent.context_from_memory:
             try:
-                from openjarvis.memory import load_configured_facts
-                from openjarvis.tools.storage.context import (
+                from nivos.memory import load_configured_facts
+                from nivos.tools.storage.context import (
                     ContextConfig,
                     inject_context,
                 )
@@ -99,7 +99,7 @@ class QueryOrchestrator:
         """Detect if a query should be routed to a specific agent."""
         import re
 
-        from openjarvis.core.registry import AgentRegistry
+        from nivos.core.registry import AgentRegistry
 
         if re.search(
             r"\b(good\s+morning|morning\s+digest|daily\s+briefing|morning\s+briefing)\b",
@@ -125,9 +125,9 @@ class QueryOrchestrator:
         prior_messages=None,
     ) -> Dict[str, Any]:
         """Run through an agent."""
-        from openjarvis.agents._stubs import AgentContext
-        from openjarvis.core.events import EventType
-        from openjarvis.core.registry import AgentRegistry
+        from nivos.agents._stubs import AgentContext
+        from nivos.core.events import EventType
+        from nivos.core.registry import AgentRegistry
 
         s = self._system
 
@@ -166,7 +166,7 @@ class QueryOrchestrator:
             examples = getattr(s, "_skill_few_shot_examples", None)
             if examples:
                 agent_kwargs["skill_few_shot_examples"] = examples
-        from openjarvis.security.runtime import agent_security_kwargs
+        from nivos.security.runtime import agent_security_kwargs
 
         agent_kwargs.update(
             agent_security_kwargs(
@@ -202,8 +202,8 @@ class QueryOrchestrator:
                     "honorific": dc.honorific,
                 }
             )
-            from openjarvis.tools.digest_collect import DigestCollectTool
-            from openjarvis.tools.text_to_speech import TextToSpeechTool
+            from nivos.tools.digest_collect import DigestCollectTool
+            from nivos.tools.text_to_speech import TextToSpeechTool
 
             digest_tools = [DigestCollectTool(), TextToSpeechTool()]
             existing = agent_kwargs.get("tools", [])
@@ -219,7 +219,7 @@ class QueryOrchestrator:
             system_prompt is None
             and "prompt_builder" in inspect.signature(agent_cls.__init__).parameters
         ):
-            from openjarvis.prompt.builder import SystemPromptBuilder
+            from nivos.prompt.builder import SystemPromptBuilder
 
             agent_kwargs["prompt_builder"] = SystemPromptBuilder(
                 agent_template=s.config.agent.default_system_prompt or "",
@@ -235,7 +235,7 @@ class QueryOrchestrator:
             except TypeError:
                 ag = agent_cls()
 
-        from openjarvis.security.runtime import wire_agent_security
+        from nivos.security.runtime import wire_agent_security
 
         wire_agent_security(
             ag,
@@ -257,7 +257,7 @@ class QueryOrchestrator:
         # instances (e.g. the judge backend).
         try:
             if s.trace_store is not None:
-                from openjarvis.traces.collector import TraceCollector
+                from nivos.traces.collector import TraceCollector
 
                 collector = TraceCollector(
                     ag,
@@ -337,24 +337,24 @@ class QueryOrchestrator:
 
     def _build_tools(self, tool_names: List[str]) -> List[BaseTool]:
         """Build tool instances from tool names."""
-        from openjarvis.core.registry import ToolRegistry
+        from nivos.core.registry import ToolRegistry
 
         s = self._system
         tools: List[BaseTool] = []
         for name in tool_names:
             try:
                 if name == "retrieval" and s.memory_backend:
-                    from openjarvis.tools.retrieval import RetrievalTool
+                    from nivos.tools.retrieval import RetrievalTool
 
                     tools.append(RetrievalTool(s.memory_backend))
                 elif name == "llm":
-                    from openjarvis.tools.llm_tool import LLMTool
+                    from nivos.tools.llm_tool import LLMTool
 
                     tools.append(LLMTool(s.engine, model=s.model))
                 elif name in {"file_read", "file_write"} and ToolRegistry.contains(
                     name
                 ):
-                    from openjarvis.tools._paths import file_tool_kwargs
+                    from nivos.tools._paths import file_tool_kwargs
 
                     tools.append(
                         ToolRegistry.create(name, **file_tool_kwargs(name, s.config))

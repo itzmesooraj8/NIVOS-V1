@@ -28,7 +28,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, Generator, Optional
 
-from openjarvis.telemetry.energy_monitor import (
+from nivos.telemetry.energy_monitor import (
     BASIS_SOC,
     EnergyMonitor,
     EnergySample,
@@ -46,7 +46,7 @@ except ImportError:
     _NATIVE_AVAILABLE = False
 
 
-# Monitors holding a live native handle. Long-lived callers (`jarvis serve`)
+# Monitors holding a live native handle. Long-lived callers (`nivos serve`)
 # create one for the process lifetime and never close it, which leaves the
 # nanobind object alive when the extension's types are torn down -- the
 # extension then prints "leaked instance" warnings on exit. Releasing the
@@ -276,7 +276,7 @@ class AppleEnergyMonitor(EnergyMonitor):
         result: EnergySample,
     ) -> Generator[EnergySample, None, None]:
         assert self._reader is not None
-        window = f"openjarvis_{time.monotonic_ns()}"
+        window = f"nivos_{time.monotonic_ns()}"
         t_start = time.monotonic()
         self._reader.begin_window(window)
 

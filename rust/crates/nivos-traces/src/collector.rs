@@ -1,7 +1,7 @@
 //! TraceCollector — subscribes to EventBus and assembles traces.
 
 use crate::store::TraceStore;
-use openjarvis_core::{Trace, TraceStep};
+use nivos_core::{Trace, TraceStep};
 use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -51,7 +51,7 @@ impl TraceCollector {
         trace_id: &str,
         result: &str,
         outcome: Option<&str>,
-    ) -> Result<(), openjarvis_core::OpenJarvisError> {
+    ) -> Result<(), nivos_core::NivosError> {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
@@ -75,7 +75,7 @@ impl TraceCollector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use openjarvis_core::StepType;
+    use nivos_core::StepType;
 
     #[test]
     fn test_collector_lifecycle() {

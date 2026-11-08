@@ -41,8 +41,8 @@ import threading
 import types
 from typing import Any, Dict, List, Optional, Tuple
 
-from openjarvis.agents._stubs import AgentContext
-from openjarvis.agents.hybrid._base import (
+from nivos.agents._stubs import AgentContext
+from nivos.agents.hybrid._base import (
     WEB_SEARCH_COST_PER_CALL,
     LocalCloudAgent,
     _bump_cloud_calls,
@@ -51,14 +51,14 @@ from openjarvis.agents.hybrid._base import (
     build_web_search_tool,
     web_search_cfg,
 )
-from openjarvis.agents.hybrid._prices import (
+from nivos.agents.hybrid._prices import (
     NO_TEMP_PREFIXES,
 )
-from openjarvis.agents.hybrid._prices import (
+from nivos.agents.hybrid._prices import (
     cost as _cost_cloud,
 )
-from openjarvis.agents.hybrid.mini_swe_agent import run_swe_agent_loop
-from openjarvis.core.registry import AgentRegistry
+from nivos.agents.hybrid.mini_swe_agent import run_swe_agent_loop
+from nivos.core.registry import AgentRegistry
 
 ARCHON_SWE_RANKER_SYS = (
     "You are ranking K candidate patches for a SWE-bench bug. For each "
@@ -77,7 +77,7 @@ ARCHON_SWE_RANKER_SYS = (
 def _stub_archon_imports() -> None:
     """``utils.py`` imports groq/google/litellm/dotenv at module load. Stub
     the ones we don't use so the import chain doesn't fail when those
-    libraries aren't installed in the OpenJarvis venv."""
+    libraries aren't installed in the Nivos venv."""
     for name in ("groq", "google", "google.generativeai", "litellm"):
         if name in sys.modules:
             continue

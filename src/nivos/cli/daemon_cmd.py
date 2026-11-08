@@ -1,4 +1,4 @@
-"""``jarvis start|stop|restart|status`` — daemon management commands."""
+"""``nivos start|stop|restart|status`` — daemon management commands."""
 
 from __future__ import annotations
 
@@ -16,9 +16,9 @@ from typing import Iterator
 import click
 from rich.console import Console
 
-from openjarvis.core.config import DEFAULT_CONFIG_DIR, load_config
-from openjarvis.core.utils import process_alive, terminate_process
-from openjarvis.security.file_utils import secure_write_json, secure_write_text
+from nivos.core.config import DEFAULT_CONFIG_DIR, load_config
+from nivos.core.utils import process_alive, terminate_process
+from nivos.security.file_utils import secure_write_json, secure_write_text
 
 _PID_FILE = DEFAULT_CONFIG_DIR / "server.pid"
 _LOG_FILE = DEFAULT_CONFIG_DIR / "server.log"
@@ -26,7 +26,7 @@ _LOG_FILE = DEFAULT_CONFIG_DIR / "server.log"
 # and `restart` fall back to the config defaults and misreport (or silently
 # move) the port whenever `start` was given an explicit --host/--port.
 _STATE_FILE = DEFAULT_CONFIG_DIR / "server.json"
-_LAUNCH_TOKEN_ENV = "OPENJARVIS_DAEMON_LAUNCH_TOKEN"
+_LAUNCH_TOKEN_ENV = "NIVOS_DAEMON_LAUNCH_TOKEN"
 
 
 def _pid_alive(pid: int) -> bool:
@@ -76,7 +76,7 @@ def _read_pid_identity() -> dict:
 
 def _legacy_cli_args(argv: list[str]) -> list[str] | None:
     """Find CLI arguments without treating script arguments as Python options."""
-    entry_points = {"jarvis", "jarvis.exe"}
+    entry_points = {"nivos", "nivos.exe"}
     if not argv:
         return None
     executable = Path(argv[0]).name
@@ -102,7 +102,7 @@ def _legacy_cli_args(argv: list[str]) -> list[str] | None:
             index += 1
             continue
         # Python accepts combined flags (-uO) and attached values (-Wignore,
-        # -Xdev, -mopenjarvis.cli). Value-taking flags consume the remainder.
+        # -Xdev, -mnivos.cli). Value-taking flags consume the remainder.
         options = arg[1:]
         while options:
             option, options = options[0], options[1:]
@@ -115,7 +115,7 @@ def _legacy_cli_args(argv: list[str]) -> list[str] | None:
                         return None
                     options = argv[index]
                 if option == "m":
-                    return argv[index + 1 :] if options == "openjarvis.cli" else None
+                    return argv[index + 1 :] if options == "nivos.cli" else None
                 break
             if option not in "bBdEiIOPqRsSuvx":
                 return None
@@ -351,10 +351,10 @@ def _server_url(host: str, port: int) -> str:
 
 
 def record_server_state(pid: int, host: str, port: int) -> None:
-    """Register a running server so `jarvis status` can find it.
+    """Register a running server so `nivos status` can find it.
 
-    Called by `jarvis serve` itself, so a server supervised by launchd/systemd
-    (which never goes through `jarvis start`) is still reported as running.
+    Called by `nivos serve` itself, so a server supervised by launchd/systemd
+    (which never goes through `nivos start`) is still reported as running.
     """
     _write_pid(pid, host, port, launch_token=os.environ.get(_LAUNCH_TOKEN_ENV))
 
@@ -396,8 +396,8 @@ def start(
     bind_host = host or config.server.host
     bind_port = port if port is not None else config.server.port
 
-    # Build command to run jarvis serve
-    cmd = [sys.executable, "-m", "openjarvis.cli", "serve"]
+    # Build command to run nivos serve
+    cmd = [sys.executable, "-m", "nivos.cli", "serve"]
     if host:
         cmd.extend(["--host", host])
     if port is not None:
@@ -417,7 +417,7 @@ def start(
     # that console — or logging off — delivers CTRL_CLOSE_EVENT and kills the
     # daemon. CREATE_NO_WINDOW gives it its own hidden console, which its
     # children inherit. DETACHED_PROCESS (no console at all) is not enough for a
-    # venv install: ``jarvis.exe``/``python.exe`` there are launcher stubs that
+    # venv install: ``nivos.exe``/``python.exe`` there are launcher stubs that
     # spawn the real interpreter, and that child, finding no console to inherit,
     # allocates a NEW visible one (a terminal window) that kills the server when
     # closed. The new process group additionally stops a Ctrl-C in the parent
@@ -484,7 +484,7 @@ def stop() -> None:
     # `nivos gui` that dies on "Frontend port 5173 is unavailable".
     # Imported here rather than at module scope: gui_cmd is a sibling CLI
     # module and only `stop` needs it.
-    from openjarvis.cli.gui_cmd import stop_frontend
+    from nivos.cli.gui_cmd import stop_frontend
 
     frontend_pid = stop_frontend()
     if frontend_pid is not None:

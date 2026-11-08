@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from openjarvis.learning.spec_search.models import TriggerKind
+from nivos.learning.spec_search.models import TriggerKind
 
 
 @dataclass

@@ -52,7 +52,7 @@ class PearlSubprocessLauncher:
         wallet_address: str,
         log_dir: Path,
         provider_id: str = "cpu-pearl",
-        miner_module: str = "openjarvis.mining._miner_loop_main",
+        miner_module: str = "nivos.mining._miner_loop_main",
     ) -> None:
         self.gateway_host = gateway_host
         self.gateway_port = gateway_port

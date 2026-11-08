@@ -6,11 +6,11 @@ import json
 
 import pytest
 
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.types import ToolCall, ToolResult
-from openjarvis.security.capabilities import DEFAULT_TOOL_CAPABILITIES
-from openjarvis.tools._stubs import BaseTool, ToolExecutor, ToolSpec
-from openjarvis.tools.code_interpreter import CodeInterpreterTool
+from nivos.core.events import EventBus, EventType
+from nivos.core.types import ToolCall, ToolResult
+from nivos.security.capabilities import DEFAULT_TOOL_CAPABILITIES
+from nivos.tools._stubs import BaseTool, ToolExecutor, ToolSpec
+from nivos.tools.code_interpreter import CodeInterpreterTool
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -6,13 +6,13 @@ import json
 
 import pytest
 
-from openjarvis.evals.core.runner import (
+from nivos.evals.core.runner import (
     EvalRunner,
     _metric_stats,
     _metric_stats_to_dict,
 )
-from openjarvis.evals.core.types import EvalRecord, MetricStats, RunConfig
-from openjarvis.evals.tests.conftest import MockBackend, MockDataset, MockScorer
+from nivos.evals.core.types import EvalRecord, MetricStats, RunConfig
+from nivos.evals.tests.conftest import MockBackend, MockDataset, MockScorer
 
 
 class TestEvalRunner:

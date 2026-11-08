@@ -22,7 +22,7 @@ For a cloud-hosted example, see [Deploy on Render](render.md). Its free-tier
 Blueprint is intended for evaluation only because local Nivos state is
 ephemeral.
 
-The server reads defaults from `~/.openjarvis/config.toml` and auto-detects available engines and models. Override any option via CLI flags:
+The server reads defaults from `~/.nivos/config.toml` and auto-detects available engines and models. Override any option via CLI flags:
 
 ```bash
 nivos serve --host 0.0.0.0 --port 8000 --engine ollama --model qwen3:8b --agent orchestrator
@@ -163,13 +163,13 @@ Lists all models available on the configured inference engine.
       "id": "qwen3:8b",
       "object": "model",
       "created": 1740100800,
-      "owned_by": "openjarvis"
+      "owned_by": "nivos"
     },
     {
       "id": "llama3.1:8b",
       "object": "model",
       "created": 1740100800,
-      "owned_by": "openjarvis"
+      "owned_by": "nivos"
     }
   ]
 }
@@ -220,7 +220,7 @@ Send a message to a specific channel.
 ```json
 {
   "target": "slack",
-  "message": "Hello from Jarvis!"
+  "message": "Hello from Nivos!"
 }
 ```
 
@@ -258,17 +258,17 @@ Show connection status for all configured channels.
 - `WS /v1/agents/events` streams agent lifecycle events and accepts an optional
   `agent_id` query parameter as a filter.
 
-When `OPENJARVIS_API_KEY` or `[server.auth].api_key` is configured,
+When `NIVOS_API_KEY` or `[server.auth].api_key` is configured,
 programmatic WebSocket clients should send the same
 `Authorization: Bearer <key>` header used by HTTP requests. Browsers cannot set
 that header on a WebSocket handshake, so browser clients must offer exactly
 these two subprotocol values:
 
-1. `openjarvis.auth.v1`
-2. `openjarvis.key.b64url.<encoded-key>`, where `<encoded-key>` is the unpadded
+1. `nivos.auth.v1`
+2. `nivos.key.b64url.<encoded-key>`, where `<encoded-key>` is the unpadded
    base64url encoding of the API key's UTF-8 bytes
 
-The server selects `openjarvis.auth.v1` in its handshake response. The built-in
+The server selects `nivos.auth.v1` in its handshake response. The built-in
 frontend handles this encoding automatically. Base64url is only a transport
 encoding, not encryption; use `wss://` for remote connections and treat the
 `Sec-WebSocket-Protocol` request header as credential-bearing.
@@ -453,7 +453,7 @@ Response headers include `Cache-Control: no-cache` and `Connection: keep-alive` 
 
 ## Configuration via `config.toml`
 
-The `[server]` section of `~/.openjarvis/config.toml` controls default server behavior:
+The `[server]` section of `~/.nivos/config.toml` controls default server behavior:
 
 ```toml
 [server]
@@ -494,10 +494,10 @@ map $http_upgrade $connection_upgrade {
 
 server {
     listen 443 ssl;
-    server_name jarvis.example.com;
+    server_name nivos.example.com;
 
-    ssl_certificate /etc/ssl/certs/jarvis.pem;
-    ssl_certificate_key /etc/ssl/private/jarvis.key;
+    ssl_certificate /etc/ssl/certs/nivos.pem;
+    ssl_certificate_key /etc/ssl/private/nivos.key;
 
     location / {
         proxy_pass http://127.0.0.1:8000;
@@ -525,7 +525,7 @@ server {
 ### Caddy
 
 ```
-jarvis.example.com {
+nivos.example.com {
     reverse_proxy 127.0.0.1:8000 {
         flush_interval -1
     }

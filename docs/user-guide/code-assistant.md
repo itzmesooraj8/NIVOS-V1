@@ -13,7 +13,7 @@ uv sync --extra dev
 nivos init --preset code-assistant --force
 ```
 
-This writes a pre-configured `~/.openjarvis/config.toml` for the code assistant.
+This writes a pre-configured `~/.nivos/config.toml` for the code assistant.
 
 ### 2. Start a local LLM via Ollama
 
@@ -54,7 +54,7 @@ nivos chat
 
 ## Configuration Reference
 
-The preset writes this to `~/.openjarvis/config.toml`:
+The preset writes this to `~/.nivos/config.toml`:
 
 ```toml
 [engine]
@@ -100,7 +100,7 @@ enabled = ["code_interpreter", "file_read", "file_write", "shell_exec", "web_sea
 nivos ask "Write a Python script that converts YAML to JSON"
 
 # Explain existing code
-nivos ask "Read src/openjarvis/core/events.py and explain the EventBus pattern"
+nivos ask "Read src/nivos/core/events.py and explain the EventBus pattern"
 
 # Debug a failing test
 nivos ask "Run pytest tests/test_memory.py -v and fix any failures"
@@ -109,7 +109,7 @@ nivos ask "Run pytest tests/test_memory.py -v and fix any failures"
 nivos ask "Read utils.py and refactor the parse_config function to use dataclasses"
 
 # Generate tests
-nivos ask "Read src/openjarvis/tools/calculator.py and write unit tests for it"
+nivos ask "Read src/nivos/tools/calculator.py and write unit tests for it"
 
 # Shell tasks
 nivos ask "Find all Python files larger than 100KB in this repo"

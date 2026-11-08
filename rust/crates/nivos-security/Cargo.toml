@@ -1,11 +1,11 @@
 [package]
-name = "openjarvis-security"
+name = "nivos-security"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-openjarvis-core = { path = "../openjarvis-core" }
-openjarvis-engine = { path = "../openjarvis-engine" }
+nivos-core = { path = "../nivos-core" }
+nivos-engine = { path = "../nivos-engine" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

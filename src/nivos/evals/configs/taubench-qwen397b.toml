@@ -26,5 +26,5 @@ num_gpus = 8
 
 [[benchmarks]]
 name = "taubench"
-backend = "jarvis-direct"
+backend = "nivos-direct"
 split = "airline,retail"

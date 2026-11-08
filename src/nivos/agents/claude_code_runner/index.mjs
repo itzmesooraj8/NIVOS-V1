@@ -1,5 +1,5 @@
 /**
- * OpenJarvis Claude Agent SDK runner.
+ * Nivos Claude Agent SDK runner.
  *
  * Reads one JSON request from stdin and writes one sentinel-delimited JSON
  * response to stdout.
@@ -7,8 +7,8 @@
 
 import { query } from "@anthropic-ai/claude-agent-sdk";
 
-const OUTPUT_START = "---OPENJARVIS_OUTPUT_START---";
-const OUTPUT_END = "---OPENJARVIS_OUTPUT_END---";
+const OUTPUT_START = "---NIVOS_OUTPUT_START---";
+const OUTPUT_END = "---NIVOS_OUTPUT_END---";
 
 function emitResult(response) {
   console.log(OUTPUT_START);

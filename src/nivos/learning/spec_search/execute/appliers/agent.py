@@ -9,14 +9,14 @@ import json
 import logging
 from pathlib import Path
 
-from openjarvis.learning.spec_search.execute.base import (
+from nivos.learning.spec_search.execute.base import (
     ApplyContext,
     ApplyResult,
     EditApplier,
     ValidationResult,
 )
-from openjarvis.learning.spec_search.models import Edit, EditOp
-from openjarvis.learning.spec_search.plan.prompt_diff import apply_unified_diff
+from nivos.learning.spec_search.models import Edit, EditOp
+from nivos.learning.spec_search.plan.prompt_diff import apply_unified_diff
 
 logger = logging.getLogger(__name__)
 

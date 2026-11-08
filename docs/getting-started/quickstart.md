@@ -8,7 +8,7 @@ search:
 # Quick Start
 
 !!! tip "Running `nivos` commands"
-    Every `jarvis ...` example below assumes you have either activated the project venv
+    Every `nivos ...` example below assumes you have either activated the project venv
     (`source .venv/bin/activate`) or are prefixing each command with `uv run`. A bare
     `nivos init --preset ...` from a fresh clone will fail with `command not found`.
 
@@ -36,17 +36,17 @@ Nivos is a modular AI assistant framework. Here's what developers build with it:
     ```
 
     !!! warning "Requires the Rust extension"
-        `nivos memory index` and `nivos memory search` import `openjarvis_rust`. If you
-        skipped the `uv run maturin develop -m rust/crates/openjarvis-python/Cargo.toml`
+        `nivos memory index` and `nivos memory search` import `nivos_rust`. If you
+        skipped the `uv run maturin develop -m rust/crates/nivos-python/Cargo.toml`
         step in [Installation](installation.md), these commands fail with
-        `ModuleNotFoundError: No module named 'openjarvis_rust'`. Build the extension
+        `ModuleNotFoundError: No module named 'nivos_rust'`. Build the extension
         once and any preset (including `deep-research`) will work.
 
 === "5-Line Python SDK"
 
     ```python
-    from openjarvis import Jarvis
-    with Jarvis() as j:
+    from nivos import Nivos
+    with Nivos() as j:
         print(j.ask("Hello!"))
     ```
 
@@ -60,7 +60,7 @@ Nivos is a modular AI assistant framework. Here's what developers build with it:
 === "Morning Digest"
 
     ```bash
-    cp configs/openjarvis/examples/morning-digest-mac.toml ~/.openjarvis/config.toml
+    cp configs/nivos/examples/morning-digest-mac.toml ~/.nivos/config.toml
     nivos connect gdrive       # one OAuth flow for Gmail, Calendar, Tasks
     CARTESIA_API_KEY="..." nivos digest --fresh
     # Plays a spoken daily briefing with your email, calendar, health, and news
@@ -99,17 +99,17 @@ For complete copy-paste patterns, see [Code Snippets](snippets.md).
 
 ## Starter Configs
 
-Copy one of these to `~/.openjarvis/config.toml` to get a pre-configured setup:
+Copy one of these to `~/.nivos/config.toml` to get a pre-configured setup:
 
 | Config | For | What it does |
 |--------|-----|-------------|
-| [`chat-simple.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/chat-simple.toml) | Any machine | Lightweight chat, no tools -- simplest setup |
-| [`code-assistant.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/code-assistant.toml) | Any machine | Orchestrator agent with code execution, file I/O, shell |
-| [`deep-research.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/deep-research.toml) | Any machine | Multi-hop research across indexed documents with citations |
-| [`scheduled-monitor.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/scheduled-monitor.toml) | Any machine | Persistent operative agent on a cron schedule |
-| [`morning-digest-mac.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/morning-digest-mac.toml) | Mac (Apple Silicon) | Daily spoken briefing from email, calendar, health, news |
-| [`morning-digest-linux.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/morning-digest-linux.toml) | Linux / GPU server | Same, with vLLM support |
-| [`morning-digest-minimal.toml`](https://github.com/nivos/nivos/blob/main/configs/openjarvis/examples/morning-digest-minimal.toml) | Any machine | Just Gmail + Calendar |
+| [`chat-simple.toml`](https://github.com/nivos/nivos/blob/main/configs/nivos/examples/chat-simple.toml) | Any machine | Lightweight chat, no tools -- simplest setup |
+| [`code-assistant.toml`](https://github.com/nivos/nivos/blob/main/configs/nivos/examples/code-assistant.toml) | Any machine | Orchestrator agent with code execution, file I/O, shell |
+| [`deep-research.toml`](https://github.com/nivos/nivos/blob/main/configs/nivos/examples/deep-research.toml) | Any machine | Multi-hop research across indexed documents with citations |
+| [`scheduled-monitor.toml`](https://github.com/nivos/nivos/blob/main/configs/nivos/examples/scheduled-monitor.toml) | Any machine | Persistent operative agent on a cron schedule |
+| [`morning-digest-mac.toml`](https://github.com/nivos/nivos/blob/main/configs/nivos/examples/morning-digest-mac.toml) | Mac (Apple Silicon) | Daily spoken briefing from email, calendar, health, news |
+| [`morning-digest-linux.toml`](https://github.com/nivos/nivos/blob/main/configs/nivos/examples/morning-digest-linux.toml) | Linux / GPU server | Same, with vLLM support |
+| [`morning-digest-minimal.toml`](https://github.com/nivos/nivos/blob/main/configs/nivos/examples/morning-digest-minimal.toml) | Any machine | Just Gmail + Calendar |
 
 Or generate a config with digest included:
 
@@ -145,11 +145,11 @@ starting quickstart:
 ```bash
 export YOUDOTCOM_API_KEY="..."   # free key: https://you.com/platform
 export SERPLY_API_KEY="..."      # free tier: https://serply.io
-export FIRECRAWL_API_KEY="..."   # free tier: https://www.firecrawl.dev/app/api-keys?utm_source=openjarvis&utm_medium=integration
+export FIRECRAWL_API_KEY="..."   # free tier: https://www.firecrawl.dev/app/api-keys?utm_source=nivos&utm_medium=integration
 ./scripts/quickstart.sh
 ```
 
-Set `OPENJARVIS_WEB_SEARCH_ENGINE` to pick an engine explicitly — `youcom`,
+Set `NIVOS_WEB_SEARCH_ENGINE` to pick an engine explicitly — `youcom`,
 `tavily`, `serply`, `firecrawl`, or `duckduckgo`. The default, `auto`, uses
 Tavily when `TAVILY_API_KEY` is set, then You.com, then Serply, then Firecrawl,
 and settles on the You.com keyless tier when no key is set at all. DuckDuckGo
@@ -171,7 +171,7 @@ pages and PDFs. Set `FIRECRAWL_API_URL` to use a
 instead of the hosted API; no key is needed if your instance runs without
 auth. Page fetches then run on your instance, and search queries go on to the
 search backend it is configured with. Keys:
-[firecrawl.dev](https://www.firecrawl.dev/app/api-keys?utm_source=openjarvis&utm_medium=integration).
+[firecrawl.dev](https://www.firecrawl.dev/app/api-keys?utm_source=nivos&utm_medium=integration).
 
 The script does not automatically source `.env` files. Run `source .env`
 first if that is where you keep the key. Stop any existing Nivos server
@@ -180,7 +180,7 @@ before restarting so it inherits the updated environment.
 To stop all services, press ++ctrl+c++ in the terminal.
 
 !!! tip "Environment variable"
-    Set `OPENJARVIS_MODEL` to change the default model: `OPENJARVIS_MODEL=deepseek-r1:14b ./scripts/quickstart.sh`
+    Set `NIVOS_MODEL` to change the default model: `NIVOS_MODEL=deepseek-r1:14b ./scripts/quickstart.sh`
 
 ## Initialize Configuration
 
@@ -190,7 +190,7 @@ Start by detecting your hardware and generating a configuration file:
 nivos init
 ```
 
-This runs hardware auto-detection (GPU vendor, VRAM, CPU, RAM) and writes a config file to `~/.openjarvis/config.toml` with sensible defaults for your system. It also selects the recommended inference engine.
+This runs hardware auto-detection (GPU vendor, VRAM, CPU, RAM) and writes a config file to `~/.nivos/config.toml` with sensible defaults for your system. It also selects the recommended inference engine.
 
 ```
 Detecting hardware...
@@ -239,12 +239,12 @@ Nivos will auto-detect a running engine, select a model using the configured rou
 
 ### Via Python SDK
 
-The `Jarvis` class provides a high-level Python interface:
+The `Nivos` class provides a high-level Python interface:
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis()
+j = Nivos()
 response = j.ask("What is the capital of France?")
 print(response)
 j.close()
@@ -263,21 +263,21 @@ print(result["usage"])    # Token usage statistics
 #### SDK Constructor Options
 
 ```python
-# Use default config (auto-detected hardware, ~/.openjarvis/config.toml)
-j = Jarvis()
+# Use default config (auto-detected hardware, ~/.nivos/config.toml)
+j = Nivos()
 
 # Override the model
-j = Jarvis(model="qwen3:8b")
+j = Nivos(model="qwen3:8b")
 
 # Override the engine
-j = Jarvis(engine_key="ollama")
+j = Nivos(engine_key="ollama")
 
 # Use a custom config file
-j = Jarvis(config_path="/path/to/config.toml")
+j = Nivos(config_path="/path/to/config.toml")
 ```
 
 !!! warning "Always call `close()`"
-    The `Jarvis` instance holds references to telemetry stores and memory backends. Call `j.close()` when you are done to release resources.
+    The `Nivos` instance holds references to telemetry stores and memory backends. Call `j.close()` when you are done to release resources.
 
 ## Using Agents with Tools
 
@@ -312,9 +312,9 @@ nivos ask --agent orchestrator --tools calculator,think "What is 137 * 42?"
 ### SDK Example
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis()
+j = Nivos()
 result = j.ask_full(
     "What is the square root of 144?",
     agent="orchestrator",
@@ -347,9 +347,9 @@ Index a file or directory. Nivos chunks the content and stores it in the configu
 === "Python SDK"
 
     ```python
-    from openjarvis import Jarvis
+    from nivos import Nivos
 
-    j = Jarvis()
+    j = Nivos()
     result = j.memory.index("./docs/", chunk_size=512, chunk_overlap=64)
     print(f"Indexed {result['chunks']} chunks")
     j.close()
@@ -436,9 +436,9 @@ nivos model pull qwen3:8b
 ### SDK Model Listing
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis()
+j = Nivos()
 models = j.list_models()
 engines = j.list_engines()
 print(f"Models: {models}")
@@ -572,10 +572,10 @@ nivos telemetry clear --yes
 Here is a complete end-to-end session combining multiple features:
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
 # Initialize with defaults (auto-detect hardware and engine)
-j = Jarvis()
+j = Nivos()
 
 # 1. Index some documentation
 index_result = j.memory.index("./docs/", chunk_size=512)

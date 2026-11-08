@@ -45,13 +45,13 @@ class EmbeddingStore:
     ----------
     store_dir:
         Root directory for the embedding store.  Defaults to
-        ``~/.openjarvis/embeddings/``.  The directory is created if it does
+        ``~/.nivos/embeddings/``.  The directory is created if it does
         not already exist.
     """
 
     def __init__(self, store_dir: str = "") -> None:
         if not store_dir:
-            from openjarvis.core.config import DEFAULT_CONFIG_DIR
+            from nivos.core.config import DEFAULT_CONFIG_DIR
 
             store_dir = str(DEFAULT_CONFIG_DIR / "embeddings")
 

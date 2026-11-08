@@ -1,29 +1,29 @@
 [package]
-name = "openjarvis-python"
+name = "nivos-python"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "openjarvis_rust"
+name = "nivos_rust"
 crate-type = ["cdylib"]
 
 [dependencies]
-openjarvis-core = { path = "../openjarvis-core" }
-openjarvis-engine = { path = "../openjarvis-engine" }
-openjarvis-security = { path = "../openjarvis-security" }
-openjarvis-tools = { path = "../openjarvis-tools" }
-openjarvis-agents = { path = "../openjarvis-agents" }
-openjarvis-traces = { path = "../openjarvis-traces" }
-openjarvis-telemetry = { path = "../openjarvis-telemetry" }
-openjarvis-learning = { path = "../openjarvis-learning" }
-openjarvis-mcp = { path = "../openjarvis-mcp" }
-openjarvis-sessions = { path = "../openjarvis-sessions" }
-openjarvis-workflow = { path = "../openjarvis-workflow" }
-openjarvis-skills = { path = "../openjarvis-skills" }
-openjarvis-recipes = { path = "../openjarvis-recipes" }
-openjarvis-templates = { path = "../openjarvis-templates" }
-openjarvis-a2a = { path = "../openjarvis-a2a" }
-openjarvis-scheduler = { path = "../openjarvis-scheduler" }
+nivos-core = { path = "../nivos-core" }
+nivos-engine = { path = "../nivos-engine" }
+nivos-security = { path = "../nivos-security" }
+nivos-tools = { path = "../nivos-tools" }
+nivos-agents = { path = "../nivos-agents" }
+nivos-traces = { path = "../nivos-traces" }
+nivos-telemetry = { path = "../nivos-telemetry" }
+nivos-learning = { path = "../nivos-learning" }
+nivos-mcp = { path = "../nivos-mcp" }
+nivos-sessions = { path = "../nivos-sessions" }
+nivos-workflow = { path = "../nivos-workflow" }
+nivos-skills = { path = "../nivos-skills" }
+nivos-recipes = { path = "../nivos-recipes" }
+nivos-templates = { path = "../nivos-templates" }
+nivos-a2a = { path = "../nivos-a2a" }
+nivos-scheduler = { path = "../nivos-scheduler" }
 pyo3 = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

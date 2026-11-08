@@ -12,9 +12,9 @@ from typing import Any, Dict, Iterator, Optional
 
 import httpx
 
-from openjarvis.connectors._stubs import BaseConnector, Document, SyncStatus
-from openjarvis.core.config import DEFAULT_CONFIG_DIR
-from openjarvis.core.registry import ConnectorRegistry
+from nivos.connectors._stubs import BaseConnector, Document, SyncStatus
+from nivos.core.config import DEFAULT_CONFIG_DIR
+from nivos.core.registry import ConnectorRegistry
 
 _SPOTIFY_API_BASE = "https://api.spotify.com/v1"
 _SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
@@ -68,7 +68,7 @@ class SpotifyConnector(BaseConnector):
         """Return Spotify OAuth authorization URL."""
         from urllib.parse import urlencode
 
-        from openjarvis.connectors.oauth import (
+        from nivos.connectors.oauth import (
             get_client_credentials,
             get_provider_for_connector,
         )
@@ -91,7 +91,7 @@ class SpotifyConnector(BaseConnector):
 
     def handle_callback(self, code: str) -> None:
         """Exchange authorization code for tokens and save."""
-        from openjarvis.connectors.oauth import (
+        from nivos.connectors.oauth import (
             _CONNECTORS_DIR,
             _exchange_token,
             get_client_credentials,

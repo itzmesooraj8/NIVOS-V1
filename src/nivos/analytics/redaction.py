@@ -1,7 +1,7 @@
 """PII redaction for analytics property values.
 
 This is the value-level half of the guardrail
-(:mod:`openjarvis.analytics.events` is the structural half).
+(:mod:`nivos.analytics.events` is the structural half).
 
 For each property value we ship, we:
   1. Drop strings longer than ``MAX_STR_LEN`` (no chunks of chat content).

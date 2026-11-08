@@ -1,4 +1,4 @@
-"""``jarvis model`` — model management subcommands."""
+"""``nivos model`` — model management subcommands."""
 
 from __future__ import annotations
 
@@ -18,11 +18,11 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from openjarvis.core.config import DEFAULT_CONFIG_DIR, load_config
-from openjarvis.core.registry import ModelRegistry
-from openjarvis.engine import discover_engines, discover_models
-from openjarvis.intelligence import merge_discovered_models, register_builtin_models
-from openjarvis.intelligence.model_catalog import BUILTIN_MODELS
+from nivos.core.config import DEFAULT_CONFIG_DIR, load_config
+from nivos.core.registry import ModelRegistry
+from nivos.engine import discover_engines, discover_models
+from nivos.intelligence import merge_discovered_models, register_builtin_models
+from nivos.intelligence.model_catalog import BUILTIN_MODELS
 
 
 @click.group()
@@ -315,7 +315,7 @@ def _convert_mlx(hf_repo: str, output: str, mlx_4bit: bool, console: Console) ->
     except ImportError:
         console.print(
             "[red]MLX conversion needs the inference-mlx extra.[/red]\n"
-            'Install it: [cyan]pip install "openjarvis[inference-mlx]"[/cyan]'
+            'Install it: [cyan]pip install "nivos[inference-mlx]"[/cyan]'
         )
         return False
 
@@ -603,7 +603,7 @@ def convert(
         console.print(
             f"[green]No conversion needed for {engine}.[/green] It consumes "
             f"Hugging Face repositories directly.\n"
-            f"[cyan]Start with:[/cyan] jarvis host {shlex.quote(hf_repo)} "
+            f"[cyan]Start with:[/cyan] nivos host {shlex.quote(hf_repo)} "
             f"--backend {engine}"
         )
         return
@@ -699,17 +699,17 @@ def convert(
 
     if engine == "mlx":
         artifact = output_path
-        hint = f"jarvis host {shlex.quote(str(artifact))} --backend mlx"
+        hint = f"nivos host {shlex.quote(str(artifact))} --backend mlx"
         title = "MLX conversion complete"
     else:
         assert artifact_relative is not None
         artifact = output_path / artifact_relative
         if engine == "ollama":
             assert ollama_name is not None
-            hint = f"jarvis chat --engine ollama --model {shlex.quote(ollama_name)}"
+            hint = f"nivos chat --engine ollama --model {shlex.quote(ollama_name)}"
             title = "GGUF conversion and Ollama import complete"
         else:
-            hint = f"jarvis host {shlex.quote(str(artifact))} --backend llamacpp"
+            hint = f"nivos host {shlex.quote(str(artifact))} --backend llamacpp"
             title = "GGUF conversion complete"
     console.print(
         Panel(

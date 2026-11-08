@@ -7,7 +7,7 @@ import logging
 import click
 from rich.console import Console
 
-from openjarvis.core.config import (
+from nivos.core.config import (
     DEFAULT_CONFIG_DIR,
     DEFAULT_CONFIG_PATH,
     detect_hardware,
@@ -21,10 +21,10 @@ logger = logging.getLogger(__name__)
 def _check_engine_health(engine_key: str) -> bool:
     """Return True if the recommended engine is reachable."""
     try:
-        import openjarvis.engine  # noqa: F401 — trigger registration
-        from openjarvis.core.config import load_config
-        from openjarvis.core.registry import EngineRegistry
-        from openjarvis.engine import _discovery
+        import nivos.engine  # noqa: F401 — trigger registration
+        from nivos.core.config import load_config
+        from nivos.core.registry import EngineRegistry
+        from nivos.engine import _discovery
 
         config = load_config()
         if engine_key not in EngineRegistry.keys():
@@ -39,9 +39,9 @@ def _check_engine_health(engine_key: str) -> bool:
 def _discover_healthy_engines() -> list[str]:
     """Return keys for all healthy engines discovered at runtime."""
     try:
-        import openjarvis.engine  # noqa: F401 — trigger registration
-        from openjarvis.core.config import load_config
-        from openjarvis.engine import _discovery
+        import nivos.engine  # noqa: F401 — trigger registration
+        from nivos.core.config import load_config
+        from nivos.engine import _discovery
 
         config = load_config()
         return [key for key, _ in _discovery.discover_engines(config)]
@@ -53,9 +53,9 @@ def _discover_healthy_engines() -> list[str]:
 def _check_model_available(engine_key: str) -> bool:
     """Return True if at least one model is available on the engine."""
     try:
-        from openjarvis.core.config import load_config
-        from openjarvis.core.registry import EngineRegistry
-        from openjarvis.engine import _discovery
+        from nivos.core.config import load_config
+        from nivos.core.registry import EngineRegistry
+        from nivos.engine import _discovery
 
         config = load_config()
         if engine_key not in EngineRegistry.keys():
@@ -70,9 +70,9 @@ def _check_model_available(engine_key: str) -> bool:
 def _test_query(engine_key: str) -> str:
     """Run a quick test query and return the response text."""
     try:
-        from openjarvis import Jarvis
+        from nivos import Nivos
 
-        j = Jarvis(engine_key=engine_key)
+        j = Nivos(engine_key=engine_key)
         response = j.ask("Say hello in one sentence.")
         j.close()
         return response

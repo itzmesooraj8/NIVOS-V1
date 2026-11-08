@@ -6,10 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from openjarvis.skills.importer import SkillImporter
-from openjarvis.skills.parser import SkillParser
-from openjarvis.skills.sources.base import ResolvedSkill
-from openjarvis.skills.tool_translator import ToolTranslator
+from nivos.skills.importer import SkillImporter
+from nivos.skills.parser import SkillParser
+from nivos.skills.sources.base import ResolvedSkill
+from nivos.skills.tool_translator import ToolTranslator
 
 
 def _make_resolved(tmp_path: Path, body: str = "Body") -> ResolvedSkill:

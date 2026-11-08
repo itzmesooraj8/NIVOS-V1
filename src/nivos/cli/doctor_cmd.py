@@ -14,7 +14,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from openjarvis.core.config import DEFAULT_CONFIG_PATH, load_config
+from nivos.core.config import DEFAULT_CONFIG_PATH, load_config
 
 
 @dataclass
@@ -74,7 +74,7 @@ def _check_config_parses() -> CheckResult:
 def _ensure_engines_imported() -> None:
     """Import engine modules to trigger registration decorators."""
     try:
-        import openjarvis.engine  # noqa: F401
+        import nivos.engine  # noqa: F401
     except Exception:
         pass
 
@@ -84,17 +84,17 @@ def _get_config() -> Any:
     try:
         return load_config()
     except Exception:
-        from openjarvis.core.config import JarvisConfig
+        from nivos.core.config import NivosConfig
 
-        return JarvisConfig()
+        return NivosConfig()
 
 
 def _probe_engines(config: Any | None = None) -> Dict[str, _EngineProbe]:
     """Instantiate and health-check every engine once, concurrently."""
     _ensure_engines_imported()
 
-    from openjarvis.core.registry import EngineRegistry
-    from openjarvis.engine import _discovery
+    from nivos.core.registry import EngineRegistry
+    from nivos.engine import _discovery
 
     resolved_config = config or _get_config()
     keys = sorted(EngineRegistry.keys())
@@ -191,7 +191,7 @@ def _check_default_model(
             details="Router will select a model dynamically.",
         )
 
-    from openjarvis.intelligence.model_catalog import resolve_model_id_for_engine
+    from nivos.intelligence.model_catalog import resolve_model_id_for_engine
 
     preferred = config.intelligence.preferred_engine or config.engine.default
     resolved_probes = probes if probes is not None else _probe_engines(config)
@@ -256,7 +256,7 @@ def _check_optional_deps() -> List[CheckResult]:
 def _check_speech_backend() -> CheckResult:
     """Check whether the configured speech backend can load."""
     try:
-        from openjarvis.speech._discovery import get_speech_backend
+        from nivos.speech._discovery import get_speech_backend
 
         config = _get_config()
         backend = get_speech_backend(config)
@@ -297,7 +297,7 @@ def _check_speech_backend() -> CheckResult:
 def _check_security_profile() -> CheckResult:
     """Check if a security profile is configured."""
     try:
-        from openjarvis.core.config import load_config
+        from nivos.core.config import load_config
 
         config = load_config()
         if config.security.profile:
@@ -426,8 +426,8 @@ def doctor(as_json: bool) -> None:
     console.print()
 
     # Background tasks section
-    from openjarvis.cli._bg_state import get_status
-    from openjarvis.core.paths import get_config_dir
+    from nivos.cli._bg_state import get_status
+    from nivos.core.paths import get_config_dir
 
     scripts_dir = get_config_dir() / ".scripts"
     console.print("[bold]Background tasks[/bold]")

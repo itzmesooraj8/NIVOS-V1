@@ -18,12 +18,12 @@ import logging
 import re
 from typing import Any, Callable, List, Optional
 
-from openjarvis.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
-from openjarvis.core.events import EventBus
-from openjarvis.core.registry import AgentRegistry
-from openjarvis.core.types import Message, Role, ToolCall, ToolResult
-from openjarvis.engine._stubs import InferenceEngine
-from openjarvis.tools._stubs import BaseTool
+from nivos.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
+from nivos.core.events import EventBus
+from nivos.core.registry import AgentRegistry
+from nivos.core.types import Message, Role, ToolCall, ToolResult
+from nivos.engine._stubs import InferenceEngine
+from nivos.tools._stubs import BaseTool
 
 logger = logging.getLogger(__name__)
 
@@ -157,7 +157,7 @@ class OrchestratorAgent(ToolUsingAgent):
         if self._system_prompt:
             sys_prompt = self._system_prompt
         else:
-            from openjarvis.learning.intelligence.orchestrator.prompt_registry import (
+            from nivos.learning.intelligence.orchestrator.prompt_registry import (
                 build_system_prompt,
             )
 

@@ -1,20 +1,20 @@
-"""MCP Server — wraps OpenJarvis tools as MCP-discoverable tools."""
+"""MCP Server — wraps Nivos tools as MCP-discoverable tools."""
 
 from __future__ import annotations
 
 import logging
 from typing import Any, Dict, List, Optional
 
-from openjarvis.core.events import EventBus
-from openjarvis.core.types import ToolCall
-from openjarvis.mcp.protocol import (
+from nivos.core.events import EventBus
+from nivos.core.types import ToolCall
+from nivos.mcp.protocol import (
     INTERNAL_ERROR,
     INVALID_PARAMS,
     METHOD_NOT_FOUND,
     MCPRequest,
     MCPResponse,
 )
-from openjarvis.tools._stubs import BaseTool, ToolExecutor
+from nivos.tools._stubs import BaseTool, ToolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ _TOOL_ANNOTATIONS: Dict[str, Dict[str, Any]] = {
 
 
 class MCPServer:
-    """MCP server that exposes OpenJarvis tools via JSON-RPC.
+    """MCP server that exposes Nivos tools via JSON-RPC.
 
     Parameters
     ----------
@@ -50,7 +50,7 @@ class MCPServer:
         all registered tools from ``ToolRegistry``.
     """
 
-    SERVER_NAME = "openjarvis"
+    SERVER_NAME = "nivos"
     SERVER_VERSION = "0.1.0"
     PROTOCOL_VERSION = "2025-11-25"
 
@@ -102,37 +102,37 @@ class MCPServer:
 
         # Built-in API tools
         try:
-            from openjarvis.tools.calculator import CalculatorTool
+            from nivos.tools.calculator import CalculatorTool
 
             _tool_classes.append(CalculatorTool)
         except ImportError:
             pass
         try:
-            from openjarvis.tools.think import ThinkTool
+            from nivos.tools.think import ThinkTool
 
             _tool_classes.append(ThinkTool)
         except ImportError:
             pass
         try:
-            from openjarvis.tools.file_read import FileReadTool
+            from nivos.tools.file_read import FileReadTool
 
             _tool_classes.append(FileReadTool)
         except ImportError:
             pass
         try:
-            from openjarvis.tools.web_search import WebSearchTool
+            from nivos.tools.web_search import WebSearchTool
 
             _tool_classes.append(WebSearchTool)
         except ImportError:
             pass
         try:
-            from openjarvis.tools.code_interpreter import CodeInterpreterTool
+            from nivos.tools.code_interpreter import CodeInterpreterTool
 
             _tool_classes.append(CodeInterpreterTool)
         except ImportError:
             pass
         try:
-            from openjarvis.tools.repl import ReplTool
+            from nivos.tools.repl import ReplTool
 
             _tool_classes.append(ReplTool)
         except ImportError:
@@ -140,7 +140,7 @@ class MCPServer:
 
         # Storage MCP tools
         try:
-            from openjarvis.tools.storage_tools import (
+            from nivos.tools.storage_tools import (
                 MemoryIndexTool,
                 MemoryRetrieveTool,
                 MemorySearchTool,
@@ -160,7 +160,7 @@ class MCPServer:
 
         # Channel MCP tools
         try:
-            from openjarvis.tools.channel_tools import (
+            from nivos.tools.channel_tools import (
                 ChannelListTool,
                 ChannelSendTool,
                 ChannelStatusTool,
@@ -178,7 +178,7 @@ class MCPServer:
 
         # LM tool (needs engine/model — instantiate with None)
         try:
-            from openjarvis.tools.llm_tool import LLMTool
+            from nivos.tools.llm_tool import LLMTool
 
             _tool_classes.append(LLMTool)
         except ImportError:
@@ -186,7 +186,7 @@ class MCPServer:
 
         # Retrieval tool (needs backend — instantiate with None)
         try:
-            from openjarvis.tools.retrieval import RetrievalTool
+            from nivos.tools.retrieval import RetrievalTool
 
             _tool_classes.append(RetrievalTool)
         except ImportError:
@@ -203,7 +203,7 @@ class MCPServer:
 
         # Also check ToolRegistry for any user-registered tools
         try:
-            from openjarvis.core.registry import ToolRegistry
+            from nivos.core.registry import ToolRegistry
 
             known_names = {t.spec.name for t in tools}
             for key in ToolRegistry.keys():
@@ -254,7 +254,7 @@ class MCPServer:
                 "serverInfo": {
                     "name": self.SERVER_NAME,
                     "version": self.SERVER_VERSION,
-                    "title": "OpenJarvis Tool Server",
+                    "title": "Nivos Tool Server",
                 },
             },
             id=req.id,

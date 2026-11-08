@@ -27,8 +27,8 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 # numpy imported lazily inside _vector_recall (see embeddings.py) so importing
 # this module never forces numpy at load time (#404, #309).
-from openjarvis.connectors.embeddings import OllamaEmbedder, decode_embedding
-from openjarvis.connectors.store import KnowledgeStore
+from nivos.connectors.embeddings import OllamaEmbedder, decode_embedding
+from nivos.connectors.store import KnowledgeStore
 
 logger = logging.getLogger(__name__)
 

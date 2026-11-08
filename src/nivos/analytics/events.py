@@ -1,10 +1,10 @@
 """Canonical registry of external analytics events.
 
-Single source of truth for every event name and property the OpenJarvis
+Single source of truth for every event name and property the Nivos
 analytics module is allowed to send. Any event not declared here is
 dropped at send time. Any property not declared on a known event is
 also dropped. This is the fail-closed half of the PII guardrail —
-see :mod:`openjarvis.analytics.redaction` for the value-level filters.
+see :mod:`nivos.analytics.redaction` for the value-level filters.
 
 Keeping the catalog in code (not config) means PR review is the gate
 for adding a new event, and ``docs/telemetry.md`` can render from this
@@ -249,7 +249,7 @@ _SPECS: tuple[EventSpec, ...] = (
     ),
     EventSpec(
         name="setup_completed",
-        description="`jarvis init` finished and config.toml was written.",
+        description="`nivos init` finished and config.toml was written.",
         properties={
             "preset": _is_one_of(*_SETUP_PRESETS),
             "model_hash": _is_hash16,

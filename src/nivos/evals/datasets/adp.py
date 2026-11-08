@@ -2,7 +2,7 @@
 
 NOT USED FOR EVALUATION. Surfaces multi-turn agent trajectories to the
 LLM-guided spec search proposer via
-``openjarvis.learning.spec_search.external_adapter`` so the diagnose
+``nivos.learning.spec_search.external_adapter`` so the diagnose
 phase can reason over a broad pool of agent traces without depending on
 the per-cell student's own trace history.
 
@@ -25,9 +25,9 @@ import ast
 import random
 from typing import Iterable, List, MutableMapping, Optional
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.splits import apply_split
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.splits import apply_split
+from nivos.evals.core.types import EvalRecord
 
 HF_DATASET_ID = "neulab/agent-data-collection"
 # Use 'std' split — the normalised, model-agnostic format present in every config.

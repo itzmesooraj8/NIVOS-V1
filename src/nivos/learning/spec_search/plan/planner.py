@@ -15,21 +15,21 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-from openjarvis.learning.spec_search.models import (
+from nivos.learning.spec_search.models import (
     Edit,
     FailureCluster,
     LearningPlan,
 )
-from openjarvis.learning.spec_search.plan.prompt_diff import (
+from nivos.learning.spec_search.plan.prompt_diff import (
     maybe_downgrade_to_replace,
 )
-from openjarvis.learning.spec_search.plan.risk_tier import assign_tiers
+from nivos.learning.spec_search.plan.risk_tier import assign_tiers
 
 logger = logging.getLogger(__name__)
 
 _PLANNER_SYSTEM_PROMPT = """\
 You are a meta-engineer planning improvements to a local AI assistant called \
-OpenJarvis. You have been given a diagnosis of the student's failure patterns.
+Nivos. You have been given a diagnosis of the student's failure patterns.
 
 Your job: for each surviving failure cluster, propose 1-3 edits from the \
 available operation set that would address the cluster's skill gap.
@@ -172,7 +172,7 @@ class LearningPlanner:
         )
 
         # Make the teacher call
-        from openjarvis.core.types import Message, Role
+        from nivos.core.types import Message, Role
 
         messages = [
             Message(role=Role.SYSTEM, content=_PLANNER_SYSTEM_PROMPT),

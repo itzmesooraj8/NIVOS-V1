@@ -10,12 +10,12 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from openjarvis.server.app import create_app  # noqa: E402
+from nivos.server.app import create_app  # noqa: E402
 
 
 @pytest.fixture
 def mcp_test_client(tmp_path, monkeypatch):
-    monkeypatch.setenv("OPENJARVIS_HOME", str(tmp_path))
+    monkeypatch.setenv("NIVOS_HOME", str(tmp_path))
 
     engine = MagicMock()
     engine.engine_id = "mock"
@@ -38,7 +38,7 @@ def test_list_empty_mcp_servers(mcp_test_client):
 def test_add_and_delete_mcp_server(mcp_test_client):
     client, tmp_path = mcp_test_client
 
-    with patch("openjarvis.server.mcp_routes._connect_and_register_server") as mock_connect:
+    with patch("nivos.server.mcp_routes._connect_and_register_server") as mock_connect:
         mock_connect.return_value = ["fs_read", "fs_write"]
 
         payload = {

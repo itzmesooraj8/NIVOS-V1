@@ -1,4 +1,4 @@
-# src/openjarvis/mining/_stubs.py
+# src/nivos/mining/_stubs.py
 """ABCs and dataclasses for the mining subsystem.
 
 See spec ``docs/design/2026-05-05-vllm-pearl-mining-integration-design.md``
@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from openjarvis.core.config import HardwareInfo
+from nivos.core.config import HardwareInfo
 
 # ---------------------------------------------------------------------------
 # Capability descriptor
@@ -26,7 +26,7 @@ from openjarvis.core.config import HardwareInfo
 class MiningCapabilities:
     """Result of a provider's ``detect()`` call.
 
-    ``reason`` is human-readable and surfaced verbatim by ``jarvis mine doctor``
+    ``reason`` is human-readable and surfaced verbatim by ``nivos mine doctor``
     when ``supported=False``.
     """
 
@@ -118,7 +118,7 @@ class MiningProvider(ABC):
         """Return whether this provider can run on the given combo.
 
         Must be a pure inspection — no subprocess, no network, no Docker. Used
-        by ``jarvis mine doctor`` and ``jarvis mine init`` for fast capability
+        by ``nivos mine doctor`` and ``nivos mine init`` for fast capability
         reporting.
         """
 
@@ -141,7 +141,7 @@ class MiningProvider(ABC):
 
 
 class Sidecar:
-    """Read/write helpers for ``~/.openjarvis/runtime/mining.json``."""
+    """Read/write helpers for ``~/.nivos/runtime/mining.json``."""
 
     @staticmethod
     def write(path: Path, payload: dict[str, Any]) -> None:

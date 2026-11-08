@@ -1,6 +1,6 @@
 """Live smoke test — full pipeline with real markdown files.
 
-NOT mocked. Uses the actual OpenJarvis docs/ directory as an Obsidian-like vault.
+NOT mocked. Uses the actual Nivos docs/ directory as an Obsidian-like vault.
 Exercises: ObsidianConnector → SyncEngine → KnowledgeStore → knowledge_search tool.
 """
 
@@ -11,13 +11,13 @@ from pathlib import Path
 
 import pytest
 
-from openjarvis.connectors.obsidian import ObsidianConnector
-from openjarvis.connectors.pipeline import IngestionPipeline
-from openjarvis.connectors.store import KnowledgeStore
-from openjarvis.connectors.sync_engine import SyncEngine
-from openjarvis.tools.knowledge_search import KnowledgeSearchTool
+from nivos.connectors.obsidian import ObsidianConnector
+from nivos.connectors.pipeline import IngestionPipeline
+from nivos.connectors.store import KnowledgeStore
+from nivos.connectors.sync_engine import SyncEngine
+from nivos.tools.knowledge_search import KnowledgeSearchTool
 
-# Use the real OpenJarvis docs directory
+# Use the real Nivos docs directory
 DOCS_DIR = Path(__file__).resolve().parents[2] / "docs"
 
 

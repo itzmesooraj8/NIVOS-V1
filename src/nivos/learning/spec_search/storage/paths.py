@@ -1,11 +1,11 @@
 """Filesystem path resolution for the spec-search subsystem.
 
 The keystone of artifact isolation (spec §11): the resolved spec-search root
-must NEVER be inside the OpenJarvis source tree. ``resolve_spec_search_root``
+must NEVER be inside the Nivos source tree. ``resolve_spec_search_root``
 walks up from this module's ``__file__`` looking for a ``pyproject.toml`` that
-identifies the OpenJarvis source root, then refuses to operate if the resolved
+identifies the Nivos source root, then refuses to operate if the resolved
 root is inside it. Defense in depth — if a user accidentally points
-``OPENJARVIS_HOME`` at the repo, the system fails loudly instead of silently
+``NIVOS_HOME`` at the repo, the system fails loudly instead of silently
 writing artifacts into the working tree.
 """
 
@@ -13,10 +13,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from openjarvis.core.paths import ConfigurationError, get_config_dir
-from openjarvis.security.file_utils import secure_mkdir
+from nivos.core.paths import ConfigurationError, get_config_dir
+from nivos.security.file_utils import secure_mkdir
 
-# ``ConfigurationError`` is re-exported from ``openjarvis.core.paths`` (it used
+# ``ConfigurationError`` is re-exported from ``nivos.core.paths`` (it used
 # to be defined here). Spec search now resolves the home dir through the unified
 # core resolver, which raises the same exception type on a source-tree path, so
 # we alias rather than redefine to keep ``except ConfigurationError`` callers and
@@ -29,9 +29,9 @@ __all__ = [
 
 
 def _find_source_root() -> Path | None:
-    """Walk upward from this module to find the OpenJarvis source root.
+    """Walk upward from this module to find the Nivos source root.
 
-    Returns the directory containing the OpenJarvis ``pyproject.toml``, or
+    Returns the directory containing the Nivos ``pyproject.toml``, or
     ``None`` if no such file is found (e.g. when running from an installed
     wheel rather than a source checkout).
     """
@@ -43,16 +43,16 @@ def _find_source_root() -> Path | None:
                 content = py.read_text(encoding="utf-8")
             except OSError:
                 continue
-            if 'name = "openjarvis"' in content.lower():
+            if 'name = "nivos"' in content.lower():
                 return candidate
     return None
 
 
-def _resolve_openjarvis_home() -> Path:
-    """Resolve the OpenJarvis home directory via the unified core resolver.
+def _resolve_nivos_home() -> Path:
+    """Resolve the Nivos home directory via the unified core resolver.
 
     Delegates to ``get_config_dir`` so spec-search honors the same env-aware
-    resolution (OPENJARVIS_HOME and XDG) as the rest of the framework.
+    resolution (NIVOS_HOME and XDG) as the rest of the framework.
     """
     return get_config_dir()
 
@@ -60,12 +60,12 @@ def _resolve_openjarvis_home() -> Path:
 def resolve_spec_search_root() -> Path:
     """Return the absolute path of the spec-search root directory.
 
-    The root is ``$OPENJARVIS_HOME/learning`` (or ``~/.openjarvis/learning``
+    The root is ``$NIVOS_HOME/learning`` (or ``~/.nivos/learning``
     by default). Raises ``ConfigurationError`` if the resolved path lies
-    inside the OpenJarvis source tree, to prevent dev artifacts from leaking
+    inside the Nivos source tree, to prevent dev artifacts from leaking
     into the repo.
     """
-    home = _resolve_openjarvis_home()
+    home = _resolve_nivos_home()
     source_root = _find_source_root()
     if source_root is not None:
         try:
@@ -74,10 +74,10 @@ def resolve_spec_search_root() -> Path:
             pass  # Good — not inside the source tree.
         else:
             raise ConfigurationError(
-                f"OPENJARVIS_HOME ({home}) is inside the source tree "
+                f"NIVOS_HOME ({home}) is inside the source tree "
                 f"({source_root}). Spec search refuses to write runtime "
-                "artifacts inside the OpenJarvis repo. Set OPENJARVIS_HOME "
-                "to a directory outside the repo (default: ~/.openjarvis)."
+                "artifacts inside the Nivos repo. Set NIVOS_HOME "
+                "to a directory outside the repo (default: ~/.nivos)."
             )
     return home / "learning"
 

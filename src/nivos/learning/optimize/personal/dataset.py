@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Iterable, List, Optional
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
-from openjarvis.learning.optimize.personal.synthesizer import PersonalBenchmark
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
+from nivos.learning.optimize.personal.synthesizer import PersonalBenchmark
 
 
 class PersonalBenchmarkDataset(DatasetProvider):

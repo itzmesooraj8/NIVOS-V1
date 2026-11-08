@@ -112,7 +112,7 @@ If you skipped the prompt during install, register the auto-start task
 manually:
 
 ```powershell
-$srv = "$env:LOCALAPPDATA\Nivos\src\deploy\windows\jarvis-service.ps1"
+$srv = "$env:LOCALAPPDATA\Nivos\src\deploy\windows\nivos-service.ps1"
 powershell -ExecutionPolicy Bypass -File $srv install
 ```
 

@@ -42,7 +42,7 @@ If you prefer to run each step yourself:
     git clone https://github.com/nivos/nivos.git
     cd Nivos
     uv sync --extra desktop
-    uv run maturin develop -m rust/crates/openjarvis-python/Cargo.toml
+    uv run maturin develop -m rust/crates/nivos-python/Cargo.toml
     cd frontend && npm install && cd ..
     ```
 
@@ -136,7 +136,7 @@ programmatically. Every feature is accessible from the terminal.
 git clone https://github.com/nivos/nivos.git
 cd Nivos
 uv sync
-uv run maturin develop -m rust/crates/openjarvis-python/Cargo.toml
+uv run maturin develop -m rust/crates/nivos-python/Cargo.toml
 ```
 
 Requires [Rust](https://rustup.rs/). On Python 3.14+, set `PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1` before the `maturin` command.
@@ -145,7 +145,7 @@ Requires [Rust](https://rustup.rs/). On Python 3.14+, set `PYO3_USE_ABI3_FORWARD
 
 ```bash
 nivos --version
-# jarvis, version 0.1.0
+# nivos, version 0.1.0
 ```
 
 ### First commands
@@ -172,7 +172,7 @@ nivos chat
 
 ## Python SDK
 
-For programmatic access, the `Jarvis` class provides a high-level sync API.
+For programmatic access, the `Nivos` class provides a high-level sync API.
 
 ### Install
 
@@ -180,7 +180,7 @@ For programmatic access, the `Jarvis` class provides a high-level sync API.
 git clone https://github.com/nivos/nivos.git
 cd Nivos
 uv sync
-uv run maturin develop -m rust/crates/openjarvis-python/Cargo.toml
+uv run maturin develop -m rust/crates/nivos-python/Cargo.toml
 ```
 
 Requires [Rust](https://rustup.rs/). On Python 3.14+, set `PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1` before the `maturin` command.
@@ -188,9 +188,9 @@ Requires [Rust](https://rustup.rs/). On Python 3.14+, set `PYO3_USE_ABI3_FORWARD
 ### Quick example
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis()
+j = Nivos()
 print(j.ask("Explain quicksort in two sentences."))
 j.close()
 ```
@@ -213,7 +213,7 @@ print(result["turns"])         # number of agent turns
 For full control, use the `SystemBuilder`:
 
 ```python
-from openjarvis import SystemBuilder
+from nivos import SystemBuilder
 
 system = (
     SystemBuilder()
@@ -329,7 +329,7 @@ environment and whichever inference engine you install.
 !!! note "Overriding the detected defaults"
     These are defaults, not limits. The generated config records what was detected
     in a comment at the top of the file, and `default_model` under `[intelligence]`
-    in `~/.openjarvis/config.toml` can be set to anything larger or smaller — see
+    in `~/.nivos/config.toml` can be set to anything larger or smaller — see
     the [Configuration guide](configuration.md). Re-run `nivos init --force` to
     re-detect and overwrite an existing config.
 

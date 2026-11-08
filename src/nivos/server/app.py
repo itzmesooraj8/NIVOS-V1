@@ -1,4 +1,4 @@
-"""FastAPI application factory for the OpenJarvis API server."""
+"""FastAPI application factory for the Nivos API server."""
 
 from __future__ import annotations
 
@@ -12,16 +12,16 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from openjarvis.server.api_routes import include_all_routes
-from openjarvis.server.comparison import comparison_router
-from openjarvis.server.connectors_router import create_connectors_router
-from openjarvis.server.dashboard import dashboard_router
-from openjarvis.server.digest_routes import create_digest_router
-from openjarvis.server.research_router import router as research_router
-from openjarvis.server.routes import router
-from openjarvis.server.upload_router import router as upload_router
-from openjarvis.server.workspace_routes import router as workspace_router
-from openjarvis.server.mcp_routes import router as mcp_router
+from nivos.server.api_routes import include_all_routes
+from nivos.server.comparison import comparison_router
+from nivos.server.connectors_router import create_connectors_router
+from nivos.server.dashboard import dashboard_router
+from nivos.server.digest_routes import create_digest_router
+from nivos.server.research_router import router as research_router
+from nivos.server.routes import router
+from nivos.server.upload_router import router as upload_router
+from nivos.server.workspace_routes import router as workspace_router
+from nivos.server.mcp_routes import router as mcp_router
 
 logger = logging.getLogger(__name__)
 _MANAGED_SHUTDOWN_GRACE_SECONDS = 0.25
@@ -54,7 +54,7 @@ def _restore_sendblue_bindings(app: FastAPI) -> None:
                 if not api_key_id or not api_secret_key:
                     continue
 
-                from openjarvis.channels.sendblue import SendBlueChannel
+                from nivos.channels.sendblue import SendBlueChannel
 
                 sb = SendBlueChannel(
                     api_key_id=api_key_id,
@@ -69,20 +69,20 @@ def _restore_sendblue_bindings(app: FastAPI) -> None:
                 if bridge and hasattr(bridge, "_channels"):
                     bridge._channels["sendblue"] = sb
                 else:
-                    from openjarvis.server.channel_bridge import ChannelBridge
-                    from openjarvis.server.session_store import SessionStore
+                    from nivos.server.channel_bridge import ChannelBridge
+                    from nivos.server.session_store import SessionStore
 
                     session_store = SessionStore()
                     engine = getattr(app.state, "engine", None)
                     dr_agent = None
                     if engine:
-                        from openjarvis.server.agent_manager_routes import (
+                        from nivos.server.agent_manager_routes import (
                             _build_deep_research_tools,
                         )
 
                         tools = _build_deep_research_tools(engine=engine, model="")
                         if tools:
-                            from openjarvis.agents.deep_research import (
+                            from nivos.agents.deep_research import (
                                 DeepResearchAgent,
                             )
 
@@ -103,7 +103,7 @@ def _restore_sendblue_bindings(app: FastAPI) -> None:
 
                     bus = getattr(app.state, "bus", None)
                     if bus is None:
-                        from openjarvis.core.events import EventBus
+                        from nivos.core.events import EventBus
 
                         bus = EventBus()
 
@@ -191,7 +191,7 @@ def create_app(
     channel_bridge:
         Optional channel bridge for multi-platform messaging.
     config:
-        Optional JarvisConfig for other settings.
+        Optional NivosConfig for other settings.
     """
     original_engine = engine
     security_enabled = config is not None and getattr(
@@ -199,7 +199,7 @@ def create_app(
     )
     if security_enabled:
         if bus is None:
-            from openjarvis.core.events import EventBus
+            from nivos.core.events import EventBus
 
             bus = EventBus(record_history=False)
         if any(
@@ -207,9 +207,9 @@ def create_app(
             for primitive in (capability_policy, rate_limiter, audit_logger)
         ):
             # Programmatic factory callers must receive the same config-driven
-            # enforcement as ``jarvis serve``. Explicitly injected primitives
+            # enforcement as ``nivos serve``. Explicitly injected primitives
             # remain authoritative; only missing pieces are derived.
-            from openjarvis.security import setup_security
+            from nivos.security import setup_security
 
             derived_security = setup_security(config, engine, bus)
             engine = derived_security.engine
@@ -225,7 +225,7 @@ def create_app(
     # wiring remains authoritative.
     if agent is not None and getattr(agent, "_engine", None) is original_engine:
         agent._engine = engine
-    from openjarvis.security.runtime import wire_agent_security
+    from nivos.security.runtime import wire_agent_security
 
     wire_agent_security(
         agent,
@@ -250,11 +250,11 @@ def create_app(
     from fastapi.middleware.cors import CORSMiddleware
 
     # Allow deployments to pin the exact browser origins via
-    # OPENJARVIS_CORS_ORIGINS (comma-separated). On an exposed server this
+    # NIVOS_CORS_ORIGINS (comma-separated). On an exposed server this
     # should be set to your real frontend origin(s) only — never "*", which
     # combined with allow_credentials=True would let any website call the API
     # in the user's authenticated context.
-    _env_origins = os.environ.get("OPENJARVIS_CORS_ORIGINS", "").strip()
+    _env_origins = os.environ.get("NIVOS_CORS_ORIGINS", "").strip()
     if cors_origins is not None:
         _origins = cors_origins
     elif _env_origins:
@@ -429,8 +429,8 @@ def create_app(
     # the telemetry store is bus-subscribed (see system/builder.py).
     app.state.trace_store = None
     try:
-        from openjarvis.core.config import load_config
-        from openjarvis.traces.store import TraceStore
+        from nivos.core.config import load_config
+        from nivos.traces.store import TraceStore
 
         cfg = config if config is not None else load_config()
         if cfg.traces.enabled:
@@ -454,7 +454,7 @@ def create_app(
 
     # Add security headers middleware
     try:
-        from openjarvis.server.middleware import create_security_middleware
+        from nivos.server.middleware import create_security_middleware
 
         middleware_cls = create_security_middleware()
         if middleware_cls is not None:
@@ -465,7 +465,7 @@ def create_app(
     # API key authentication middleware
     if api_key:
         try:
-            from openjarvis.server.auth_middleware import AuthMiddleware
+            from nivos.server.auth_middleware import AuthMiddleware
 
             app.add_middleware(AuthMiddleware, api_key=api_key)
         except Exception as exc:
@@ -486,7 +486,7 @@ def create_app(
     # Mount webhook routes (always — SendBlue may be configured dynamically)
     if webhook_config:
         try:
-            from openjarvis.server.webhook_routes import (
+            from nivos.server.webhook_routes import (
                 create_webhook_router,
             )
 

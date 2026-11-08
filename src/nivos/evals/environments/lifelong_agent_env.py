@@ -18,9 +18,9 @@ import subprocess
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
-from openjarvis.evals.core.types import EvalRecord
-from openjarvis.evals.environments.base import TaskEnvironment
-from openjarvis.evals.scorers.lifelong_agent_scorer import (
+from nivos.evals.core.types import EvalRecord
+from nivos.evals.environments.base import TaskEnvironment
+from nivos.evals.scorers.lifelong_agent_scorer import (
     _TYPE_MAP,
     _normalize_entity,
     compare_tuple_lists,
@@ -268,7 +268,7 @@ class DBEnvironment(TaskEnvironment):
             )
             meta["ref_sql_sqlite_error"] = str(exc)
             meta["fallback"] = "normalized_sql_comparison"
-            from openjarvis.evals.scorers.lifelong_agent_scorer import (
+            from nivos.evals.scorers.lifelong_agent_scorer import (
                 _normalize_sql,
             )
 
@@ -342,7 +342,7 @@ class DBEnvironment(TaskEnvironment):
 
         # Strategy 2: Parse text from final answer
         if self._agent_final_answer:
-            from openjarvis.evals.scorers.lifelong_agent_scorer import (
+            from nivos.evals.scorers.lifelong_agent_scorer import (
                 _parse_text_answer,
             )
 

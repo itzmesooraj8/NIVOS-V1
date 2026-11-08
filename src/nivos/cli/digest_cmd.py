@@ -1,4 +1,4 @@
-"""``jarvis digest`` — display and play the morning digest."""
+"""``nivos digest`` — display and play the morning digest."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ import click
 from rich.console import Console
 from rich.markdown import Markdown
 
-from openjarvis.agents.digest_store import DigestStore
-from openjarvis.core.config import DEFAULT_CONFIG_PATH, load_config
+from nivos.agents.digest_store import DigestStore
+from nivos.core.config import DEFAULT_CONFIG_PATH, load_config
 
 
 def _play_audio(audio_path: str) -> None:
@@ -84,8 +84,8 @@ def _save_digest_schedule(enabled: bool, cron: str) -> None:
 def _create_scheduler_task(cron: str, timezone_name: str = "") -> Optional[str]:
     """Create a digest task in the TaskScheduler. Returns task ID or None."""
     try:
-        from openjarvis.scheduler.scheduler import TaskScheduler
-        from openjarvis.scheduler.store import SchedulerStore
+        from nivos.scheduler.scheduler import TaskScheduler
+        from nivos.scheduler.store import SchedulerStore
 
         timezone_name = timezone_name or load_config().digest.timezone
         db_path = DEFAULT_CONFIG_PATH.parent / "scheduler.db"
@@ -113,8 +113,8 @@ def _create_scheduler_task(cron: str, timezone_name: str = "") -> Optional[str]:
 def _cancel_scheduler_tasks() -> int:
     """Cancel all active digest tasks. Returns count cancelled."""
     try:
-        from openjarvis.scheduler.scheduler import TaskScheduler
-        from openjarvis.scheduler.store import SchedulerStore
+        from nivos.scheduler.scheduler import TaskScheduler
+        from nivos.scheduler.store import SchedulerStore
 
         db_path = DEFAULT_CONFIG_PATH.parent / "scheduler.db"
         store = SchedulerStore(db_path)
@@ -183,9 +183,9 @@ def digest(
         # Trigger on-demand generation
         console.print("[yellow]Generating fresh digest...[/yellow]")
         try:
-            from openjarvis.sdk import Jarvis
+            from nivos.sdk import Nivos
 
-            with Jarvis() as j:
+            with Nivos() as j:
                 j.ask("Generate my morning digest", agent="morning_digest")
         except Exception as exc:
             console.print(f"[red]Failed to generate digest: {exc}[/red]")

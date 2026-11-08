@@ -1,11 +1,11 @@
-"""`jarvis self-update` — upgrade OpenJarvis to the latest release.
+"""`nivos self-update` — upgrade Nivos to the latest release.
 
-Runs the right upgrade command for how the user installed OpenJarvis:
+Runs the right upgrade command for how the user installed Nivos:
 
-- PyPI installs get ``pip install --upgrade openjarvis``.
-- uv-tool installs get ``uv tool upgrade openjarvis``.
+- PyPI installs get ``pip install --upgrade nivos``.
+- uv-tool installs get ``uv tool upgrade nivos``.
 - Editable Git checkouts recover release-tag history, fast-forward, and rebuild
-  OpenJarvis in the running environment. The inexact sync preserves packages
+  Nivos in the running environment. The inexact sync preserves packages
   previously installed through extras and dependency groups.
 
 The detection logic is shared with the post-command "new version
@@ -22,8 +22,8 @@ from pathlib import Path
 
 import click
 
-import openjarvis
-from openjarvis.cli._install_detect import detect_install
+import nivos
+from nivos.cli._install_detect import detect_install
 
 
 def _update_git_checkout(repo_root: Path) -> int:
@@ -64,7 +64,7 @@ def _update_git_checkout(repo_root: Path) -> int:
                 sys.executable,
                 "--inexact",
                 "--reinstall-package",
-                "openjarvis",
+                "nivos",
             ],
             cwd=repo_root,
             env={**os.environ, "UV_PROJECT_ENVIRONMENT": sys.prefix},
@@ -80,7 +80,7 @@ def _update_git_checkout(repo_root: Path) -> int:
                 "--python",
                 sys.executable,
                 "--reinstall-package",
-                "openjarvis",
+                "nivos",
                 "-e",
                 ".",
             ],
@@ -111,7 +111,7 @@ def _update_git_checkout(repo_root: Path) -> int:
 )
 def self_update(check: bool, yes: bool) -> None:
     info = detect_install()
-    current = openjarvis.__version__
+    current = nivos.__version__
 
     click.echo(f"Current Nivos version: v{current}")
     click.echo(f"Install method: {info.kind}")
@@ -163,4 +163,4 @@ def self_update(check: bool, yes: bool) -> None:
         )
         sys.exit(returncode)
 
-    click.echo("\nUpgrade complete. Re-run `jarvis --version` to confirm.")
+    click.echo("\nUpgrade complete. Re-run `nivos --version` to confirm.")

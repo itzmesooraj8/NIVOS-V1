@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from openjarvis.core.registry import (
+from nivos.core.registry import (
     AgentRegistry,
     EngineRegistry,
     MemoryRegistry,
     ModelRegistry,
     ToolRegistry,
 )
-from openjarvis.core.types import (
+from nivos.core.types import (
     Conversation,
     Message,
     ModelSpec,
@@ -19,7 +19,7 @@ from openjarvis.core.types import (
     ToolCall,
     ToolResult,
 )
-from openjarvis.core.utils import (
+from nivos.core.utils import (
     get_python_executable,
     open_browser,
     process_alive,

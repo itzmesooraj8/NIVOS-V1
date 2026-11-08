@@ -1,6 +1,6 @@
 """GEPA agent optimizer -- Pareto-efficient evolutionary optimization.
 
-Uses GEPA's adapter pattern to bridge OpenJarvis traces into GEPA's
+Uses GEPA's adapter pattern to bridge Nivos traces into GEPA's
 evolutionary optimization framework. Outputs TOML config updates
 written via AgentConfigEvolver.
 """
@@ -10,9 +10,9 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List
 
-from openjarvis.core.config import GEPAOptimizerConfig
-from openjarvis.core.registry import LearningRegistry
-from openjarvis.learning._stubs import AgentLearningPolicy
+from nivos.core.config import GEPAOptimizerConfig
+from nivos.core.registry import LearningRegistry
+from nivos.learning._stubs import AgentLearningPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +26,8 @@ except ImportError:
     gepa = None  # type: ignore[assignment]
 
 
-class OpenJarvisGEPAAdapter:
-    """Implements GEPA's adapter protocol for OpenJarvis agents.
+class NivosGEPAAdapter:
+    """Implements GEPA's adapter protocol for Nivos agents.
 
     Bridges trace data into GEPA's optimization framework via
     the ``assess()`` and ``make_reflective_dataset()`` methods.
@@ -183,12 +183,12 @@ class GEPAAgentOptimizer:
             return {
                 "status": "error",
                 "reason": (
-                    "gepa not installed (pip install 'openjarvis[learning-gepa]')"
+                    "gepa not installed (pip install 'nivos[learning-gepa]')"
                 ),
             }
 
         agent_name = self.config.agent_filter or "default"
-        adapter = OpenJarvisGEPAAdapter(trace_store, agent_name, self.config)
+        adapter = NivosGEPAAdapter(trace_store, agent_name, self.config)
         adapter.load_traces()
 
         try:
@@ -210,7 +210,7 @@ class GEPAAgentOptimizer:
 
     def _run_gepa(
         self,
-        adapter: OpenJarvisGEPAAdapter,
+        adapter: NivosGEPAAdapter,
         traces: List[Any],
     ) -> Dict[str, Any]:
         """Run the GEPA evolutionary optimization loop."""
@@ -293,7 +293,7 @@ class GEPAAgentOptimizer:
         """Write updated configs via AgentConfigEvolver."""
         import pathlib
 
-        from openjarvis.learning.agents.agent_evolver import AgentConfigEvolver
+        from nivos.learning.agents.agent_evolver import AgentConfigEvolver
 
         evolver = AgentConfigEvolver.__new__(AgentConfigEvolver)
         evolver._config_dir = pathlib.Path(self.config.config_dir)
@@ -323,4 +323,4 @@ class _GEPALearningPolicy(AgentLearningPolicy):
         return optimizer.optimize(trace_store)
 
 
-__all__ = ["GEPAAgentOptimizer", "OpenJarvisGEPAAdapter"]
+__all__ = ["GEPAAgentOptimizer", "NivosGEPAAdapter"]

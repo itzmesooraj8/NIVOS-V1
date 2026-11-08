@@ -18,7 +18,7 @@ from typing import Any
 class AsyncLoopRunner:
     """Own an event loop on a daemon thread and run coroutines against it."""
 
-    def __init__(self, name: str = "openjarvis-async") -> None:
+    def __init__(self, name: str = "nivos-async") -> None:
         self._loop = asyncio.new_event_loop()
         self._thread = threading.Thread(target=self._run_loop, name=name, daemon=True)
         self._thread.start()

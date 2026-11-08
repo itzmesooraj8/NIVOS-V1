@@ -14,8 +14,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from openjarvis.core.paths import _find_source_root, get_config_dir
-from openjarvis.core.registry import ToolRegistry
+from nivos.core.paths import _find_source_root, get_config_dir
+from nivos.core.registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
 

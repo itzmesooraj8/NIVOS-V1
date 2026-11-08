@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from openjarvis.plugins.loader import PluginLoader, PluginManifest, get_plugin_loader
+from nivos.plugins.loader import PluginLoader, PluginManifest, get_plugin_loader
 
 __all__ = ["PluginLoader", "PluginManifest", "get_plugin_loader"]
 

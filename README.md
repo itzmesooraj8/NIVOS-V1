@@ -1,5 +1,5 @@
 <div align="center">
-  <img alt="Nivos" src="assets/OpenJarvis_Horizontal_Logo.png" width="400">
+  <img alt="Nivos" src="assets/Nivos_Horizontal_Logo.png" width="400">
 
   <p><i>Personal AI, On Personal Devices.</i></p>
 
@@ -17,7 +17,7 @@
 ---
 
 <div align="center">
-  <img alt="Nivos demo reel" src="assets/openjarvis_demo_reel.webp" width="75%">
+  <img alt="Nivos demo reel" src="assets/nivos_demo_reel.webp" width="75%">
 </div>
 
 ---
@@ -166,8 +166,8 @@ Nivos is an open-source personal AI agent framework designed for local devices.
 
 ## Citation
 ```bibtex
-@misc{saadfalcon2026openjarvispersonalaipersonal,
-      title={OpenJarvis: Personal AI, On Personal Devices}, 
+@misc{saadfalcon2026nivospersonalaipersonal,
+      title={Nivos: Personal AI, On Personal Devices}, 
       author={Jon Saad-Falcon and Avanika Narayan and Robby Manihani and Tanvir Bhathal and Herumb Shandilya and Hakki Orhun Akengin and Gabriel Bo and Andrew Park and Matthew Hart and Caia Costello and Chuan Li and Christopher Ré and Azalia Mirhoseini},
       year={2026},
       eprint={2605.17172},

@@ -7,13 +7,13 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict
 
-from openjarvis.evals.backends.external._subprocess_runner import run_one_shot
-from openjarvis.evals.comparison.third_party import (
+from nivos.evals.backends.external._subprocess_runner import run_one_shot
+from nivos.evals.comparison.third_party import (
     ThirdPartyEntry,
     load_third_party_config,
     verify_commit_pin,
 )
-from openjarvis.evals.core.backend import InferenceBackend
+from nivos.evals.core.backend import InferenceBackend
 
 
 class OpenClawBackend(InferenceBackend):

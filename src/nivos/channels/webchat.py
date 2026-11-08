@@ -5,14 +5,14 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
-from openjarvis.channels._stubs import (
+from nivos.channels._stubs import (
     BaseChannel,
     ChannelHandler,
     ChannelMessage,
     ChannelStatus,
 )
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.registry import ChannelRegistry
+from nivos.core.events import EventBus, EventType
+from nivos.core.registry import ChannelRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class WebChatChannel(BaseChannel):
         """Append a message to the in-memory queue."""
         msg = ChannelMessage(
             channel=channel,
-            sender="jarvis",
+            sender="nivos",
             content=content,
             conversation_id=conversation_id,
             metadata=metadata or {},

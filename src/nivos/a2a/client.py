@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from openjarvis.a2a.protocol import A2ARequest, A2ATask, AgentCard
+from nivos.a2a.protocol import A2ARequest, A2ATask, AgentCard
 
 
 class A2AClient:

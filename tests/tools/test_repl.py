@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import time
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.tools.repl import ReplTool
+from nivos.core.registry import ToolRegistry
+from nivos.tools.repl import ReplTool
 
 
 class TestReplSpec:

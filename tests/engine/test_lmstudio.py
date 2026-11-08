@@ -6,10 +6,10 @@ import httpx
 import pytest
 import respx
 
-from openjarvis.core.registry import EngineRegistry
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._base import EngineConnectionError
-from openjarvis.engine.openai_compat_engines import LMStudioEngine
+from nivos.core.registry import EngineRegistry
+from nivos.core.types import Message, Role
+from nivos.engine._base import EngineConnectionError
+from nivos.engine.openai_compat_engines import LMStudioEngine
 
 
 @pytest.fixture()

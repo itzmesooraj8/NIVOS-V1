@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 
 @ToolRegistry.register("think")
@@ -41,7 +41,7 @@ class ThinkTool(BaseTool):
     def execute(self, **params: Any) -> ToolResult:
         thought = params.get("thought", "")
         try:
-            from openjarvis._rust_bridge import get_rust_module
+            from nivos._rust_bridge import get_rust_module
 
             _rust = get_rust_module()
             content = _rust.ThinkTool().execute(thought)

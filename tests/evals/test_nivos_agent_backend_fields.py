@@ -1,15 +1,15 @@
-"""Verify JarvisAgentBackend.generate_full returns the spec §6.2 extended fields."""
+"""Verify NivosAgentBackend.generate_full returns the spec §6.2 extended fields."""
 
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
 
-class TestJarvisAgentExtendedFields:
+class TestNivosAgentExtendedFields:
     def test_generate_full_includes_framework_and_commit(self) -> None:
-        from openjarvis.evals.backends.jarvis_agent import JarvisAgentBackend
+        from nivos.evals.backends.nivos_agent import NivosAgentBackend
 
-        with patch("openjarvis.system.SystemBuilder") as MockSB:
+        with patch("nivos.system.SystemBuilder") as MockSB:
             mock_system = MagicMock()
             mock_system.ask.return_value = {
                 "content": "answer",
@@ -30,7 +30,7 @@ class TestJarvisAgentExtendedFields:
             # MagicMock that tolerates arbitrary attribute access.
             builder_instance._config = MagicMock()
 
-            backend = JarvisAgentBackend(model="qwen-9b")
+            backend = NivosAgentBackend(model="qwen-9b")
             result = backend.generate_full(
                 "task",
                 model="qwen-9b",
@@ -38,7 +38,7 @@ class TestJarvisAgentExtendedFields:
                 temperature=0.0,
                 max_tokens=2048,
             )
-            assert result["framework"] == "openjarvis"
+            assert result["framework"] == "nivos"
             assert "framework_commit" in result
             assert "energy_joules" in result  # may be None
             assert "peak_power_w" in result

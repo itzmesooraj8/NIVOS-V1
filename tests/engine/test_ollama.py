@@ -15,10 +15,10 @@ except ImportError:  # respx is an optional test-only dep; the async MockTranspo
     respx = None  # type: ignore[assignment]  # pins below run without it.
     _HAS_RESPX = False
 
-from openjarvis.core.registry import EngineRegistry
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._base import EngineConnectionError
-from openjarvis.engine.ollama import OllamaEngine, _is_control_token_only_args
+from nivos.core.registry import EngineRegistry
+from nivos.core.types import Message, Role
+from nivos.engine._base import EngineConnectionError
+from nivos.engine.ollama import OllamaEngine, _is_control_token_only_args
 
 # respx-backed tests exercise the SYNC client paths (generate/list_models/health)
 # and the respx-driven stream tests; they skip cleanly when respx is absent. The

@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Tuple
 
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.types import EvalRecord
 
 
 class TaskEnvironmentError(RuntimeError):

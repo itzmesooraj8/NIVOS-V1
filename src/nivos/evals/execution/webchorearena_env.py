@@ -532,7 +532,7 @@ class WebChoreArenaTaskEnv:
     def _call_judge(self, prompt: str) -> Optional[str]:
         """Call an LLM judge for fuzzy/ua matching."""
         try:
-            from openjarvis.evals.core.backend import InferenceBackend
+            from nivos.evals.core.backend import InferenceBackend
 
             backend = InferenceBackend.create_default()
             return backend.generate(

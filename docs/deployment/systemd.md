@@ -6,38 +6,38 @@ Nivos includes a systemd unit file for running the API server as a managed backg
 
 Before installing the service, ensure that:
 
-1. Nivos is installed in a virtual environment at `/opt/openjarvis/.venv` (or adjust paths accordingly).
-2. A dedicated `openjarvis` system user exists (recommended for security).
+1. Nivos is installed in a virtual environment at `/opt/nivos/.venv` (or adjust paths accordingly).
+2. A dedicated `nivos` system user exists (recommended for security).
 3. An inference engine (such as Ollama) is running and accessible.
 
 Create the user and installation directory:
 
 ```bash
-sudo useradd --system --create-home --home-dir /opt/openjarvis openjarvis
-sudo -u openjarvis python3 -m venv /opt/openjarvis/.venv
-sudo -u openjarvis git clone https://github.com/nivos/nivos.git /opt/openjarvis/Nivos
-cd /opt/openjarvis/Nivos && sudo -u openjarvis uv sync --extra server
+sudo useradd --system --create-home --home-dir /opt/nivos nivos
+sudo -u nivos python3 -m venv /opt/nivos/.venv
+sudo -u nivos git clone https://github.com/nivos/nivos.git /opt/nivos/Nivos
+cd /opt/nivos/Nivos && sudo -u nivos uv sync --extra server
 ```
 
 ## Installing the Service
 
 The unit binds `0.0.0.0`, so an **API key is required** — and the unit
-declares `EnvironmentFile=/etc/openjarvis/env` (no `-` prefix), so it will
+declares `EnvironmentFile=/etc/nivos/env` (no `-` prefix), so it will
 **fail to start** until that file exists with a key. Create it first:
 
 ```bash
-sudo mkdir -p /etc/openjarvis
-echo "OPENJARVIS_API_KEY=$(nivos auth generate-key)" | sudo tee /etc/openjarvis/env
-sudo chmod 600 /etc/openjarvis/env
+sudo mkdir -p /etc/nivos
+echo "NIVOS_API_KEY=$(nivos auth generate-key)" | sudo tee /etc/nivos/env
+sudo chmod 600 /etc/nivos/env
 ```
 
 Then copy the unit file, reload the daemon, and enable the service:
 
 ```bash
-sudo cp deploy/systemd/openjarvis.service /etc/systemd/system/
+sudo cp deploy/systemd/nivos.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable openjarvis
-sudo systemctl start openjarvis
+sudo systemctl enable nivos
+sudo systemctl start nivos
 ```
 
 Clients must send `Authorization: Bearer <key>` on `/v1/*` and `/api/*`
@@ -47,12 +47,12 @@ can drop the `EnvironmentFile` line.)
 Verify it is running:
 
 ```bash
-sudo systemctl status openjarvis
+sudo systemctl status nivos
 ```
 
 ## Service File Reference
 
-The provided unit file at `deploy/systemd/openjarvis.service`:
+The provided unit file at `deploy/systemd/nivos.service`:
 
 ```ini
 [Unit]
@@ -61,12 +61,12 @@ After=network.target
 
 [Service]
 Type=simple
-User=openjarvis
-WorkingDirectory=/opt/openjarvis
-ExecStart=/opt/openjarvis/.venv/bin/nivos serve --host 0.0.0.0 --port 8000
+User=nivos
+WorkingDirectory=/opt/nivos
+ExecStart=/opt/nivos/.venv/bin/nivos serve --host 0.0.0.0 --port 8000
 Restart=on-failure
 RestartSec=5
-Environment=HOME=/opt/openjarvis
+Environment=HOME=/opt/nivos
 
 [Install]
 WantedBy=multi-user.target
@@ -84,12 +84,12 @@ WantedBy=multi-user.target
 | Directive          | Value                                                              | Description                                                                                     |
 |--------------------|--------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
 | `Type`             | `simple`                                                           | The process started by `ExecStart` is the main service process. systemd considers the service started immediately. |
-| `User`             | `openjarvis`                                                       | Runs the server as the `openjarvis` user rather than root, limiting the blast radius of any security issue. |
-| `WorkingDirectory` | `/opt/openjarvis`                                                  | Sets the working directory for the process. This is where Nivos looks for local files and writes data. |
-| `ExecStart`        | `/opt/openjarvis/.venv/bin/nivos serve --host 0.0.0.0 --port 8000` | The command to start the server. Uses the full path to the `nivos` binary inside the virtual environment. |
+| `User`             | `nivos`                                                       | Runs the server as the `nivos` user rather than root, limiting the blast radius of any security issue. |
+| `WorkingDirectory` | `/opt/nivos`                                                  | Sets the working directory for the process. This is where Nivos looks for local files and writes data. |
+| `ExecStart`        | `/opt/nivos/.venv/bin/nivos serve --host 0.0.0.0 --port 8000` | The command to start the server. Uses the full path to the `nivos` binary inside the virtual environment. |
 | `Restart`          | `on-failure`                                                       | Automatically restarts the service if it exits with a non-zero exit code. Does not restart on clean shutdown (`systemctl stop`). |
 | `RestartSec`       | `5`                                                                | Waits 5 seconds before attempting a restart, preventing rapid restart loops if the service crashes immediately on startup. |
-| `Environment`      | `HOME=/opt/openjarvis`                                             | Sets the `HOME` environment variable so Nivos finds its configuration at `~/.openjarvis/config.toml` (resolving to `/opt/openjarvis/.openjarvis/config.toml`). |
+| `Environment`      | `HOME=/opt/nivos`                                             | Sets the `HOME` environment variable so Nivos finds its configuration at `~/.nivos/config.toml` (resolving to `/opt/nivos/.nivos/config.toml`). |
 
 ### `[Install]` Section
 
@@ -104,7 +104,7 @@ WantedBy=multi-user.target
 Edit the `ExecStart` line to change the host or port:
 
 ```ini
-ExecStart=/opt/openjarvis/.venv/bin/nivos serve --host 127.0.0.1 --port 9000
+ExecStart=/opt/nivos/.venv/bin/nivos serve --host 127.0.0.1 --port 9000
 ```
 
 !!! tip
@@ -115,7 +115,7 @@ ExecStart=/opt/openjarvis/.venv/bin/nivos serve --host 127.0.0.1 --port 9000
 Pass additional flags to `nivos serve`:
 
 ```ini
-ExecStart=/opt/openjarvis/.venv/bin/nivos serve --host 0.0.0.0 --port 8000 --engine ollama --model qwen3:8b
+ExecStart=/opt/nivos/.venv/bin/nivos serve --host 0.0.0.0 --port 8000 --engine ollama --model qwen3:8b
 ```
 
 ### Adding Environment Variables
@@ -124,16 +124,16 @@ Add multiple `Environment` directives or use `EnvironmentFile` for complex confi
 
 ```ini
 [Service]
-Environment=HOME=/opt/openjarvis
-Environment=OPENJARVIS_ENGINE_DEFAULT=vllm
-Environment=OPENJARVIS_OLLAMA_HOST=http://localhost:11434
+Environment=HOME=/opt/nivos
+Environment=NIVOS_ENGINE_DEFAULT=vllm
+Environment=NIVOS_OLLAMA_HOST=http://localhost:11434
 ```
 
 Or load from a file:
 
 ```ini
 [Service]
-EnvironmentFile=/opt/openjarvis/.env
+EnvironmentFile=/opt/nivos/.env
 ```
 
 ### Changing the User
@@ -143,9 +143,9 @@ If you prefer a different service user, update both the `User` directive and the
 ```ini
 [Service]
 User=myuser
-WorkingDirectory=/home/myuser/openjarvis
-ExecStart=/home/myuser/openjarvis/.venv/bin/nivos serve --host 0.0.0.0 --port 8000
-Environment=HOME=/home/myuser/openjarvis
+WorkingDirectory=/home/myuser/nivos
+ExecStart=/home/myuser/nivos/.venv/bin/nivos serve --host 0.0.0.0 --port 8000
+Environment=HOME=/home/myuser/nivos
 ```
 
 ### Using a Configuration File
@@ -153,11 +153,11 @@ Environment=HOME=/home/myuser/openjarvis
 Ensure the configuration file exists at the path where `HOME` points:
 
 ```bash
-sudo -u openjarvis mkdir -p /opt/openjarvis/.openjarvis
-sudo -u openjarvis cp config.toml /opt/openjarvis/.openjarvis/config.toml
+sudo -u nivos mkdir -p /opt/nivos/.nivos
+sudo -u nivos cp config.toml /opt/nivos/.nivos/config.toml
 ```
 
-The server reads `~/.openjarvis/config.toml` on startup, where `~` resolves from the `HOME` environment variable.
+The server reads `~/.nivos/config.toml` on startup, where `~` resolves from the `HOME` environment variable.
 
 ## Viewing Logs
 
@@ -165,19 +165,19 @@ Nivos logs are captured by journald. View them with `journalctl`:
 
 ```bash
 # View all logs for the service
-sudo journalctl -u openjarvis
+sudo journalctl -u nivos
 
 # Follow logs in real time
-sudo journalctl -u openjarvis -f
+sudo journalctl -u nivos -f
 
 # View logs since the last boot
-sudo journalctl -u openjarvis -b
+sudo journalctl -u nivos -b
 
 # View logs from the last hour
-sudo journalctl -u openjarvis --since "1 hour ago"
+sudo journalctl -u nivos --since "1 hour ago"
 
 # View only error-level messages
-sudo journalctl -u openjarvis -p err
+sudo journalctl -u nivos -p err
 ```
 
 ## Managing the Service
@@ -186,55 +186,55 @@ sudo journalctl -u openjarvis -p err
 
 ```bash
 # Start the service
-sudo systemctl start openjarvis
+sudo systemctl start nivos
 
 # Stop the service
-sudo systemctl stop openjarvis
+sudo systemctl stop nivos
 
 # Restart the service (stop + start)
-sudo systemctl restart openjarvis
+sudo systemctl restart nivos
 
 # Reload configuration without full restart (sends SIGHUP)
-sudo systemctl reload-or-restart openjarvis
+sudo systemctl reload-or-restart nivos
 ```
 
 ### Check Status
 
 ```bash
-sudo systemctl status openjarvis
+sudo systemctl status nivos
 ```
 
 Example output:
 
 ```
-● openjarvis.service - Nivos API Server
-     Loaded: loaded (/etc/systemd/system/openjarvis.service; enabled; preset: enabled)
+● nivos.service - Nivos API Server
+     Loaded: loaded (/etc/systemd/system/nivos.service; enabled; preset: enabled)
      Active: active (running) since Fri 2026-02-21 10:00:00 UTC; 2h ago
-   Main PID: 12345 (jarvis)
+   Main PID: 12345 (nivos)
       Tasks: 4 (limit: 4915)
      Memory: 256.0M
         CPU: 1min 23s
-     CGroup: /system.slice/openjarvis.service
-             └─12345 /opt/openjarvis/.venv/bin/python /opt/openjarvis/.venv/bin/nivos serve --host 0.0.0.0 --port 8000
+     CGroup: /system.slice/nivos.service
+             └─12345 /opt/nivos/.venv/bin/python /opt/nivos/.venv/bin/nivos serve --host 0.0.0.0 --port 8000
 ```
 
 ### Enable and Disable on Boot
 
 ```bash
 # Enable automatic start on boot
-sudo systemctl enable openjarvis
+sudo systemctl enable nivos
 
 # Disable automatic start on boot
-sudo systemctl disable openjarvis
+sudo systemctl disable nivos
 ```
 
 ### Apply Changes After Editing the Unit File
 
-After modifying `/etc/systemd/system/openjarvis.service`, reload the systemd daemon and restart the service:
+After modifying `/etc/systemd/system/nivos.service`, reload the systemd daemon and restart the service:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl restart openjarvis
+sudo systemctl restart nivos
 ```
 
 ## Running Alongside Ollama

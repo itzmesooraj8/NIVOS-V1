@@ -17,13 +17,13 @@ import logging
 import threading
 from typing import Any
 
-from openjarvis.analytics.events import validate_event
-from openjarvis.analytics.identity import (
+from nivos.analytics.events import validate_event
+from nivos.analytics.identity import (
     get_or_create_anon_id,
     is_analytics_enabled,
 )
-from openjarvis.analytics.redaction import redact
-from openjarvis.core.config import AnalyticsConfig
+from nivos.analytics.redaction import redact
+from nivos.core.config import AnalyticsConfig
 
 logger = logging.getLogger(__name__)
 

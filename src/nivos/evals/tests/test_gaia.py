@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from openjarvis.evals.core.types import EvalRecord
-from openjarvis.evals.scorers.gaia_exact import (
+from nivos.evals.core.types import EvalRecord
+from nivos.evals.scorers.gaia_exact import (
     GAIAScorer,
     _is_float,
     _normalize_number_str,
@@ -11,7 +11,7 @@ from openjarvis.evals.scorers.gaia_exact import (
     _split_string,
     exact_match,
 )
-from openjarvis.evals.tests.conftest import MockBackend
+from nivos.evals.tests.conftest import MockBackend
 
 
 class TestNormalization:

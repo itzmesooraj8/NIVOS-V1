@@ -1,6 +1,6 @@
 """TauBench V2 dataset provider — multi-turn customer service benchmark.
 
-Wraps the tau2-bench framework for evaluation within OpenJarvis.
+Wraps the tau2-bench framework for evaluation within Nivos.
 Supports airline, retail, and telecom domains.
 
 Reference: https://github.com/sierra-research/tau2-bench
@@ -14,9 +14,9 @@ import os
 from importlib import metadata
 from typing import Iterable, List, Optional
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.splits import apply_split
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.splits import apply_split
+from nivos.evals.core.types import EvalRecord
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ def _ensure_tau2() -> None:
         distribution = metadata.distribution("tau2")
     except metadata.PackageNotFoundError as exc:
         raise ImportError(
-            "TauBench requires tau2, which OpenJarvis does not install at "
+            "TauBench requires tau2, which Nivos does not install at "
             "runtime. Install the pinned dependency explicitly (Python >=3.12): "
             f'uv pip install "{TAU2_INSTALL_SPEC}"'
         ) from exc
@@ -52,7 +52,7 @@ def _ensure_tau2() -> None:
 
     if installed_repo != TAU2_REPO or installed_revision != TAU2_REVISION:
         raise ImportError(
-            "The installed tau2 package does not match OpenJarvis's pinned "
+            "The installed tau2 package does not match Nivos's pinned "
             "source revision. Reinstall it explicitly (Python >=3.12): "
             f'uv pip install --force-reinstall "{TAU2_INSTALL_SPEC}"'
         )
@@ -89,8 +89,8 @@ class TauBenchDataset(DatasetProvider):
         self._max_tokens: int = 4096
         self._user_model: Optional[str] = None
         # pass^k: best of k trials per task. Default 3, override via env var
-        # OPENJARVIS_TAUBENCH_TRIALS for faster runs (e.g. =1 for 3x speedup).
-        self._num_trials: int = int(os.environ.get("OPENJARVIS_TAUBENCH_TRIALS", "3"))
+        # NIVOS_TAUBENCH_TRIALS for faster runs (e.g. =1 for 3x speedup).
+        self._num_trials: int = int(os.environ.get("NIVOS_TAUBENCH_TRIALS", "3"))
         self._telemetry: bool = False
         self._gpu_metrics: bool = False
 
@@ -257,7 +257,7 @@ class TauBenchDataset(DatasetProvider):
 
     def create_task_env(self, record: EvalRecord):
         """Create a TauBench task environment for evaluation."""
-        from openjarvis.evals.execution.taubench_env import TauBenchTaskEnv
+        from nivos.evals.execution.taubench_env import TauBenchTaskEnv
 
         return TauBenchTaskEnv(
             record,

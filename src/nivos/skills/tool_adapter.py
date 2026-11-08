@@ -5,10 +5,10 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional, Set
 
-from openjarvis.core.types import ToolResult
-from openjarvis.skills.executor import SkillExecutor
-from openjarvis.skills.types import SkillManifest
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.types import ToolResult
+from nivos.skills.executor import SkillExecutor
+from nivos.skills.types import SkillManifest
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 _PLACEHOLDER_RE = re.compile(r"\{(\w+)\}")
 
@@ -109,7 +109,7 @@ class SkillTool(BaseTool):
         Includes the skill name, source provenance, and kind so downstream
         consumers (TraceCollector, SkillOptimizer) can bucket invocations.
         """
-        oj_meta = self._manifest.metadata.get("openjarvis", {}) or {}
+        oj_meta = self._manifest.metadata.get("nivos", {}) or {}
         source = oj_meta.get("source", "user")
         kind = "executable" if self._manifest.steps else "instructional"
         return {

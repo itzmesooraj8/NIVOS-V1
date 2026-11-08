@@ -1,4 +1,4 @@
-"""``jarvis mine`` command group."""
+"""``nivos mine`` command group."""
 
 from __future__ import annotations
 
@@ -14,10 +14,10 @@ from typing import Any
 
 import click
 
-from openjarvis.core.config import HardwareInfo, detect_hardware, load_config
-from openjarvis.core.registry import MinerRegistry
-from openjarvis.core.utils import process_alive, terminate_process
-from openjarvis.mining._constants import (
+from nivos.core.config import HardwareInfo, detect_hardware, load_config
+from nivos.core.registry import MinerRegistry
+from nivos.core.utils import process_alive, terminate_process
+from nivos.mining._constants import (
     DEFAULT_GATEWAY_METRICS_PORT,
     DEFAULT_GATEWAY_RPC_PORT,
     DEFAULT_PEARL_MODEL,
@@ -25,22 +25,22 @@ from openjarvis.mining._constants import (
     PEARL_IMAGE_TAG,
     SIDECAR_PATH,
 )
-from openjarvis.mining._discovery import (
+from nivos.mining._discovery import (
     check_disk_free,
     check_docker_available,
     check_pearld_reachable,
     check_wallet_address_format,
     detect_for_engine_model,
 )
-from openjarvis.mining._docker import PearlDockerLauncher
-from openjarvis.mining._metrics import parse_gateway_metrics
-from openjarvis.mining._models import (
+from nivos.mining._docker import PearlDockerLauncher
+from nivos.mining._metrics import parse_gateway_metrics
+from nivos.mining._models import (
     get_pearl_model_spec,
     iter_pearl_model_specs,
     pearl_variant_for_base_model,
 )
-from openjarvis.mining._stubs import Sidecar
-from openjarvis.mining.vllm_pearl import ensure_registered as ensure_vllm_registered
+from nivos.mining._stubs import Sidecar
+from nivos.mining.vllm_pearl import ensure_registered as ensure_vllm_registered
 
 
 def _detect_hardware() -> HardwareInfo:
@@ -57,11 +57,11 @@ def _docker_from_env():
 
 def _ensure_providers_registered() -> None:
     ensure_vllm_registered()
-    from openjarvis.mining.cpu_pearl import ensure_registered as ensure_cpu_registered
+    from nivos.mining.cpu_pearl import ensure_registered as ensure_cpu_registered
 
     ensure_cpu_registered()
     try:
-        from openjarvis.mining.apple_mps_pearl import (
+        from nivos.mining.apple_mps_pearl import (
             ensure_registered as ensure_mps_registered,
         )
 
@@ -275,7 +275,7 @@ def doctor() -> None:
 
     click.echo("Pearl node")
     if mining_cfg is None:
-        _row("RPC", False, "no [mining] config - run `jarvis mine init`")
+        _row("RPC", False, "no [mining] config - run `nivos mine init`")
     else:
         url = mining_cfg.extra.get("pearld_rpc_url", DEFAULT_PEARLD_RPC_URL)
         user = mining_cfg.extra.get("pearld_rpc_user", "rpcuser")
@@ -420,7 +420,7 @@ def init(
             if not cap.supported:
                 raise click.ClickException(
                     f"vllm-pearl not supported on this host: {cap.reason}\n"
-                    "See `jarvis mine models` and `jarvis mine doctor` for details."
+                    "See `nivos mine models` and `nivos mine doctor` for details."
                 )
         elif not local_model_path.exists():
             raise click.ClickException(
@@ -450,13 +450,13 @@ def init(
     if pearld_password_env not in os.environ:
         click.echo(
             f"Warning: ${pearld_password_env} is not set. "
-            "Set it before `jarvis mine start`.",
+            "Set it before `nivos mine start`.",
             err=True,
         )
 
-    from openjarvis.core.config import DEFAULT_CONFIG_PATH
+    from nivos.core.config import DEFAULT_CONFIG_PATH
 
-    config_path = Path(os.environ.get("OPENJARVIS_CONFIG", DEFAULT_CONFIG_PATH))
+    config_path = Path(os.environ.get("NIVOS_CONFIG", DEFAULT_CONFIG_PATH))
     config_path.parent.mkdir(parents=True, exist_ok=True)
     section = f"""
 [mining]
@@ -516,7 +516,7 @@ pearld_rpc_password_env = "{pearld_password_env}"
     if selected_provider == "vllm-pearl":
         click.echo(f"Resolving image {image}...")
         PearlDockerLauncher(client=_docker_from_env()).ensure_image(image)
-    click.echo("Done. Run `jarvis mine start` to begin mining.")
+    click.echo("Done. Run `nivos mine start` to begin mining.")
 
 
 @mine.command()
@@ -527,11 +527,11 @@ def start() -> None:
     cfg = load_config().mining
     if cfg is None:
         raise click.ClickException(
-            "no [mining] section in config - run `jarvis mine init`"
+            "no [mining] section in config - run `nivos mine init`"
         )
     provider = MinerRegistry.get(cfg.provider)()
     asyncio.run(provider.start(cfg))
-    click.echo(f"Started {cfg.provider}. Run `jarvis mine status` for live stats.")
+    click.echo(f"Started {cfg.provider}. Run `nivos mine status` for live stats.")
 
 
 @mine.command()
@@ -680,7 +680,7 @@ def validate_model(
         record(
             "Sidecar",
             False,
-            "absent - run `jarvis mine start` first",
+            "absent - run `nivos mine start` first",
         )
     else:
         record("Sidecar", True, f"present ({SIDECAR_PATH})")
@@ -987,7 +987,7 @@ def logs(tail_n: int, follow: bool) -> None:
     client = _docker_from_env()
     launcher = PearlDockerLauncher(client=client)
     try:
-        launcher._container = client.containers.get("openjarvis-pearl-miner")
+        launcher._container = client.containers.get("nivos-pearl-miner")
     except Exception as exc:  # noqa: BLE001
         raise click.ClickException(f"no mining container: {exc}") from exc
     click.echo(launcher.get_logs(tail=tail_n))

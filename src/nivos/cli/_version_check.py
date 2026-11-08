@@ -9,18 +9,18 @@ import sys
 import time
 from pathlib import Path
 
-from openjarvis.core.paths import get_config_dir
+from nivos.core.paths import get_config_dir
 
 logger = logging.getLogger(__name__)
 
 _CACHE_PATH = get_config_dir() / "version-check.json"
 _CACHE_TTL = 86400  # 24 hours
-_PYPI_API = "https://pypi.org/pypi/openjarvis/json"
+_PYPI_API = "https://pypi.org/pypi/nivos/json"
 
 
 def _config_path() -> Path:
-    """Resolve the config path, honoring ``OPENJARVIS_CONFIG`` like core.config."""
-    override = os.environ.get("OPENJARVIS_CONFIG")
+    """Resolve the config path, honoring ``NIVOS_CONFIG`` like core.config."""
+    override = os.environ.get("NIVOS_CONFIG")
     if override:
         return Path(override).expanduser()
     return get_config_dir() / "config.toml"
@@ -50,9 +50,9 @@ _CHECK_COMMANDS = {
 }
 
 # Environment opt-outs (any truthy value disables the check):
-# - ``OPENJARVIS_NO_UPDATE_CHECK=1`` — project-specific
+# - ``NIVOS_NO_UPDATE_CHECK=1`` — project-specific
 # - ``CI=true`` — set by every major CI provider, suppresses by default
-_OPT_OUT_ENV_VARS = ("OPENJARVIS_NO_UPDATE_CHECK",)
+_OPT_OUT_ENV_VARS = ("NIVOS_NO_UPDATE_CHECK",)
 
 
 def _check_disabled() -> bool:
@@ -62,7 +62,7 @@ def _check_disabled() -> bool:
         if raw and raw.strip().lower() not in ("", "0", "false", "no", "off"):
             return True
     # CI defaults to skipping. Users in CI can override with
-    # ``OPENJARVIS_NO_UPDATE_CHECK=0`` if they want the nudge anyway.
+    # ``NIVOS_NO_UPDATE_CHECK=0`` if they want the nudge anyway.
     if os.environ.get("CI", "").strip().lower() in ("1", "true", "yes", "on"):
         return True
     return _config_disabled()
@@ -101,7 +101,7 @@ def _config_disabled() -> bool:
 def check_for_updates(command_name: str) -> None:
     """Print a message if a newer version is available. Best-effort, never raises.
 
-    Honors ``OPENJARVIS_NO_UPDATE_CHECK=1`` and ``CI=true`` — any
+    Honors ``NIVOS_NO_UPDATE_CHECK=1`` and ``CI=true`` — any
     truthy value (``1``, ``true``, ``yes``, ``on``) disables both the
     PyPI poll and the banner. See ``_check_disabled`` for the full list.
     """
@@ -116,9 +116,9 @@ def check_for_updates(command_name: str) -> None:
 
 
 def _do_check() -> None:
-    import openjarvis
+    import nivos
 
-    current = openjarvis.__version__
+    current = nivos.__version__
     # A source-build placeholder is not an old release. Comparing it with PyPI
     # creates a permanent upgrade prompt even when Git is already up to date.
     if "unknown" in current.lower():
@@ -131,7 +131,7 @@ def _do_check() -> None:
 
     try:
         if Version(latest) > Version(current):
-            from openjarvis.cli._install_detect import detect_install
+            from nivos.cli._install_detect import detect_install
 
             cmd = detect_install().upgrade_command
             alternative = (

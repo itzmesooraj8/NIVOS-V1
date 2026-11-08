@@ -9,8 +9,8 @@ from __future__ import annotations
 import random
 from typing import Iterable, List, Optional
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
 
 _PROMPT_TEMPLATE = """You are a research assistant. Please research the following question and provide a comprehensive answer.
 

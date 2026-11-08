@@ -1,4 +1,4 @@
-"""Screen capture for vision input (``jarvis ask --screen``).
+"""Screen capture for vision input (``nivos ask --screen``).
 
 Captures the primary monitor to a temporary PNG so it can be handed to a
 vision-capable model. On Windows this uses the built-in .NET
@@ -33,7 +33,7 @@ def capture_screen_to_temp() -> str:
     Raises ``RuntimeError`` with actionable guidance if capture fails or the
     platform has no available backend.
     """
-    fd, path = tempfile.mkstemp(prefix="jarvis_screen_", suffix=".png")
+    fd, path = tempfile.mkstemp(prefix="nivos_screen_", suffix=".png")
     os.close(fd)
 
     if sys.platform.startswith("win"):

@@ -1,4 +1,4 @@
-"""``jarvis tool`` — tool management commands."""
+"""``nivos tool`` — tool management commands."""
 
 from __future__ import annotations
 
@@ -18,8 +18,8 @@ def list_tools() -> None:
     console = Console(stderr=True)
     try:
         # Trigger tool registration by importing the tools module
-        import openjarvis.tools  # noqa: F401
-        from openjarvis.core.registry import ToolRegistry
+        import nivos.tools  # noqa: F401
+        from nivos.core.registry import ToolRegistry
 
         keys = sorted(ToolRegistry.keys())
         if not keys:
@@ -63,12 +63,12 @@ def inspect(tool_name: str) -> None:
     console = Console(stderr=True)
     try:
         # Trigger tool registration by importing the tools module
-        import openjarvis.tools  # noqa: F401
-        from openjarvis.core.registry import ToolRegistry
+        import nivos.tools  # noqa: F401
+        from nivos.core.registry import ToolRegistry
 
         if not ToolRegistry.contains(tool_name):
             console.print(f"[red]Tool not found: {tool_name}[/red]")
-            console.print("[dim]Run 'jarvis tool list' to see available tools.[/dim]")
+            console.print("[dim]Run 'nivos tool list' to see available tools.[/dim]")
             return
 
         tool_cls = ToolRegistry.get(tool_name)

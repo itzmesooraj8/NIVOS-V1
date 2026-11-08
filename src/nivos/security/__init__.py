@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from importlib import import_module
 from typing import Any, Optional
 
-from openjarvis.core.events import EventBus
+from nivos.core.events import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +34,11 @@ def setup_security(
     if not config.security.enabled:
         return SecurityContext(engine=engine)
 
-    from openjarvis.security._stubs import BaseScanner
-    from openjarvis.security.audit import AuditLogger
-    from openjarvis.security.guardrails import GuardrailsEngine
-    from openjarvis.security.scanner import PIIScanner, SecretScanner
-    from openjarvis.security.types import RedactionMode
+    from nivos.security._stubs import BaseScanner
+    from nivos.security.audit import AuditLogger
+    from nivos.security.guardrails import GuardrailsEngine
+    from nivos.security.scanner import PIIScanner, SecretScanner
+    from nivos.security.types import RedactionMode
 
     # Scanners + engine wrapping
     try:
@@ -65,7 +65,7 @@ def setup_security(
     cap_policy = None
     if config.security.capabilities.enabled:
         try:
-            from openjarvis.security.capabilities import CapabilityPolicy
+            from nivos.security.capabilities import CapabilityPolicy
 
             cap_policy = CapabilityPolicy(
                 policy_path=config.security.capabilities.policy_path or None,
@@ -99,7 +99,7 @@ def setup_security(
     rate_limiter = None
     if config.security.rate_limit_enabled:
         try:
-            from openjarvis.security.rate_limiter import RateLimitConfig, RateLimiter
+            from nivos.security.rate_limiter import RateLimitConfig, RateLimiter
 
             rate_limiter = RateLimiter(
                 RateLimitConfig(
@@ -154,32 +154,32 @@ __all__ = [
 ]
 
 _LAZY_EXPORTS = {
-    "AuditLogger": ("openjarvis.security.audit", "AuditLogger"),
-    "BaseScanner": ("openjarvis.security._stubs", "BaseScanner"),
+    "AuditLogger": ("nivos.security.audit", "AuditLogger"),
+    "BaseScanner": ("nivos.security._stubs", "BaseScanner"),
     "DEFAULT_SENSITIVE_PATTERNS": (
-        "openjarvis.security.file_policy",
+        "nivos.security.file_policy",
         "DEFAULT_SENSITIVE_PATTERNS",
     ),
-    "GuardrailsEngine": ("openjarvis.security.guardrails", "GuardrailsEngine"),
-    "PIIScanner": ("openjarvis.security.scanner", "PIIScanner"),
-    "RedactionMode": ("openjarvis.security.types", "RedactionMode"),
-    "ScanFinding": ("openjarvis.security.types", "ScanFinding"),
-    "ScanResult": ("openjarvis.security.types", "ScanResult"),
-    "SecretScanner": ("openjarvis.security.scanner", "SecretScanner"),
+    "GuardrailsEngine": ("nivos.security.guardrails", "GuardrailsEngine"),
+    "PIIScanner": ("nivos.security.scanner", "PIIScanner"),
+    "RedactionMode": ("nivos.security.types", "RedactionMode"),
+    "ScanFinding": ("nivos.security.types", "ScanFinding"),
+    "ScanResult": ("nivos.security.types", "ScanResult"),
+    "SecretScanner": ("nivos.security.scanner", "SecretScanner"),
     "SecurityBlockError": (
-        "openjarvis.security.guardrails",
+        "nivos.security.guardrails",
         "SecurityBlockError",
     ),
-    "SecurityEvent": ("openjarvis.security.types", "SecurityEvent"),
-    "SecurityEventType": ("openjarvis.security.types", "SecurityEventType"),
-    "ThreatLevel": ("openjarvis.security.types", "ThreatLevel"),
-    "check_ssrf": ("openjarvis.security.ssrf", "check_ssrf"),
+    "SecurityEvent": ("nivos.security.types", "SecurityEvent"),
+    "SecurityEventType": ("nivos.security.types", "SecurityEventType"),
+    "ThreatLevel": ("nivos.security.types", "ThreatLevel"),
+    "check_ssrf": ("nivos.security.ssrf", "check_ssrf"),
     "filter_sensitive_paths": (
-        "openjarvis.security.file_policy",
+        "nivos.security.file_policy",
         "filter_sensitive_paths",
     ),
-    "is_private_ip": ("openjarvis.security.ssrf", "is_private_ip"),
-    "is_sensitive_file": ("openjarvis.security.file_policy", "is_sensitive_file"),
+    "is_private_ip": ("nivos.security.ssrf", "is_private_ip"),
+    "is_sensitive_file": ("nivos.security.file_policy", "is_sensitive_file"),
 }
 
 

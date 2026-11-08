@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Dict, List, Optional
 
 if TYPE_CHECKING:
-    from openjarvis.tools._stubs import BaseTool
+    from nivos.tools._stubs import BaseTool
 
 PROMPT_VERSION = "1.0"
 
@@ -49,7 +49,7 @@ NOW SOLVE THE TASK. You MUST use at least one tool - choose the best one for the
 """
 
 # ---------------------------------------------------------------------------
-# Tool descriptions for OpenJarvis built-in tools
+# Tool descriptions for Nivos built-in tools
 # ---------------------------------------------------------------------------
 
 TOOL_DESCRIPTIONS: Dict[str, dict] = {
@@ -237,7 +237,7 @@ def build_system_prompt(
     """
     # When BaseTool instances are provided, generate descriptions from spec
     if tools is not None:
-        from openjarvis.tools._stubs import build_tool_descriptions
+        from nivos.tools._stubs import build_tool_descriptions
 
         desc_text = build_tool_descriptions(tools, include_cost=True)
 

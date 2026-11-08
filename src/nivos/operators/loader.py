@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from openjarvis.operators.types import OperatorManifest
+from nivos.operators.types import OperatorManifest
 
 try:
     import tomllib

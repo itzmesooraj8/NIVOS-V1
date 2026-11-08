@@ -11,8 +11,8 @@ from functools import wraps
 from pathlib import Path
 from typing import Any, List, Optional
 
-from openjarvis.core.events import Event, EventBus, EventType
-from openjarvis.core.types import StepType, Trace, TraceStep
+from nivos.core.events import Event, EventBus, EventType
+from nivos.core.types import StepType, Trace, TraceStep
 
 _CREATE_TRACES = """\
 CREATE TABLE IF NOT EXISTS traces (
@@ -102,7 +102,7 @@ class TraceStore:
             else str(Path(db_path).expanduser())
         )
         if self._db_path != ":memory:":
-            from openjarvis.security.file_utils import secure_create
+            from nivos.security.file_utils import secure_create
 
             secure_create(Path(self._db_path))
         # The AgenticRunner dispatches agent work to a ThreadPoolExecutor

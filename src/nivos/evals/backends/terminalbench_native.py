@@ -10,8 +10,8 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from openjarvis.evals.core.backend import InferenceBackend
-from openjarvis.evals.core.types import RunSummary
+from nivos.evals.core.backend import InferenceBackend
+from nivos.evals.core.types import RunSummary
 
 LOGGER = logging.getLogger(__name__)
 

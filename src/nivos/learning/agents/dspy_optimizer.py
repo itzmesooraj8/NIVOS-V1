@@ -10,9 +10,9 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List
 
-from openjarvis.core.config import DSPyOptimizerConfig
-from openjarvis.core.registry import LearningRegistry
-from openjarvis.learning._stubs import AgentLearningPolicy
+from nivos.core.config import DSPyOptimizerConfig
+from nivos.core.registry import LearningRegistry
+from nivos.learning._stubs import AgentLearningPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class DSPyAgentOptimizer:
             return {
                 "status": "error",
                 "reason": (
-                    "dspy not installed (pip install 'openjarvis[learning-dspy]')"
+                    "dspy not installed (pip install 'nivos[learning-dspy]')"
                 ),
             }
 
@@ -177,7 +177,7 @@ class DSPyAgentOptimizer:
         """Write updated configs via AgentConfigEvolver."""
         import pathlib
 
-        from openjarvis.learning.agents.agent_evolver import (
+        from nivos.learning.agents.agent_evolver import (
             AgentConfigEvolver,
         )
 

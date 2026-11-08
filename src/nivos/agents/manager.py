@@ -16,7 +16,7 @@ from functools import wraps
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from openjarvis.core.paths import get_config_dir
+from nivos.core.paths import get_config_dir
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +154,7 @@ class AgentManager:
         self._conn.commit()
         # Only the authoritative long-running process (the API server, which
         # owns the scheduler) may sweep running→idle on boot. Short-lived CLI
-        # commands (`jarvis agents list/info/...`) and the SystemBuilder path
+        # commands (`nivos agents list/info/...`) and the SystemBuilder path
         # used by `run`/`ask` MUST NOT: they share this DB with a server that
         # may be mid-tick, and an unconditional sweep here flips an actively
         # running agent back to "idle" — which is exactly why `list` reported
@@ -595,7 +595,7 @@ class AgentManager:
 
         # Built-in templates
         try:
-            tpl_dir = importlib.resources.files("openjarvis.agents") / "templates"
+            tpl_dir = importlib.resources.files("nivos.agents") / "templates"
             for item in tpl_dir.iterdir():
                 if str(item).endswith(".toml"):
                     data = tomllib.loads(item.read_text(encoding="utf-8"))

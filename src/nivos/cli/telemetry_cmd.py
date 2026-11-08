@@ -1,4 +1,4 @@
-"""``jarvis telemetry`` — query and manage telemetry data."""
+"""``nivos telemetry`` — query and manage telemetry data."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from openjarvis.core.config import load_config
-from openjarvis.telemetry.aggregator import TelemetryAggregator
+from nivos.core.config import load_config
+from nivos.telemetry.aggregator import TelemetryAggregator
 
 
 def _get_aggregator() -> TelemetryAggregator:

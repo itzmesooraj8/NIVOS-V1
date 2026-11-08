@@ -15,7 +15,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from openjarvis.learning.spec_search.models import Edit
+from nivos.learning.spec_search.models import Edit
 
 logger = logging.getLogger(__name__)
 

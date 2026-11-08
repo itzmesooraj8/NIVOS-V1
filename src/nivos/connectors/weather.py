@@ -14,9 +14,9 @@ from typing import Any, Dict, Iterator, Optional
 
 import httpx
 
-from openjarvis.connectors._stubs import BaseConnector, Document, SyncStatus
-from openjarvis.core.paths import get_config_dir
-from openjarvis.core.registry import ConnectorRegistry
+from nivos.connectors._stubs import BaseConnector, Document, SyncStatus
+from nivos.core.paths import get_config_dir
+from nivos.core.registry import ConnectorRegistry
 
 _CURRENT_WEATHER_URL = "https://api.openweathermap.org/data/2.5/weather"
 _FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"
@@ -48,7 +48,7 @@ class _WeatherRequestLogFilter(logging.Filter):
 # only this provider's credential parameter; preserve other request logging.
 # Connector discovery can reload this module, so install the filter only once.
 _httpx_logger = logging.getLogger("httpx")
-_filter_name = "openjarvis.weather.credentials"
+_filter_name = "nivos.weather.credentials"
 if not any(getattr(f, "name", None) == _filter_name for f in _httpx_logger.filters):
     _httpx_logger.addFilter(_WeatherRequestLogFilter(_filter_name))
 
@@ -155,7 +155,7 @@ class WeatherConnector(BaseConnector):
             units="imperial",
             language="en",
         )
-        from openjarvis.security.file_utils import secure_write_json
+        from nivos.security.file_utils import secure_write_json
 
         secure_write_json(
             self._token_path,

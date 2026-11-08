@@ -1,4 +1,4 @@
-"""``jarvis scan`` — audit your environment for privacy and security risks."""
+"""``nivos scan`` — audit your environment for privacy and security risks."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from typing import Callable, List
 
 import click
 
-from openjarvis.core.paths import get_config_dir, get_config_path
-from openjarvis.security.data_boundary_audit import (
+from nivos.core.paths import get_config_dir, get_config_path
+from nivos.security.data_boundary_audit import (
     DataBoundaryReport,
     build_data_boundary_report,
 )
@@ -137,7 +137,7 @@ class PrivacyScanner:
             )
 
     def check_icloud_sync(self) -> ScanResult:
-        """Check whether ~/.openjarvis is inside iCloud Drive sync scope."""
+        """Check whether ~/.nivos is inside iCloud Drive sync scope."""
         try:
             config_path = get_config_dir().resolve()
             icloud_path = Path("~/Library/Mobile Documents/").expanduser().resolve()
@@ -145,7 +145,7 @@ class PrivacyScanner:
                 return ScanResult(
                     name="iCloud Sync",
                     status="warn",
-                    message="~/.openjarvis may be synced to iCloud.",
+                    message="~/.nivos may be synced to iCloud.",
                     platform="darwin",
                 )
             # Also probe defaults for com.apple.bird (iCloud daemon)
@@ -166,7 +166,7 @@ class PrivacyScanner:
             return ScanResult(
                 name="iCloud Sync",
                 status="ok",
-                message="~/.openjarvis is not inside iCloud Drive.",
+                message="~/.nivos is not inside iCloud Drive.",
                 platform="darwin",
             )
         except Exception:
@@ -452,7 +452,7 @@ _RICH_ICONS = {
 
 
 def _resolve_data_boundary_config_path() -> Path:
-    env_config = os.environ.get("OPENJARVIS_CONFIG")
+    env_config = os.environ.get("NIVOS_CONFIG")
     if env_config:
         return Path(env_config).expanduser().resolve()
     return get_config_path()
@@ -473,16 +473,16 @@ def _load_data_boundary_config():
         return None, root, False, "", root_error
 
     try:
-        from openjarvis.core.config import JarvisConfig, load_config
+        from nivos.core.config import NivosConfig, load_config
     except Exception as exc:
         return None, root, False, f"{type(exc).__name__}: {exc}", ""
 
     if config_path is None or not config_path.exists():
-        return JarvisConfig(), root, False, "", root_error
+        return NivosConfig(), root, False, "", root_error
     try:
         return load_config(config_path), root, True, "", root_error
     except Exception as exc:
-        return JarvisConfig(), root, False, f"{type(exc).__name__}: {exc}", root_error
+        return NivosConfig(), root, False, f"{type(exc).__name__}: {exc}", root_error
 
 
 def _render_results(results: List[ScanResult]) -> None:

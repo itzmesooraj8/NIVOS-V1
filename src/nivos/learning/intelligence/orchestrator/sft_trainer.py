@@ -25,8 +25,8 @@ except ImportError:
     torch = None  # type: ignore[assignment]
     DataLoader = None  # type: ignore[assignment,misc]
 
-from openjarvis.core.registry import LearningRegistry
-from openjarvis.learning._stubs import IntelligenceLearningPolicy
+from nivos.core.registry import LearningRegistry
+from nivos.learning._stubs import IntelligenceLearningPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +237,7 @@ class OrchestratorSFTTrainer:
         self._init_optimizer()
 
     def _init_model(self) -> None:
-        from openjarvis.learning.intelligence.orchestrator.policy_model import (
+        from nivos.learning.intelligence.orchestrator.policy_model import (
             OrchestratorPolicyModel,
         )
 

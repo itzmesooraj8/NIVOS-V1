@@ -6,8 +6,8 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from openjarvis.operators.loader import load_operator
-from openjarvis.operators.types import OperatorManifest
+from nivos.operators.loader import load_operator
+from nivos.operators.types import OperatorManifest
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class OperatorManager:
     Parameters
     ----------
     system:
-        A ``JarvisSystem`` instance (used to access scheduler, session_store,
+        A ``NivosSystem`` instance (used to access scheduler, session_store,
         memory_backend, and to run operators via ``system.ask()``).
     """
 

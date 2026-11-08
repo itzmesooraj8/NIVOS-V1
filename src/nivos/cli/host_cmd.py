@@ -1,4 +1,4 @@
-"""``jarvis host`` — download and serve a model locally with auto backend setup."""
+"""``nivos host`` — download and serve a model locally with auto backend setup."""
 
 from __future__ import annotations
 
@@ -298,7 +298,7 @@ def _build_serve_command(backend: str, model: str, port: int) -> list[str]:
             sys.executable,
             "-m",
             "uvicorn",
-            "openjarvis.engine.apple_fm_shim:app",
+            "nivos.engine.apple_fm_shim:app",
             "--host",
             "127.0.0.1",
             "--port",
@@ -341,10 +341,10 @@ def host(
     Examples:
 
     \b
-      jarvis host mlx-community/Qwen2.5-7B-4bit --backend mlx
-      jarvis host Qwen/Qwen3-8B --backend vllm
-      jarvis host qwen3:8b --backend ollama
-      jarvis host meta-llama/Llama-3-8B -b sglang
+      nivos host mlx-community/Qwen2.5-7B-4bit --backend mlx
+      nivos host Qwen/Qwen3-8B --backend vllm
+      nivos host qwen3:8b --backend ollama
+      nivos host meta-llama/Llama-3-8B -b sglang
     """
     console = Console()
 
@@ -397,7 +397,7 @@ def host(
     if backend != "ollama":
         console.print(f"[dim]The model server will be available at {host_url}[/dim]")
         console.print(
-            "[dim]OpenJarvis will auto-discover it. Press Ctrl+C to stop.[/dim]\n"
+            "[dim]Nivos will auto-discover it. Press Ctrl+C to stop.[/dim]\n"
         )
 
     try:

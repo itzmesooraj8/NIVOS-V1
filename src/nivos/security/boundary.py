@@ -11,11 +11,11 @@ import logging
 from dataclasses import replace
 from typing import TYPE_CHECKING, List, Optional
 
-from openjarvis.core.types import ToolCall
+from nivos.core.types import ToolCall
 
 if TYPE_CHECKING:
-    from openjarvis.core.events import EventBus
-    from openjarvis.security._stubs import BaseScanner
+    from nivos.core.events import EventBus
+    from nivos.security._stubs import BaseScanner
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class BoundaryGuard:
     @staticmethod
     def _default_scanners() -> List["BaseScanner"]:
         try:
-            from openjarvis.security.scanner import PIIScanner, SecretScanner
+            from nivos.security.scanner import PIIScanner, SecretScanner
 
             return [SecretScanner(), PIIScanner()]
         except (ImportError, Exception) as exc:
@@ -124,7 +124,7 @@ class BoundaryGuard:
         if self._bus is None:
             return
         try:
-            from openjarvis.core.events import EventType
+            from nivos.core.events import EventType
 
             self._bus.publish(
                 EventType.SECURITY_ALERT,

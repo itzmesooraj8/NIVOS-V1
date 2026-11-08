@@ -1,17 +1,17 @@
 #!/usr/bin/env bats
 
 # Requires Python with tomlkit, as does the installed application. Set
-# OPENJARVIS_TEST_PYTHON to an existing project venv when running locally.
+# NIVOS_TEST_PYTHON to an existing project venv when running locally.
 
 setup() {
-    export OPENJARVIS_TEST_PYTHON="${OPENJARVIS_TEST_PYTHON:-$(command -v python3)}"
+    export NIVOS_TEST_PYTHON="${NIVOS_TEST_PYTHON:-$(command -v python3)}"
     export PYTHONPATH="$BATS_TEST_DIRNAME/../../../src"
-    unset OPENJARVIS_CONFIG XDG_DATA_HOME
+    unset NIVOS_CONFIG XDG_DATA_HOME
     TEST_TMPDIR=$(mktemp -d)
     export FAKE_HOME="$TEST_TMPDIR/home"
     mkdir -p "$FAKE_HOME"
     export HOME="$FAKE_HOME"
-    export OPENJARVIS_HOME="$FAKE_HOME/.openjarvis"
+    export NIVOS_HOME="$FAKE_HOME/.nivos"
 
     export STUBS_DIR="$BATS_TEST_DIRNAME/stubs"
     # Use a copy of stubs without uv-style real binaries that might be on the host.
@@ -22,13 +22,13 @@ setup() {
     export OLLAMA_STUB_LOG="$TEST_TMPDIR/ollama.log"
     export UV_STUB_LOG="$TEST_TMPDIR/uv.log"
     export CURL_STUB_LOG="$TEST_TMPDIR/curl.log"
-    export JARVIS_STUB_LOG="$TEST_TMPDIR/jarvis.log"
+    export NIVOS_STUB_LOG="$TEST_TMPDIR/nivos.log"
     : > "$GIT_STUB_LOG"
     : > "$OLLAMA_STUB_LOG"
     : > "$UV_STUB_LOG"
     : > "$CURL_STUB_LOG"
 
-    # uv stub needs to fake creating a venv with a jarvis binary.
+    # uv stub needs to fake creating a venv with a nivos binary.
     # Replace the stubs/uv with one that creates the venv tree on `venv` command.
     # Since we don't want to mutate the real stub, override via a per-test stub dir.
     export PER_TEST_STUBS="$TEST_TMPDIR/stubs"
@@ -50,23 +50,23 @@ case "\$1" in
         done
         if [[ -n "\$venv_path" ]]; then
             mkdir -p "\$venv_path/bin"
-            cat > "\$venv_path/bin/jarvis" <<'EOJ'
+            cat > "\$venv_path/bin/nivos" <<'EOJ'
 #!/usr/bin/env bash
-# fake jarvis for tests
-echo "\$@" >> "\$JARVIS_STUB_LOG"
+# fake nivos for tests
+echo "\$@" >> "\$NIVOS_STUB_LOG"
 # Model the pre-consent CLI, which cannot validate the new schema key.
 if [[ "\$*" == 'config set analytics.choice_recorded true' ]]; then
     echo "Error: Unknown config key: 'analytics.choice_recorded'" >&2
     exit 1
 fi
-echo "fake jarvis: \$@"
+echo "fake nivos: \$@"
 exit 0
 EOJ
-            chmod +x "\$venv_path/bin/jarvis"
+            chmod +x "\$venv_path/bin/nivos"
             cat > "\$venv_path/bin/python" <<'EOJ'
 #!/usr/bin/env bash
 # Run the real persistence code using an interpreter with app dependencies.
-exec "\$OPENJARVIS_TEST_PYTHON" "\$@"
+exec "\$NIVOS_TEST_PYTHON" "\$@"
 EOJ
             chmod +x "\$venv_path/bin/python"
         fi
@@ -90,7 +90,7 @@ teardown() {
 }
 
 assert_analytics_preference() {
-    "$OPENJARVIS_TEST_PYTHON" - "$1" "$2" "$3" <<'PY'
+    "$NIVOS_TEST_PYTHON" - "$1" "$2" "$3" <<'PY'
 import sys
 from pathlib import Path
 
@@ -106,16 +106,16 @@ PY
     run bash "$SCRIPT" --no-bg-orchestrator --minimal
     [ "$status" -eq 0 ]
     ! grep -q '/i/v0/e/' "$CURL_STUB_LOG"
-    [ ! -f "$OPENJARVIS_HOME/anon_id" ]
-    assert_analytics_preference "$OPENJARVIS_HOME/config.toml" false false
+    [ ! -f "$NIVOS_HOME/anon_id" ]
+    assert_analytics_preference "$NIVOS_HOME/config.toml" false false
 }
 
 @test "explicit analytics flag sends beacons and persists enabled" {
     run bash "$SCRIPT" --no-bg-orchestrator --minimal --analytics
     [ "$status" -eq 0 ]
     grep -q '/i/v0/e/' "$CURL_STUB_LOG"
-    [ -s "$OPENJARVIS_HOME/anon_id" ]
-    assert_analytics_preference "$OPENJARVIS_HOME/config.toml" true true
+    [ -s "$NIVOS_HOME/anon_id" ]
+    assert_analytics_preference "$NIVOS_HOME/config.toml" true true
 }
 
 @test "Enter at dedicated terminal prompt consents before the first beacon" {
@@ -123,15 +123,15 @@ PY
     [ "$status" -eq 0 ]
     [[ "$output" == *"Press Enter or Y to consent, or N to decline"* ]]
     grep -q '"event":"install_started"' "$CURL_STUB_LOG"
-    assert_analytics_preference "$OPENJARVIS_HOME/config.toml" true true
+    assert_analytics_preference "$NIVOS_HOME/config.toml" true true
 }
 
 @test "N at terminal prompt declines every installer beacon" {
     run python3 "$BATS_TEST_DIRNAME/run_installer_pty.py" "$SCRIPT" '["N\n"]'
     [ "$status" -eq 0 ]
     ! grep -q '/i/v0/e/' "$CURL_STUB_LOG"
-    [ ! -f "$OPENJARVIS_HOME/anon_id" ]
-    assert_analytics_preference "$OPENJARVIS_HOME/config.toml" false true
+    [ ! -f "$NIVOS_HOME/anon_id" ]
+    assert_analytics_preference "$NIVOS_HOME/config.toml" false true
 }
 
 @test "invalid answer retries without silently consenting" {
@@ -145,26 +145,26 @@ PY
     run python3 "$BATS_TEST_DIRNAME/run_installer_pty.py" "$SCRIPT" '["\u0004"]'
     [ "$status" -eq 0 ]
     ! grep -q '/i/v0/e/' "$CURL_STUB_LOG"
-    [ ! -f "$OPENJARVIS_HOME/anon_id" ]
-    assert_analytics_preference "$OPENJARVIS_HOME/config.toml" false false
+    [ ! -f "$NIVOS_HOME/anon_id" ]
+    assert_analytics_preference "$NIVOS_HOME/config.toml" false false
 }
 
 @test "declining on a rerun persists despite skipped config creation" {
     run bash "$SCRIPT" --no-bg-orchestrator --minimal --analytics
     [ "$status" -eq 0 ]
-    : > "$JARVIS_STUB_LOG"
+    : > "$NIVOS_STUB_LOG"
     : > "$CURL_STUB_LOG"
     run bash "$SCRIPT" --no-bg-orchestrator --minimal --no-analytics
     [ "$status" -eq 0 ]
     ! grep -q '/i/v0/e/' "$CURL_STUB_LOG"
-    ! grep -q '_bootstrap' "$JARVIS_STUB_LOG"
-    assert_analytics_preference "$OPENJARVIS_HOME/config.toml" false true
+    ! grep -q '_bootstrap' "$NIVOS_STUB_LOG"
+    assert_analytics_preference "$NIVOS_HOME/config.toml" false true
 }
 
 @test "rerun saves consent with an older CLI and preserves existing TOML" {
     run bash "$SCRIPT" --no-bg-orchestrator --minimal
     [ "$status" -eq 0 ]
-    cat > "$OPENJARVIS_HOME/config.toml" <<'TOML'
+    cat > "$NIVOS_HOME/config.toml" <<'TOML'
 # Preserve user settings and comments.
 [engine]
 default = "ollama"
@@ -172,40 +172,40 @@ default = "ollama"
 enabled = false # Previous choice.
 flush_at_size = 7
 TOML
-    run "$OPENJARVIS_HOME/.venv/bin/jarvis" config set analytics.choice_recorded true
+    run "$NIVOS_HOME/.venv/bin/nivos" config set analytics.choice_recorded true
     [ "$status" -eq 1 ]
-    : > "$JARVIS_STUB_LOG"
+    : > "$NIVOS_STUB_LOG"
     : > "$UV_STUB_LOG"
     run bash "$SCRIPT" --no-bg-orchestrator --minimal --analytics
     [ "$status" -eq 0 ]
     [ ! -s "$UV_STUB_LOG" ]
-    [ ! -s "$JARVIS_STUB_LOG" ]
-    assert_analytics_preference "$OPENJARVIS_HOME/config.toml" true true
-    grep -q '# Preserve user settings and comments.' "$OPENJARVIS_HOME/config.toml"
-    grep -q '# Previous choice.' "$OPENJARVIS_HOME/config.toml"
-    grep -q 'default = "ollama"' "$OPENJARVIS_HOME/config.toml"
-    grep -q 'flush_at_size = 7' "$OPENJARVIS_HOME/config.toml"
+    [ ! -s "$NIVOS_STUB_LOG" ]
+    assert_analytics_preference "$NIVOS_HOME/config.toml" true true
+    grep -q '# Preserve user settings and comments.' "$NIVOS_HOME/config.toml"
+    grep -q '# Previous choice.' "$NIVOS_HOME/config.toml"
+    grep -q 'default = "ollama"' "$NIVOS_HOME/config.toml"
+    grep -q 'flush_at_size = 7' "$NIVOS_HOME/config.toml"
 }
 
-@test "consent respects OPENJARVIS_CONFIG instead of changing the default config" {
+@test "consent respects NIVOS_CONFIG instead of changing the default config" {
     run bash "$SCRIPT" --no-bg-orchestrator --minimal --no-analytics
     [ "$status" -eq 0 ]
-    export OPENJARVIS_CONFIG="$TEST_TMPDIR/custom config.toml"
-    printf '# Custom config\n[engine]\ndefault = "ollama"\n' > "$OPENJARVIS_CONFIG"
+    export NIVOS_CONFIG="$TEST_TMPDIR/custom config.toml"
+    printf '# Custom config\n[engine]\ndefault = "ollama"\n' > "$NIVOS_CONFIG"
     run bash "$SCRIPT" --no-bg-orchestrator --minimal --analytics
     [ "$status" -eq 0 ]
-    assert_analytics_preference "$OPENJARVIS_CONFIG" true true
-    assert_analytics_preference "$OPENJARVIS_HOME/config.toml" false true
-    grep -q '# Custom config' "$OPENJARVIS_CONFIG"
+    assert_analytics_preference "$NIVOS_CONFIG" true true
+    assert_analytics_preference "$NIVOS_HOME/config.toml" false true
+    grep -q '# Custom config' "$NIVOS_CONFIG"
 }
 
-@test "consent follows the runtime XDG path when OPENJARVIS_HOME is unset" {
-    unset OPENJARVIS_HOME
+@test "consent follows the runtime XDG path when NIVOS_HOME is unset" {
+    unset NIVOS_HOME
     export XDG_DATA_HOME="$TEST_TMPDIR/xdg data"
     run bash "$SCRIPT" --no-bg-orchestrator --minimal --analytics
     [ "$status" -eq 0 ]
-    assert_analytics_preference "$XDG_DATA_HOME/openjarvis/config.toml" true true
-    [ ! -f "$HOME/.openjarvis/config.toml" ]
+    assert_analytics_preference "$XDG_DATA_HOME/nivos/config.toml" true true
+    [ ! -f "$HOME/.nivos/config.toml" ]
 }
 
 @test "contradictory analytics flags are rejected" {
@@ -229,29 +229,29 @@ IDEOF
     echo "$output" | grep -qi "root"
 }
 
-@test "creates ~/.openjarvis directory tree" {
+@test "creates ~/.nivos directory tree" {
     run bash "$SCRIPT" --no-bg-orchestrator
     [ "$status" -eq 0 ]
-    [ -d "$OPENJARVIS_HOME/src" ]
-    [ -d "$OPENJARVIS_HOME/.state" ]
-    [ -d "$OPENJARVIS_HOME/.scripts" ]
+    [ -d "$NIVOS_HOME/src" ]
+    [ -d "$NIVOS_HOME/.state" ]
+    [ -d "$NIVOS_HOME/.scripts" ]
 }
 
 @test "writes install-state.json on success" {
     run bash "$SCRIPT" --no-bg-orchestrator
     [ "$status" -eq 0 ]
-    [ -f "$OPENJARVIS_HOME/.state/install-state.json" ]
+    [ -f "$NIVOS_HOME/.state/install-state.json" ]
 }
 
-@test "calls git clone for the OpenJarvis repo" {
+@test "calls git clone for the Nivos repo" {
     run bash "$SCRIPT" --no-bg-orchestrator
     grep -q "clone" "$GIT_STUB_LOG"
 }
 
-@test "creates jarvis symlink in ~/.local/bin" {
+@test "creates nivos symlink in ~/.local/bin" {
     run bash "$SCRIPT" --no-bg-orchestrator
     [ "$status" -eq 0 ]
-    [ -L "$FAKE_HOME/.local/bin/jarvis" ] || [ -f "$FAKE_HOME/.local/bin/jarvis" ]
+    [ -L "$FAKE_HOME/.local/bin/nivos" ] || [ -f "$FAKE_HOME/.local/bin/nivos" ]
 }
 
 @test "is idempotent — second run skips completed steps" {
@@ -264,9 +264,9 @@ IDEOF
 }
 
 @test "detects WSL2 and writes platform note to install-state" {
-    OPENJARVIS_FORCE_WSL=1 run bash "$SCRIPT" --no-bg-orchestrator
+    NIVOS_FORCE_WSL=1 run bash "$SCRIPT" --no-bg-orchestrator
     [ "$status" -eq 0 ]
-    grep -q "wsl" "$OPENJARVIS_HOME/.state/install-state.json"
+    grep -q "wsl" "$NIVOS_HOME/.state/install-state.json"
 }
 
 @test "fails loudly when git is missing" {
@@ -339,9 +339,9 @@ IDEOF
     PATH="$no_py_stubs" run bash "$SCRIPT" --no-bg-orchestrator --minimal
     [ "$status" -eq 0 ]
     # State file was still written (mark_done is Python-free).
-    [ -f "$OPENJARVIS_HOME/.state/install-state.json" ]
+    [ -f "$NIVOS_HOME/.state/install-state.json" ]
     # And it still has valid-looking JSON for state_done's grep.
-    grep -q '"install_uv":' "$OPENJARVIS_HOME/.state/install-state.json"
+    grep -q '"install_uv":' "$NIVOS_HOME/.state/install-state.json"
 }
 
 @test "mark_done is idempotent — second mark of same key doesn't duplicate" {
@@ -349,13 +349,13 @@ IDEOF
     [ "$status" -eq 0 ]
     # Capture first state file
     local first_count
-    first_count="$(grep -c '"install_uv":' "$OPENJARVIS_HOME/.state/install-state.json")"
+    first_count="$(grep -c '"install_uv":' "$NIVOS_HOME/.state/install-state.json")"
     [ "$first_count" -eq 1 ]
     # Second run reuses state — keys should not duplicate even if some path re-marks.
     run bash "$SCRIPT" --no-bg-orchestrator
     [ "$status" -eq 0 ]
     local second_count
-    second_count="$(grep -c '"install_uv":' "$OPENJARVIS_HOME/.state/install-state.json")"
+    second_count="$(grep -c '"install_uv":' "$NIVOS_HOME/.state/install-state.json")"
     [ "$second_count" -eq 1 ]
 }
 

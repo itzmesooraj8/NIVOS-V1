@@ -11,8 +11,8 @@ from typing import Any, Dict, Iterator, List, Optional
 
 import httpx
 
-from openjarvis.connectors._stubs import BaseConnector, Document, SyncStatus
-from openjarvis.core.registry import ConnectorRegistry
+from nivos.connectors._stubs import BaseConnector, Document, SyncStatus
+from nivos.core.registry import ConnectorRegistry
 
 _HN_API_BASE = "https://hacker-news.firebaseio.com/v0"
 

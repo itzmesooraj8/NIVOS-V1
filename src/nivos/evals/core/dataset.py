@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
 from typing import Iterable, List, Optional
 
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.types import EvalRecord
 
 
 class DatasetProvider(ABC):

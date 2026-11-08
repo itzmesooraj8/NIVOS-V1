@@ -7,13 +7,13 @@ from __future__ import annotations
 
 import re
 
-from openjarvis.learning.spec_search.execute.base import (
+from nivos.learning.spec_search.execute.base import (
     ApplyContext,
     ApplyResult,
     EditApplier,
     ValidationResult,
 )
-from openjarvis.learning.spec_search.models import Edit, EditOp
+from nivos.learning.spec_search.models import Edit, EditOp
 
 
 class AddToolToAgentApplier(EditApplier):

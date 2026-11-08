@@ -7,7 +7,7 @@ from collections import deque
 from dataclasses import dataclass
 from typing import Optional
 
-from openjarvis.core.events import EventBus, EventType
+from nivos.core.events import EventBus, EventType
 
 
 @dataclass(slots=True)
@@ -55,7 +55,7 @@ class LoopGuard:
         self._warned_cycles: set[str] = set()
 
         try:
-            from openjarvis._rust_bridge import get_rust_module
+            from nivos._rust_bridge import get_rust_module
 
             _rust = get_rust_module()
             self._rust_impl = _rust.LoopGuard(
@@ -162,7 +162,7 @@ class LoopGuard:
         compressed = []
         for i, msg in enumerate(messages):
             if i < threshold and self._is_tool(msg):
-                from openjarvis.core.types import Message, Role
+                from nivos.core.types import Message, Role
 
                 compressed.append(
                     Message(

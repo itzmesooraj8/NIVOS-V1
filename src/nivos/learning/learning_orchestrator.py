@@ -54,8 +54,8 @@ class LearningOrchestrator:
         lora_config: Optional[Any] = None,
         model_name: Optional[str] = None,
     ) -> None:
-        from openjarvis.learning.agents.agent_evolver import AgentConfigEvolver
-        from openjarvis.learning.training.data import TrainingDataMiner
+        from nivos.learning.agents.agent_evolver import AgentConfigEvolver
+        from nivos.learning.training.data import TrainingDataMiner
 
         self._trace_store = trace_store
         self._config_dir = Path(config_dir)
@@ -103,7 +103,7 @@ class LearningOrchestrator:
         # rather than mined as SFT pairs, so they can be optimized even when
         # there's no other training data available.
         try:
-            from openjarvis.core.config import load_config
+            from nivos.core.config import load_config
 
             cfg = load_config()
             skills_cfg = getattr(cfg.learning, "skills", None)
@@ -200,7 +200,7 @@ class LearningOrchestrator:
     ) -> Optional[Dict[str, Any]]:
         """Attempt LoRA training, returning result or None on failure."""
         try:
-            from openjarvis.learning.training.lora import (
+            from nivos.learning.training.lora import (
                 HAS_TORCH,
                 LoRATrainer,
             )
@@ -235,9 +235,9 @@ class LearningOrchestrator:
         if not auto_optimize:
             return None
         try:
-            from openjarvis.core.events import EventBus
-            from openjarvis.learning.agents.skill_optimizer import SkillOptimizer
-            from openjarvis.skills.manager import SkillManager
+            from nivos.core.events import EventBus
+            from nivos.learning.agents.skill_optimizer import SkillOptimizer
+            from nivos.skills.manager import SkillManager
 
             mgr = SkillManager(bus=EventBus())
             mgr.discover()

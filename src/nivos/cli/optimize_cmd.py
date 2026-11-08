@@ -1,4 +1,4 @@
-"""``jarvis optimize`` — LLM-driven configuration optimization CLI."""
+"""``nivos optimize`` — LLM-driven configuration optimization CLI."""
 
 from __future__ import annotations
 
@@ -14,8 +14,8 @@ from rich.table import Table
 def _get_trace_store():
     """Return a TraceStore from user config, or None on failure."""
     try:
-        from openjarvis.core.config import load_config
-        from openjarvis.traces.store import TraceStore
+        from nivos.core.config import load_config
+        from nivos.traces.store import TraceStore
 
         cfg = load_config()
         return TraceStore(cfg.traces.db_path)
@@ -77,14 +77,14 @@ def optimize_run(
     max_samples: int,
     output_dir: str,
 ) -> None:
-    """Run an optimization loop over OpenJarvis configuration."""
+    """Run an optimization loop over Nivos configuration."""
     console = Console(stderr=True)
 
     # Load config data if provided
     data = None
     if config_path is not None:
         try:
-            from openjarvis.learning.optimize.config import load_optimize_config
+            from nivos.learning.optimize.config import load_optimize_config
         except ImportError:
             console.print("[red]Optimization framework not available.[/red]")
             sys.exit(1)
@@ -106,7 +106,7 @@ def optimize_run(
     benchmark_specs = None
     if data is not None:
         try:
-            from openjarvis.learning.optimize.config import load_benchmark_specs
+            from nivos.learning.optimize.config import load_benchmark_specs
 
             specs = load_benchmark_specs(data)
             if len(specs) > 1:
@@ -135,16 +135,16 @@ def optimize_run(
     console.print(f"[cyan]Max samples/trial:[/cyan] {max_samples}")
 
     try:
-        from openjarvis.core.config import DEFAULT_CONFIG_DIR
-        from openjarvis.learning.optimize.config import load_objectives
-        from openjarvis.learning.optimize.llm_optimizer import LLMOptimizer
-        from openjarvis.learning.optimize.optimizer import OptimizationEngine
-        from openjarvis.learning.optimize.search_space import (
+        from nivos.core.config import DEFAULT_CONFIG_DIR
+        from nivos.learning.optimize.config import load_objectives
+        from nivos.learning.optimize.llm_optimizer import LLMOptimizer
+        from nivos.learning.optimize.optimizer import OptimizationEngine
+        from nivos.learning.optimize.search_space import (
             DEFAULT_SEARCH_SPACE,
             build_search_space,
         )
-        from openjarvis.learning.optimize.store import OptimizationStore
-        from openjarvis.learning.optimize.trial_runner import (
+        from nivos.learning.optimize.store import OptimizationStore
+        from nivos.learning.optimize.trial_runner import (
             MultiBenchTrialRunner,
             TrialRunner,
         )
@@ -164,7 +164,7 @@ def optimize_run(
         # Build optimizer backend for cloud LLM
         optimizer_backend = None
         try:
-            from openjarvis.evals.cli import _build_judge_backend
+            from nivos.evals.cli import _build_judge_backend
 
             optimizer_backend = _build_judge_backend(optimizer_model)
         except Exception:
@@ -240,8 +240,8 @@ def optimize_status() -> None:
     console = Console()
 
     try:
-        from openjarvis.core.config import DEFAULT_CONFIG_DIR
-        from openjarvis.learning.optimize.store import OptimizationStore
+        from nivos.core.config import DEFAULT_CONFIG_DIR
+        from nivos.learning.optimize.store import OptimizationStore
 
         db_path = DEFAULT_CONFIG_DIR / "optimize.db"
         if not db_path.exists():
@@ -288,8 +288,8 @@ def optimize_results(run_id: str) -> None:
     console = Console()
 
     try:
-        from openjarvis.core.config import DEFAULT_CONFIG_DIR
-        from openjarvis.learning.optimize.store import OptimizationStore
+        from nivos.core.config import DEFAULT_CONFIG_DIR
+        from nivos.learning.optimize.store import OptimizationStore
 
         db_path = DEFAULT_CONFIG_DIR / "optimize.db"
         if not db_path.exists():
@@ -357,9 +357,9 @@ def optimize_best(run_id: str, output: Optional[str]) -> None:
     console = Console()
 
     try:
-        from openjarvis.core.config import DEFAULT_CONFIG_DIR
-        from openjarvis.learning.optimize.optimizer import OptimizationEngine
-        from openjarvis.learning.optimize.store import OptimizationStore
+        from nivos.core.config import DEFAULT_CONFIG_DIR
+        from nivos.learning.optimize.optimizer import OptimizationEngine
+        from nivos.learning.optimize.store import OptimizationStore
 
         db_path = DEFAULT_CONFIG_DIR / "optimize.db"
         if not db_path.exists():
@@ -457,9 +457,9 @@ def skills(policy: str, min_traces: int, dry_run: bool) -> None:
     from rich.console import Console
     from rich.table import Table
 
-    from openjarvis.core.events import EventBus
-    from openjarvis.learning.agents.skill_optimizer import SkillOptimizer
-    from openjarvis.skills.manager import SkillManager
+    from nivos.core.events import EventBus
+    from nivos.learning.agents.skill_optimizer import SkillOptimizer
+    from nivos.skills.manager import SkillManager
 
     console = Console()
     store = _get_trace_store()

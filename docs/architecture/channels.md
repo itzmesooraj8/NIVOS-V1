@@ -158,15 +158,15 @@ Channel implementations use Python's `threading` module rather than asyncio. Thi
 
 To add a new channel backend:
 
-1. Create a new file in `src/openjarvis/channels/`.
+1. Create a new file in `src/nivos/channels/`.
 2. Subclass `BaseChannel` and implement all six abstract methods.
 3. Set `channel_id` as a class attribute.
 4. Decorate with `@ChannelRegistry.register("name")`.
 5. Add the module name to `_CHANNEL_MODULES` in `channels/__init__.py`.
 
 ```python
-from openjarvis.channels._stubs import BaseChannel, ChannelMessage, ChannelStatus
-from openjarvis.core.registry import ChannelRegistry
+from nivos.channels._stubs import BaseChannel, ChannelMessage, ChannelStatus
+from nivos.core.registry import ChannelRegistry
 
 @ChannelRegistry.register("my_platform")
 class MyPlatformChannel(BaseChannel):
@@ -187,6 +187,6 @@ After registration, the backend is discoverable via `ChannelRegistry.get("my_pla
 ## See Also
 
 - [User Guide: Channels](../user-guide/channels.md) -- how to use channels in practice
-- [API Reference: Channels](../api-reference/openjarvis/channels/index.md) -- complete class and type signatures
+- [API Reference: Channels](../api-reference/nivos/channels/index.md) -- complete class and type signatures
 - [Architecture: Overview](overview.md) -- where channels fit in the overall system
 - [Architecture: Design Principles](design-principles.md) -- registry pattern and ABC conventions

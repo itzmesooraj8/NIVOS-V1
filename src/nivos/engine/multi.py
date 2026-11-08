@@ -6,9 +6,9 @@ import logging
 from collections.abc import AsyncIterator, Sequence
 from typing import Any, Dict, List
 
-from openjarvis.core.types import Message
-from openjarvis.engine._base import InferenceEngine
-from openjarvis.engine._stubs import StreamChunk
+from nivos.core.types import Message
+from nivos.engine._base import InferenceEngine
+from nivos.engine._stubs import StreamChunk
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,7 @@ class MultiEngine(InferenceEngine):
 
         # 5. Cloud models:
         try:
-            from openjarvis.server.cloud_router import is_cloud_model
+            from nivos.server.cloud_router import is_cloud_model
             is_cloud = is_cloud_model(model)
         except Exception:
             is_cloud = False

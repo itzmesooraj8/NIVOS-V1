@@ -7,7 +7,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
-from openjarvis.traces.store import TraceStore
+from nivos.traces.store import TraceStore
 
 
 @dataclass(slots=True)

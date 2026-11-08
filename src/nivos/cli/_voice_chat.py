@@ -9,8 +9,8 @@ from rich.markup import escape
 VOICE_EXIT = object()
 
 # Backend selection is shared with the API server and lives in
-# openjarvis.speech._tts_discovery. Importing that at module level would pull
-# the whole speech stack -- numpy included -- into every `jarvis` invocation,
+# nivos.speech._tts_discovery. Importing that at module level would pull
+# the whole speech stack -- numpy included -- into every `nivos` invocation,
 # which tests/cli/test_cli.py guards against, so these aliases resolve lazily.
 _LAZY_TTS_NAMES = {
     "_TTS_BACKEND_ORDER": "TTS_BACKEND_ORDER",
@@ -22,7 +22,7 @@ def __getattr__(name: str) -> Any:
     target = _LAZY_TTS_NAMES.get(name)
     if target is None:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    from openjarvis.speech import _tts_discovery
+    from nivos.speech import _tts_discovery
 
     return getattr(_tts_discovery, target)
 
@@ -50,8 +50,8 @@ class VoiceSession:
     def get_stt_backend(self) -> Any:
         """Resolve and health-check STT once, then reuse the loaded backend."""
         if not self._stt_resolved:
-            from openjarvis.core.config import load_config
-            from openjarvis.speech._discovery import get_speech_backend
+            from nivos.core.config import load_config
+            from nivos.speech._discovery import get_speech_backend
 
             config = self._config if self._config is not None else load_config()
             self._stt_backend = get_speech_backend(config)
@@ -60,7 +60,7 @@ class VoiceSession:
 
     def get_stt_language(self) -> Optional[str]:
         """Return the configured ``speech.language``, or None to auto-detect."""
-        from openjarvis.core.config import load_config
+        from nivos.core.config import load_config
 
         config = self._config if self._config is not None else load_config()
         return (getattr(config.speech, "language", "") or "").strip() or None
@@ -70,7 +70,7 @@ class VoiceSession:
         if self._tts_backend is not None:
             return self._tts_backend
 
-        from openjarvis.speech._tts_discovery import get_tts_backend
+        from nivos.speech._tts_discovery import get_tts_backend
 
         preferred, _, _ = self.get_voice_preferences()
         self._tts_backend = get_tts_backend(preferred, attempted=self._tts_attempted)
@@ -79,8 +79,8 @@ class VoiceSession:
     def get_voice_preferences(self) -> tuple[str, str, float]:
         """Resolve configured (tts_backend, voice_id, speed), cached per session."""
         if self._voice_prefs is None:
-            from openjarvis.core.config import load_config
-            from openjarvis.speech._tts_discovery import voice_preferences
+            from nivos.core.config import load_config
+            from nivos.speech._tts_discovery import voice_preferences
 
             config = self._config if self._config is not None else load_config()
             self._voice_prefs = voice_preferences(config)
@@ -99,7 +99,7 @@ class VoiceSession:
         if active == want_backend:
             return voice_id, speed
 
-        from openjarvis.speech._tts_discovery import default_voice_for
+        from nivos.speech._tts_discovery import default_voice_for
 
         substitute = default_voice_for(active)
         if console is not None and active not in self._voice_warned:
@@ -131,7 +131,7 @@ def record_voice(
     session: VoiceSession | None = None,
 ) -> Optional[str] | object:
     """Record from mic, transcribe, and return text or a loop sentinel."""
-    from openjarvis.speech.voice_io import record_until_silence
+    from nivos.speech.voice_io import record_until_silence
 
     active_session = session or VoiceSession()
     backend = active_session.get_stt_backend()
@@ -139,7 +139,7 @@ def record_voice(
         console.print(
             "[red]No speech-to-text backend available. "
             "Install the voice dependencies with: "
-            "pip install 'OpenJarvis[speech]', or configure a healthy "
+            "pip install 'Nivos[speech]', or configure a healthy "
             "OpenAI/Deepgram backend.[/red]"
         )
         return VOICE_EXIT
@@ -175,7 +175,7 @@ def record_voice(
 
 def speak(text: str, console: Any, session: VoiceSession | None = None) -> None:
     """Synthesize and play text, reusing a healthy backend for the session."""
-    from openjarvis.speech.voice_io import play_wav
+    from nivos.speech.voice_io import play_wav
 
     active_session = session or VoiceSession()
 

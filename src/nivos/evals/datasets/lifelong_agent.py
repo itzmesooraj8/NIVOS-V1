@@ -37,8 +37,8 @@ import logging
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Optional
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
 
 logger = logging.getLogger(__name__)
 
@@ -265,7 +265,7 @@ class LifelongAgentDataset(DatasetProvider):
         This is called by EvalRunner when episode_mode=True and enables
         the faithful multi-turn interaction protocol matching the original.
         """
-        from openjarvis.evals.environments.lifelong_agent_env import (
+        from nivos.evals.environments.lifelong_agent_env import (
             create_task_environment,
         )
 

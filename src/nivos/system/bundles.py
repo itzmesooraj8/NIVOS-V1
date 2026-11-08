@@ -1,4 +1,4 @@
-"""Bundle dataclasses that group cohesive subsystems of JarvisSystem."""
+"""Bundle dataclasses that group cohesive subsystems of NivosSystem."""
 
 from __future__ import annotations
 
@@ -6,19 +6,19 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
-    from openjarvis.agents._stubs import BaseAgent
-    from openjarvis.agents.executor import AgentExecutor
-    from openjarvis.agents.manager import AgentManager
-    from openjarvis.agents.scheduler import AgentScheduler
-    from openjarvis.scheduler.scheduler import TaskScheduler
-    from openjarvis.scheduler.store import SchedulerStore
-    from openjarvis.security.audit import AuditLogger
-    from openjarvis.security.boundary import BoundaryGuard
-    from openjarvis.security.capabilities import CapabilityPolicy
-    from openjarvis.telemetry.gpu_monitor import GpuMonitor
-    from openjarvis.telemetry.store import TelemetryStore
-    from openjarvis.traces.collector import TraceCollector
-    from openjarvis.traces.store import TraceStore
+    from nivos.agents._stubs import BaseAgent
+    from nivos.agents.executor import AgentExecutor
+    from nivos.agents.manager import AgentManager
+    from nivos.agents.scheduler import AgentScheduler
+    from nivos.scheduler.scheduler import TaskScheduler
+    from nivos.scheduler.store import SchedulerStore
+    from nivos.security.audit import AuditLogger
+    from nivos.security.boundary import BoundaryGuard
+    from nivos.security.capabilities import CapabilityPolicy
+    from nivos.telemetry.gpu_monitor import GpuMonitor
+    from nivos.telemetry.store import TelemetryStore
+    from nivos.traces.collector import TraceCollector
+    from nivos.traces.store import TraceStore
 
 
 @dataclass

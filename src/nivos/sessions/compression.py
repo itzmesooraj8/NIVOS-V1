@@ -5,8 +5,8 @@ from abc import ABC, abstractmethod
 from dataclasses import replace
 from typing import List
 
-from openjarvis.core.registry import CompressionRegistry
-from openjarvis.core.types import Message, Role
+from nivos.core.registry import CompressionRegistry
+from nivos.core.types import Message, Role
 
 
 class BaseCompressor(ABC):

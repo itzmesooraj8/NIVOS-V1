@@ -22,8 +22,8 @@ import types
 from collections import OrderedDict
 from typing import Any, Dict, List
 
-from openjarvis.core.registry import TTSRegistry
-from openjarvis.speech.tts import TTSBackend, TTSResult
+from nivos.core.registry import TTSRegistry
+from nivos.speech.tts import TTSBackend, TTSResult
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +96,7 @@ def _import_kokoro() -> Any:
                 active = False
                 if builtins.__import__ is fallback_import:
                     builtins.__import__ = original_import
-            kokoro._openjarvis_spacy_error = str(spacy_error)
+            kokoro._nivos_spacy_error = str(spacy_error)
             logger.warning(
                 "spaCy unavailable (%s); English Kokoro voices disabled, "
                 "other languages still work",
@@ -158,11 +158,11 @@ class KokoroTTSBackend(TTSBackend):
                     "kokoro package not installed. Install with: pip install kokoro"
                 ) from exc
             if lang_code in {"a", "b"} and getattr(
-                kokoro, "_openjarvis_spacy_error", None
+                kokoro, "_nivos_spacy_error", None
             ):
                 raise RuntimeError(
                     "English Kokoro voices require a working spaCy installation: "
-                    f"{kokoro._openjarvis_spacy_error}"
+                    f"{kokoro._nivos_spacy_error}"
                 )
             try:
                 # KModel is language-blind and is by far the heaviest part of
@@ -295,7 +295,7 @@ class KokoroTTSBackend(TTSBackend):
 
     def available_voices(self) -> List[str]:
         # Curated subset of Kokoro v1.x voices. The full catalog is larger;
-        # the list here covers the languages OpenJarvis users most commonly
+        # the list here covers the languages Nivos users most commonly
         # ask for and avoids voice IDs that have changed across Kokoro
         # releases.
         return [

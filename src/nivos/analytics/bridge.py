@@ -1,6 +1,6 @@
 """Bridge between the internal event bus and the analytics client.
 
-The internal bus (:mod:`openjarvis.core.events`) carries dozens of
+The internal bus (:mod:`nivos.core.events`) carries dozens of
 event types — most are too granular or too internal to ship as
 analytics. The bridge:
 
@@ -23,13 +23,13 @@ import threading
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from openjarvis.analytics.aggregator import SessionAggregator
-from openjarvis.analytics.redaction import hash_id
-from openjarvis.core.events import Event, EventType
+from nivos.analytics.aggregator import SessionAggregator
+from nivos.analytics.redaction import hash_id
+from nivos.core.events import Event, EventType
 
 if TYPE_CHECKING:
-    from openjarvis.analytics.client import AnalyticsClient
-    from openjarvis.core.events import EventBus
+    from nivos.analytics.client import AnalyticsClient
+    from nivos.core.events import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +160,7 @@ class EventBridge:
             if first:
                 # tool_name property must be in the analytics allowlist;
                 # if the raw name isn't recognised, we send "custom_tool".
-                from openjarvis.analytics.events import KNOWN_TOOL_NAMES
+                from nivos.analytics.events import KNOWN_TOOL_NAMES
 
                 shipped_name = (
                     tool_name_raw

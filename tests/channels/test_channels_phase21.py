@@ -7,18 +7,18 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openjarvis.channels._stubs import ChannelStatus
-from openjarvis.channels.line_channel import LineChannel
-from openjarvis.channels.mastodon_channel import MastodonChannel
-from openjarvis.channels.messenger_channel import MessengerChannel
-from openjarvis.channels.nostr_channel import NostrChannel
-from openjarvis.channels.reddit_channel import RedditChannel
-from openjarvis.channels.rocketchat_channel import RocketChatChannel
-from openjarvis.channels.twitch_channel import TwitchChannel
-from openjarvis.channels.viber_channel import ViberChannel
-from openjarvis.channels.xmpp_channel import XMPPChannel
-from openjarvis.channels.zulip_channel import ZulipChannel
-from openjarvis.core.registry import ChannelRegistry
+from nivos.channels._stubs import ChannelStatus
+from nivos.channels.line_channel import LineChannel
+from nivos.channels.mastodon_channel import MastodonChannel
+from nivos.channels.messenger_channel import MessengerChannel
+from nivos.channels.nostr_channel import NostrChannel
+from nivos.channels.reddit_channel import RedditChannel
+from nivos.channels.rocketchat_channel import RocketChatChannel
+from nivos.channels.twitch_channel import TwitchChannel
+from nivos.channels.viber_channel import ViberChannel
+from nivos.channels.xmpp_channel import XMPPChannel
+from nivos.channels.zulip_channel import ZulipChannel
+from nivos.core.registry import ChannelRegistry
 
 # (class, registry key, library module name, pip package name)
 CHANNELS = [

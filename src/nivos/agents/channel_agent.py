@@ -1,6 +1,6 @@
 """ChannelAgent — bridge between messaging channels and AI agents.
 
-Routes incoming :class:`~openjarvis.channels._stubs.ChannelMessage` objects
+Routes incoming :class:`~nivos.channels._stubs.ChannelMessage` objects
 to an agent, classifies queries as "quick" or "deep", and delivers responses
 either inline or as a preview with an escalation link to a full report.
 """
@@ -12,7 +12,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Optional
 
-from openjarvis.channels._stubs import BaseChannel, ChannelMessage
+from nivos.channels._stubs import BaseChannel, ChannelMessage
 
 # ---------------------------------------------------------------------------
 # Query classifier
@@ -55,7 +55,7 @@ def classify_query(text: str) -> str:
 # ChannelAgent
 # ---------------------------------------------------------------------------
 
-_ESCALATION_TEMPLATE = "{preview}...\n\n---\nFull report ready — open in OpenJarvis:\nopenjarvis://research/{session_id}"
+_ESCALATION_TEMPLATE = "{preview}...\n\n---\nFull report ready — open in Nivos:\nnivos://research/{session_id}"
 _LONG_RESPONSE_THRESHOLD = 500
 
 
@@ -73,7 +73,7 @@ class ChannelAgent:
         A connected :class:`BaseChannel` instance.
     agent:
         Any object that exposes a ``run(input: str) -> AgentResult``-compatible
-        method (typically a :class:`~openjarvis.agents._stubs.BaseAgent`
+        method (typically a :class:`~nivos.agents._stubs.BaseAgent`
         subclass).
     max_workers:
         Size of the background :class:`~concurrent.futures.ThreadPoolExecutor`.

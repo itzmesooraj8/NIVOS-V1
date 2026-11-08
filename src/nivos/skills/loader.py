@@ -7,7 +7,7 @@ from typing import Optional
 
 import yaml
 
-from openjarvis.skills.types import SkillManifest, SkillStep
+from nivos.skills.types import SkillManifest, SkillStep
 
 try:
     import tomllib
@@ -58,7 +58,7 @@ def load_skill(
     name = "research_and_summarize"
     version = "0.1.0"
     description = "Search web and summarize results"
-    author = "openjarvis"
+    author = "nivos"
     required_capabilities = ["network:fetch"]
     signature = ""
 
@@ -108,7 +108,7 @@ def load_skill(
     # Verify signature if requested
     if verify_signature and public_key and manifest.signature:
         try:
-            from openjarvis.security.signing import verify_b64
+            from nivos.security.signing import verify_b64
 
             valid = verify_b64(
                 manifest.manifest_bytes(),
@@ -126,7 +126,7 @@ def load_skill(
     # Scan for prompt injection if requested
     if scan_for_injection:
         try:
-            from openjarvis.security.scanner import SecretScanner
+            from nivos.security.scanner import SecretScanner
 
             scanner = SecretScanner()
             for step in manifest.steps:
@@ -150,7 +150,7 @@ def load_skill_markdown(path: str | Path) -> SkillManifest:
     body, then runs them through :class:`SkillParser` for strict validation
     and tolerant field mapping.
     """
-    from openjarvis.skills.parser import SkillParseError, SkillParser
+    from nivos.skills.parser import SkillParseError, SkillParser
 
     path = Path(path)
     raw = path.read_text(encoding="utf-8")
@@ -247,7 +247,7 @@ def load_skill_directory(path: str | Path) -> SkillManifest:
         # Only markdown present
         manifest = load_skill_markdown(md_path)
 
-    # Promote .source file's source field into manifest.metadata.openjarvis.source
+    # Promote .source file's source field into manifest.metadata.nivos.source
     source_data = _read_source_metadata(path)
     if source_data:
         # Extract just the source name (e.g. "hermes" from "hermes:apple-notes")
@@ -255,9 +255,9 @@ def load_skill_directory(path: str | Path) -> SkillManifest:
         source_name = source_str.partition(":")[0] if source_str else ""
         if source_name:
             new_metadata = dict(manifest.metadata) if manifest.metadata else {}
-            oj = dict(new_metadata.get("openjarvis", {}) or {})
+            oj = dict(new_metadata.get("nivos", {}) or {})
             oj["source"] = source_name
-            new_metadata["openjarvis"] = oj
+            new_metadata["nivos"] = oj
             manifest.metadata = new_metadata
 
     return manifest

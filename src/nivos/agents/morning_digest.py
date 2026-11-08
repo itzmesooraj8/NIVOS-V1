@@ -11,11 +11,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, List, Optional
 
-from openjarvis.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
-from openjarvis.agents.digest_store import DigestArtifact, DigestStore
-from openjarvis.core.paths import get_config_dir
-from openjarvis.core.registry import AgentRegistry
-from openjarvis.core.types import Message, Role, ToolCall
+from nivos.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
+from nivos.agents.digest_store import DigestArtifact, DigestStore
+from nivos.core.paths import get_config_dir
+from nivos.core.registry import AgentRegistry
+from nivos.core.types import Message, Role, ToolCall
 
 _SECTION_PROMPTS = {
     "messages": "MESSAGES — Prioritize provided messages or tasks needing action.",
@@ -29,7 +29,7 @@ _SECTION_PROMPTS = {
 def _load_persona(persona_name: str) -> str:
     """Load a persona prompt file by name."""
     search_paths = [
-        Path("configs/openjarvis/prompts/personas") / f"{persona_name}.md",
+        Path("configs/nivos/prompts/personas") / f"{persona_name}.md",
         get_config_dir() / "prompts" / "personas" / f"{persona_name}.md",
     ]
     for p in search_paths:
@@ -46,7 +46,7 @@ class MorningDigestAgent(ToolUsingAgent):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         # Extract digest-specific kwargs before passing to parent
-        self._persona = kwargs.pop("persona", "jarvis")
+        self._persona = kwargs.pop("persona", "nivos")
         self._sections = kwargs.pop(
             "sections", ["messages", "calendar", "health", "world"]
         )
@@ -162,7 +162,7 @@ class MorningDigestAgent(ToolUsingAgent):
         quality_score = 0.0
         evaluator_feedback = ""
         try:
-            from openjarvis.agents.digest_evaluator import DigestEvaluator
+            from nivos.agents.digest_evaluator import DigestEvaluator
 
             evaluator = DigestEvaluator(self._engine, self._model)
             quality_score, evaluator_feedback = evaluator.evaluate(

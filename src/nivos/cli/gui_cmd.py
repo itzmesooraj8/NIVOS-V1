@@ -1,4 +1,4 @@
-"""``jarvis gui`` — start and open the local graphical interface."""
+"""``nivos gui`` — start and open the local graphical interface."""
 
 from __future__ import annotations
 
@@ -22,8 +22,8 @@ import click
 import psutil
 from rich.console import Console
 
-from openjarvis.core.config import DEFAULT_CONFIG_DIR
-from openjarvis.security.file_utils import secure_write_json
+from nivos.core.config import DEFAULT_CONFIG_DIR
+from nivos.security.file_utils import secure_write_json
 
 # Records the frontend this command started, so a later run can tell its own
 # leftover dev server apart from an unrelated application holding the port.
@@ -43,7 +43,7 @@ _API_FAILURES_BEFORE_DOWN = 3
 
 def _frontend_dir() -> Path | None:
     """Find the source checkout's frontend directory."""
-    configured = os.environ.get("OPENJARVIS_FRONTEND_DIR")
+    configured = os.environ.get("NIVOS_FRONTEND_DIR")
     candidates = [Path(configured)] if configured else []
     candidates.append(Path(__file__).resolve().parents[3] / "frontend")
     for candidate in candidates:
@@ -71,7 +71,7 @@ def _read_frontend_state() -> dict:
 
 
 def _frontend_state_lock():
-    from openjarvis.cli.daemon_cmd import _state_lock
+    from nivos.cli.daemon_cmd import _state_lock
 
     return _state_lock(_FRONTEND_STATE_FILE)
 
@@ -87,7 +87,7 @@ def clear_frontend_state(pid: int, launch_token: str | None) -> None:
 def _process_identity(process: psutil.Process) -> dict | None:
     """Return an identity that cannot be confused with a recycled PID."""
     if sys.platform == "linux":
-        from openjarvis.cli.daemon_cmd import _linux_process_identity
+        from nivos.cli.daemon_cmd import _linux_process_identity
 
         # psutil's Linux epoch start time depends on the current boot epoch.
         # Keep the same clock-stable identity used by daemon bookkeeping.
@@ -402,7 +402,7 @@ def _daemon_pid_alive(port: int, *, require_ready: bool = False) -> bool:
     knows which process is supposed to be serving this port.
     """
     # Imported lazily; daemon_cmd imports this module for its own `stop`.
-    from openjarvis.cli.daemon_cmd import _read_pid_unlocked, _read_state, _state_lock
+    from nivos.cli.daemon_cmd import _read_pid_unlocked, _read_state, _state_lock
 
     with _state_lock():
         state = _read_state()
@@ -511,7 +511,7 @@ def build_frontend(frontend: Path, console: Console | None = None) -> None:
 
 def _configured_server_endpoint() -> tuple[str, int]:
     """Read host and port from config.toml without triggering hardware detection."""
-    from openjarvis.core.config import DEFAULT_CONFIG_PATH
+    from nivos.core.config import DEFAULT_CONFIG_PATH
 
     host, port = "127.0.0.1", 8000
     try:
@@ -632,7 +632,7 @@ def gui(
                 cmd = [
                     sys.executable,
                     "-m",
-                    "openjarvis.cli",
+                    "nivos.cli",
                     "start",
                     "--port",
                     str(effective_port),
@@ -733,7 +733,7 @@ def gui(
     # Let browser requests use Vite's same-origin proxy at any frontend port.
     # VITE_API_URL is exposed to browser code, so clear an inherited override.
     env["VITE_API_URL"] = ""
-    env["OPENJARVIS_VITE_PROXY_TARGET"] = f"http://127.0.0.1:{effective_port}"
+    env["NIVOS_VITE_PROXY_TARGET"] = f"http://127.0.0.1:{effective_port}"
     spawn_kwargs = {}
     if sys.platform == "win32":
         spawn_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP

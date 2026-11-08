@@ -31,9 +31,9 @@ _VARIANT_ATTR: dict[str, str] = {
 def tty_wants_model_picker(cli_flag: bool) -> bool:
     """Return whether this explicit ``chat`` invocation requested a picker.
 
-    Bare ``jarvis`` owns the TTY auto-prompt policy in ``_first_run`` and
+    Bare ``nivos`` owns the TTY auto-prompt policy in ``_first_run`` and
     passes ``pick_model=True`` when appropriate. Keeping the subcommand gate
-    flag-only prevents ``jarvis chat`` from unexpectedly reading stdin before
+    flag-only prevents ``nivos chat`` from unexpectedly reading stdin before
     the chat loop.
     """
     return bool(cli_flag)
@@ -116,7 +116,7 @@ def resolve_chat_cli_model(
     if dm:
         return sanitize_model_id(dm)
 
-    from openjarvis.engine import discover_engines, discover_models
+    from nivos.engine import discover_engines, discover_models
 
     all_engines = discover_engines(config)
     all_models = discover_models(all_engines)

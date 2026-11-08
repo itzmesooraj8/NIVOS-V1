@@ -11,8 +11,8 @@ from typing import List
 
 import httpx
 
-from openjarvis.core.registry import TTSRegistry
-from openjarvis.speech.tts import TTSBackend, TTSResult
+from nivos.core.registry import TTSRegistry
+from nivos.speech.tts import TTSBackend, TTSResult
 
 _CARTESIA_API_BASE = "https://api.cartesia.ai"
 
@@ -76,7 +76,7 @@ class CartesiaTTSBackend(TTSBackend):
         if not self._api_key:
             raise RuntimeError("CARTESIA_API_KEY not set")
 
-        # Default to "British Butler" voice — warm, authoritative, Jarvis-like
+        # Default to "British Butler" voice — warm, authoritative, Nivos-like
         if not voice_id:
             voice_id = "a0e99841-438c-4a64-b679-ae501e7d6091"
 

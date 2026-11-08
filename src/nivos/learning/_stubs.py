@@ -5,10 +5,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, ClassVar, Dict
 
-from openjarvis.core.registry import LearningRegistry  # noqa: F401
+from nivos.core.registry import LearningRegistry  # noqa: F401
 
 # Re-export from canonical location for backward compatibility
-from openjarvis.core.types import RoutingContext  # noqa: F401
+from nivos.core.types import RoutingContext  # noqa: F401
 
 if TYPE_CHECKING:
     pass

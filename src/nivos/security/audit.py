@@ -10,9 +10,9 @@ from functools import wraps
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
-from openjarvis.core.config import DEFAULT_CONFIG_DIR
-from openjarvis.core.events import Event, EventBus, EventType
-from openjarvis.security.types import (
+from nivos.core.config import DEFAULT_CONFIG_DIR
+from nivos.core.events import Event, EventBus, EventType
+from nivos.security.types import (
     ScanFinding,
     SecurityEvent,
     SecurityEventType,
@@ -49,7 +49,7 @@ class AuditLogger:
         bus: Optional[EventBus] = None,
     ) -> None:
         self._db_path = Path(db_path)
-        from openjarvis.security.file_utils import secure_create
+        from nivos.security.file_utils import secure_create
 
         secure_create(self._db_path)
         self._db_lock = threading.RLock()

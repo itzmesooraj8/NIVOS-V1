@@ -5,12 +5,12 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from typing import Any, Dict, List, Optional, Sequence
 
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.types import Message
-from openjarvis.engine._stubs import InferenceEngine, StreamChunk
-from openjarvis.security._stubs import BaseScanner
-from openjarvis.security.scanner import PIIScanner, SecretScanner
-from openjarvis.security.types import RedactionMode, ScanResult
+from nivos.core.events import EventBus, EventType
+from nivos.core.types import Message
+from nivos.engine._stubs import InferenceEngine, StreamChunk
+from nivos.security._stubs import BaseScanner
+from nivos.security.scanner import PIIScanner, SecretScanner
+from nivos.security.types import RedactionMode, ScanResult
 
 
 class SecurityBlockError(Exception):

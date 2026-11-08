@@ -10,10 +10,10 @@ import subprocess
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from openjarvis.core.paths import get_workspace_dir
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.paths import get_workspace_dir
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 logger = logging.getLogger(__name__)
 
@@ -191,7 +191,7 @@ class SandboxedShellTool(BaseTool):
             else:
                 # Check ApprovalStore
                 try:
-                    from openjarvis.tools.approval_store import (
+                    from nivos.tools.approval_store import (
                         ApprovalStore,
                         DECISION_ALWAYS_DENY,
                         TIER_HIGH,

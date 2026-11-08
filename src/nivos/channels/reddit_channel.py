@@ -6,13 +6,13 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
-from openjarvis.channels._stubs import (
+from nivos.channels._stubs import (
     BaseChannel,
     ChannelHandler,
     ChannelStatus,
 )
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.registry import ChannelRegistry
+from nivos.core.events import EventBus, EventType
+from nivos.core.registry import ChannelRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class RedditChannel(BaseChannel):
         self._username = username or os.environ.get("REDDIT_USERNAME", "")
         self._password = password or os.environ.get("REDDIT_PASSWORD", "")
         self._user_agent = user_agent or os.environ.get(
-            "REDDIT_USER_AGENT", "openjarvis:v1.0"
+            "REDDIT_USER_AGENT", "nivos:v1.0"
         )
         self._bus = bus
         self._handlers: List[ChannelHandler] = []
@@ -129,7 +129,7 @@ class RedditChannel(BaseChannel):
             else:
                 # Submit as a new text post to the subreddit
                 subreddit = reddit.subreddit(channel)
-                title = (metadata or {}).get("title", "OpenJarvis Message")
+                title = (metadata or {}).get("title", "Nivos Message")
                 subreddit.submit(title=title, selftext=content)
 
             self._publish_sent(channel, content, conversation_id)

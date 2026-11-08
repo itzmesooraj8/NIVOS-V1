@@ -191,10 +191,10 @@ def create_webhook_router(
             else:
                 # Direct agent fallback
                 try:
-                    from openjarvis.agents.deep_research import (
+                    from nivos.agents.deep_research import (
                         DeepResearchAgent,
                     )
-                    from openjarvis.server.agent_manager_routes import (
+                    from nivos.server.agent_manager_routes import (
                         _build_deep_research_tools,
                     )
 

@@ -9,8 +9,8 @@ import json
 import random
 from typing import Any, Iterable, List, MutableMapping, Optional, Sequence
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
 
 _HF_PATHS = {
     "verified": "princeton-nlp/SWE-bench_Verified",

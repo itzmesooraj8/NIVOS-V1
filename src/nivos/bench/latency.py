@@ -6,11 +6,11 @@ import logging
 import time
 from typing import Any, List
 
-from openjarvis.bench._stats import compute_stats
-from openjarvis.bench._stubs import BaseBenchmark, BenchmarkResult
-from openjarvis.core.registry import BenchmarkRegistry
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._stubs import InferenceEngine
+from nivos.bench._stats import compute_stats
+from nivos.bench._stubs import BaseBenchmark, BenchmarkResult
+from nivos.core.registry import BenchmarkRegistry
+from nivos.core.types import Message, Role
+from nivos.engine._stubs import InferenceEngine
 
 logger = logging.getLogger(__name__)
 

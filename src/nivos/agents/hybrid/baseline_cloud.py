@@ -1,7 +1,7 @@
 """BaselineCloudAgent — cloud-only reference for the hybrid ablation.
 
 Used as the "what does the cloud do alone?" row in the n=100 ablation
-matrix (see ``.openjarvis/experiments/hybrid/docs/results-table.md``).
+matrix (see ``.nivos/experiments/hybrid/docs/results-table.md``).
 No local model is involved — ``local_*`` settings are ignored.
 
 On GAIA the agent makes one cloud call with the formatted prompt (which
@@ -24,17 +24,17 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional, Tuple
 
-from openjarvis.agents._stubs import AgentContext
-from openjarvis.agents.hybrid._base import (
+from nivos.agents._stubs import AgentContext
+from nivos.agents.hybrid._base import (
     WEB_SEARCH_COST_PER_CALL,
     LocalCloudAgent,
     build_web_search_tool,
     web_search_cfg,
 )
-from openjarvis.agents.hybrid._prices import cost as estimate_cost
-from openjarvis.agents.hybrid._prices import default_max_output_tokens
-from openjarvis.agents.hybrid.mini_swe_agent import run_swe_agent_loop
-from openjarvis.core.registry import AgentRegistry
+from nivos.agents.hybrid._prices import cost as estimate_cost
+from nivos.agents.hybrid._prices import default_max_output_tokens
+from nivos.agents.hybrid.mini_swe_agent import run_swe_agent_loop
+from nivos.core.registry import AgentRegistry
 
 
 @AgentRegistry.register("baseline_cloud")

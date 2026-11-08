@@ -12,7 +12,7 @@ from __future__ import annotations
 import uuid
 from pathlib import Path
 
-from openjarvis.core.config import AnalyticsConfig
+from nivos.core.config import AnalyticsConfig
 
 
 def get_or_create_anon_id(path: Path | str) -> str:

@@ -27,10 +27,10 @@ import json
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
-from openjarvis.tools.approval_store import (
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
+from nivos.tools.approval_store import (
     DECISION_ALWAYS_APPROVE,
     DECISION_ALWAYS_DENY,
     STATUS_APPROVED,
@@ -473,7 +473,7 @@ def _exec_email_delete(payload: Dict[str, Any]) -> Tuple[bool, str]:
     if not msg_id:
         return False, "Missing message_id in payload"
     try:
-        from openjarvis.connectors.gmail import GmailConnector
+        from nivos.connectors.gmail import GmailConnector
 
         conn = GmailConnector()
         conn.delete_message(msg_id)
@@ -487,7 +487,7 @@ def _exec_email_archive(payload: Dict[str, Any]) -> Tuple[bool, str]:
     if not msg_id:
         return False, "Missing message_id in payload"
     try:
-        from openjarvis.connectors.gmail import GmailConnector
+        from nivos.connectors.gmail import GmailConnector
 
         conn = GmailConnector()
         conn.archive_message(msg_id)
@@ -502,7 +502,7 @@ def _exec_sms_send(payload: Dict[str, Any]) -> Tuple[bool, str]:
     if not contact or not body:
         return False, "Missing contact or body in payload"
     try:
-        from openjarvis.channels.imessage_daemon import send_imessage
+        from nivos.channels.imessage_daemon import send_imessage
 
         send_imessage(contact, body)
         return True, f"Sent iMessage to {contact}"
@@ -516,7 +516,7 @@ def _exec_calendar_decline(payload: Dict[str, Any]) -> Tuple[bool, str]:
     if not event_id:
         return False, "Missing event_id in payload"
     try:
-        from openjarvis.connectors.gcalendar import GCalendarConnector
+        from nivos.connectors.gcalendar import GCalendarConnector
 
         conn = GCalendarConnector()
         conn.decline_event(event_id, calendar_id=calendar_id)
@@ -531,7 +531,7 @@ def _exec_calendar_accept(payload: Dict[str, Any]) -> Tuple[bool, str]:
     if not event_id:
         return False, "Missing event_id in payload"
     try:
-        from openjarvis.connectors.gcalendar import GCalendarConnector
+        from nivos.connectors.gcalendar import GCalendarConnector
 
         conn = GCalendarConnector()
         conn.accept_event(event_id, calendar_id=calendar_id)

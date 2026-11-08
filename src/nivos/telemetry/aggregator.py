@@ -135,7 +135,7 @@ class TelemetryAggregator:
             clauses.append("timestamp <= ?")
             params.append(until)
         if current_methodology_only and self._safe_col("token_counting_version"):
-            from openjarvis.core.types import TOKEN_COUNTING_VERSION
+            from nivos.core.types import TOKEN_COUNTING_VERSION
 
             clauses.append("token_counting_version = ?")
             params.append(TOKEN_COUNTING_VERSION)

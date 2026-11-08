@@ -6,9 +6,9 @@ import time
 from collections.abc import Sequence
 from typing import Any, Dict
 
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.types import Message, TelemetryRecord
-from openjarvis.engine._base import InferenceEngine
+from nivos.core.events import EventBus, EventType
+from nivos.core.types import Message, TelemetryRecord
+from nivos.engine._base import InferenceEngine
 
 
 def instrumented_generate(

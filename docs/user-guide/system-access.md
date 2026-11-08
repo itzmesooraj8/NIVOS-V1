@@ -22,7 +22,7 @@ enabled by default.
 First check whether you have a config file at all:
 
 ```bash
-cat ~/.openjarvis/config.toml
+cat ~/.nivos/config.toml
 ```
 
 If it isn't there, that's your answer. Create it:
@@ -42,12 +42,12 @@ enabled = ["shell_exec", "file_read", "file_write", "think"]
 ```
 
 There's a fuller version at
-`configs/openjarvis/examples/full-system-access.toml`.
+`configs/nivos/examples/full-system-access.toml`.
 
 Then confirm the list actually resolved:
 
 ```bash
-python -c "from openjarvis.core.config import load_config; print(load_config().tools.enabled)"
+python -c "from nivos.core.config import load_config; print(load_config().tools.enabled)"
 ```
 
 ---
@@ -130,7 +130,7 @@ inherit it:
 |------------------------|-----------------|
 | CLI (`nivos ask`, `nivos chat`) | Your terminal (Terminal, iTerm, Warp) |
 | Desktop app | `Nivos.app`, which spawns `nivos serve` beneath it |
-| launchd (`deploy/launchd/com.openjarvis.plist`) | The `nivos` binary, as its own entry |
+| launchd (`deploy/launchd/com.nivos.plist`) | The `nivos` binary, as its own entry |
 
 System Settings, then Privacy & Security, then Full Disk Access, then **+**.
 
@@ -191,7 +191,7 @@ runtime = "docker"
 
 [security.capabilities]
 enabled = true          # RBAC over declared tool capabilities
-policy_path = "~/.openjarvis/policy.yaml"
+policy_path = "~/.nivos/policy.yaml"
 ```
 
 !!! note "Capabilities are open by default even once enabled"

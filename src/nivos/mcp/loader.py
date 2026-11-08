@@ -23,9 +23,9 @@ import logging
 from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
-    from openjarvis.core.types import ToolSpec  # noqa: F401
-    from openjarvis.mcp.client import MCPClient
-    from openjarvis.tools._stubs import BaseTool
+    from nivos.core.types import ToolSpec  # noqa: F401
+    from nivos.mcp.client import MCPClient
+    from nivos.tools._stubs import BaseTool
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def load_mcp_tools_from_config(
     Returns ``([], [])`` when mcp is disabled or no servers are
     configured — no exception, no warning.
     """
-    # ``enabled`` and ``servers`` come from openjarvis.core.config's
+    # ``enabled`` and ``servers`` come from nivos.core.config's
     # MCPConfig dataclass; accept duck-typed equivalents for tests.
     enabled = getattr(mcp_cfg, "enabled", False)
     servers_blob = getattr(mcp_cfg, "servers", None)
@@ -70,12 +70,12 @@ def load_mcp_tools_from_config(
         )
         return [], []
 
-    # Imported lazily so that `openjarvis.mcp.loader` can be imported
+    # Imported lazily so that `nivos.mcp.loader` can be imported
     # cheaply from CLI startup paths without dragging in the heavy MCP
     # client stack until something actually wants to discover tools.
-    from openjarvis.mcp.client import MCPClient
-    from openjarvis.mcp.transport import StdioTransport, StreamableHTTPTransport
-    from openjarvis.tools.mcp_adapter import MCPToolProvider
+    from nivos.mcp.client import MCPClient
+    from nivos.mcp.transport import StdioTransport, StreamableHTTPTransport
+    from nivos.tools.mcp_adapter import MCPToolProvider
 
     tools: list["BaseTool"] = []
     clients: list["MCPClient"] = []

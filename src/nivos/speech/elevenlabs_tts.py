@@ -15,12 +15,12 @@ from typing import Any, List, TypeVar
 
 import httpx
 
-from openjarvis.core.registry import TTSRegistry
-from openjarvis.speech.tts import TTSBackend, TTSResult
+from nivos.core.registry import TTSRegistry
+from nivos.speech.tts import TTSBackend, TTSResult
 
 _ELEVENLABS_API_BASE = "https://api.elevenlabs.io/v1"
 
-# "George" — warm British male premade voice, Jarvis-like
+# "George" — warm British male premade voice, Nivos-like
 _DEFAULT_VOICE_ID = "JBFqnCBsd6RMkjVDRZzb"
 
 # Kokoro-style IDs ("bm_george", "pf_dora"). SpeechConfig.voice_id defaults to

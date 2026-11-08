@@ -49,12 +49,12 @@ class AttachmentStore:
 
     def __init__(self, base_dir: str = "") -> None:
         if not base_dir:
-            from openjarvis.core.config import DEFAULT_CONFIG_DIR
+            from nivos.core.config import DEFAULT_CONFIG_DIR
 
             base_dir = str(DEFAULT_CONFIG_DIR / "blobs")
 
         self._base_dir = Path(base_dir)
-        from openjarvis.security.file_utils import secure_mkdir
+        from nivos.security.file_utils import secure_mkdir
 
         secure_mkdir(self._base_dir)
 

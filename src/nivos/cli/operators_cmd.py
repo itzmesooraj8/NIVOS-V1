@@ -1,4 +1,4 @@
-"""``jarvis operators`` — operator lifecycle management commands."""
+"""``nivos operators`` — operator lifecycle management commands."""
 
 from __future__ import annotations
 
@@ -25,8 +25,8 @@ def list_operators() -> None:
     """List all discovered operators and their status."""
     console = Console(stderr=True)
     try:
-        from openjarvis.core.config import DEFAULT_CONFIG_DIR, load_config
-        from openjarvis.operators.loader import load_operator
+        from nivos.core.config import DEFAULT_CONFIG_DIR, load_config
+        from nivos.operators.loader import load_operator
 
         config = load_config()
         manifests_dir = (
@@ -181,13 +181,13 @@ def logs(operator_id: str, lines: int) -> None:
     """Show execution logs for an operator."""
     console = Console(stderr=True)
     try:
-        from openjarvis.core.config import load_config
-        from openjarvis.scheduler.store import SchedulerStore
+        from nivos.core.config import load_config
+        from nivos.scheduler.store import SchedulerStore
 
         config = load_config()
         db_path = config.scheduler.db_path
         if not db_path:
-            from openjarvis.core.config import DEFAULT_CONFIG_DIR
+            from nivos.core.config import DEFAULT_CONFIG_DIR
 
             db_path = str(DEFAULT_CONFIG_DIR / "scheduler.db")
 
@@ -225,7 +225,7 @@ def install(path: str) -> None:
     """Install an operator TOML manifest to the manifests directory."""
     console = Console(stderr=True)
     try:
-        from openjarvis.core.config import DEFAULT_CONFIG_DIR
+        from nivos.core.config import DEFAULT_CONFIG_DIR
 
         src = Path(path)
         if not src.exists():
@@ -246,8 +246,8 @@ def install(path: str) -> None:
 
 def _find_manifest(operator_id: str):
     """Find an operator manifest by ID across known directories."""
-    from openjarvis.core.config import DEFAULT_CONFIG_DIR
-    from openjarvis.operators.loader import load_operator
+    from nivos.core.config import DEFAULT_CONFIG_DIR
+    from nivos.operators.loader import load_operator
 
     dirs = [DEFAULT_CONFIG_DIR / "operators", _builtin_operators_dir()]
     for d in dirs:
@@ -264,9 +264,9 @@ def _find_manifest(operator_id: str):
 
 
 def _build_system_with_operators():
-    """Build a JarvisSystem with operators wired up."""
-    from openjarvis.operators.manager import OperatorManager
-    from openjarvis.system import SystemBuilder
+    """Build a NivosSystem with operators wired up."""
+    from nivos.operators.manager import OperatorManager
+    from nivos.system import SystemBuilder
 
     system = SystemBuilder().scheduler(True).sessions(True).build()
 
@@ -274,7 +274,7 @@ def _build_system_with_operators():
     system.operator_manager = manager
 
     # Discover from known directories
-    from openjarvis.core.config import DEFAULT_CONFIG_DIR
+    from nivos.core.config import DEFAULT_CONFIG_DIR
 
     for d in [DEFAULT_CONFIG_DIR / "operators", _builtin_operators_dir()]:
         if d.is_dir():

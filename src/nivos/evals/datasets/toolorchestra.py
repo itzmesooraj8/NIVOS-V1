@@ -3,7 +3,7 @@
 NOT USED FOR EVALUATION. Surfaces tool-use trajectories from
 ``nvidia/ToolScale`` (the dataset underlying the ToolOrchestra paper) to
 the LLM-guided spec search proposer via
-``openjarvis.learning.spec_search.external_adapter`` so the diagnose
+``nivos.learning.spec_search.external_adapter`` so the diagnose
 phase can reason over a broad pool of tool-use traces.
 
 The ``dataset_id`` is kept as ``"toolorchestra"`` (matching the published
@@ -33,9 +33,9 @@ import ast
 import random
 from typing import Any, Iterable, List, MutableMapping, Optional
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.splits import apply_split
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.splits import apply_split
+from nivos.evals.core.types import EvalRecord
 
 HF_DATASET_ID = "nvidia/ToolScale"
 HF_SPLIT = "train"

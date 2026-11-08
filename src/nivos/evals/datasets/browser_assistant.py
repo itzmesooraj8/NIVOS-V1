@@ -14,8 +14,8 @@ from __future__ import annotations
 import random
 from typing import Any, Dict, Iterable, List, Optional
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
 
 _PROMPT_TEMPLATE = """You are a web research assistant. Answer the following question accurately and cite your sources.
 

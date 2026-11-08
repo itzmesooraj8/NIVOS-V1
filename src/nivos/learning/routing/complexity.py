@@ -12,8 +12,8 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
-from openjarvis.core.types import RoutingContext
-from openjarvis.learning._stubs import QueryAnalyzer
+from nivos.core.types import RoutingContext
+from nivos.learning._stubs import QueryAnalyzer
 
 # ---------------------------------------------------------------------------
 # Signal patterns

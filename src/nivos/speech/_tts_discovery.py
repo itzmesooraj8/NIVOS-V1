@@ -11,7 +11,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
-    from openjarvis.core.config import JarvisConfig
+    from nivos.core.config import NivosConfig
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +46,8 @@ def get_tts_backend(
     """
     # Import triggers built-in backend registration only when voice output is
     # actually requested.
-    import openjarvis.speech  # noqa: F401
-    from openjarvis.core.registry import TTSRegistry
+    import nivos.speech  # noqa: F401
+    from nivos.core.registry import TTSRegistry
 
     seen = attempted if attempted is not None else set()
 
@@ -67,7 +67,7 @@ def get_tts_backend(
     return None
 
 
-def voice_preferences(config: "JarvisConfig") -> tuple[str, str, float]:
+def voice_preferences(config: "NivosConfig") -> tuple[str, str, float]:
     """Resolve ``(tts_backend, voice_id, speed)`` from *config*."""
     speech = getattr(config, "speech", None)
     return (

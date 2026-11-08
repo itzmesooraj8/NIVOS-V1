@@ -1,6 +1,6 @@
 """Credential persistence for tools and channels.
 
-Stores credentials in ~/.openjarvis/credentials.toml with 0o600 permissions.
+Stores credentials in ~/.nivos/credentials.toml with 0o600 permissions.
 Thread-safe writes via lock. Sets os.environ on save for immediate effect.
 """
 
@@ -14,8 +14,8 @@ from pathlib import Path
 
 import tomlkit
 
-from openjarvis.core.paths import get_config_dir
-from openjarvis.security.file_utils import secure_write_text
+from nivos.core.paths import get_config_dir
+from nivos.security.file_utils import secure_write_text
 
 try:
     import tomllib
@@ -28,7 +28,7 @@ _LOCK = threading.RLock()
 
 
 def _default_path() -> Path:
-    """Resolve the credentials file under the OpenJarvis root (env-aware)."""
+    """Resolve the credentials file under the Nivos root (env-aware)."""
     return get_config_dir() / "credentials.toml"
 
 
@@ -74,7 +74,7 @@ TOOL_CREDENTIALS: dict[str, list[str]] = {
 
 # Keys that unlock or upgrade a tool but are not prerequisites for it. Every
 # key in TOOL_CREDENTIALS is otherwise treated as required — by the Settings UI,
-# by ``jarvis doctor``, and by anything else reading credential status — which
+# by ``nivos doctor``, and by anything else reading credential status — which
 # leaves no way to describe a tool that also works without one. ``web_search``
 # is the first such tool: the You.com keyless tier serves it with no key at all,
 # and every listed key only raises limits, changes the engine, or improves

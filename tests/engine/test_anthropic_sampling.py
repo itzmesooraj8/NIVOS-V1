@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from openjarvis.core.types import Message, Role
-from openjarvis.engine.cloud import CloudEngine
+from nivos.core.types import Message, Role
+from nivos.engine.cloud import CloudEngine
 
 
 class _Stream:

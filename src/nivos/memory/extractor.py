@@ -15,7 +15,7 @@ import logging
 import re
 from typing import Any, List, Optional
 
-from openjarvis.core.types import Message, Role
+from nivos.core.types import Message, Role
 
 logger = logging.getLogger(__name__)
 

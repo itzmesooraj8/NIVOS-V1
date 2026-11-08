@@ -1,4 +1,4 @@
-"""``jarvis registry`` — registry inspection commands."""
+"""``nivos registry`` — registry inspection commands."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from rich.table import Table
 
 def _load_registry_map() -> tuple[dict[str, object], dict[str, object]]:
     """Import all registries and return (by_name, aliases) lookup dicts."""
-    from openjarvis.core.registry import (
+    from nivos.core.registry import (
         AgentRegistry,
         BenchmarkRegistry,
         ChannelRegistry,
@@ -83,7 +83,7 @@ def list_registries() -> None:
         console.print(f"[red]Error loading registries: {exc}[/red]")
         return
 
-    module_path = "openjarvis.core.registry"
+    module_path = "nivos.core.registry"
     for reg_name, registry_cls in by_name.items():
         try:
             count = len(registry_cls.keys())
@@ -110,7 +110,7 @@ def show(registry_name: str, verbose: bool) -> None:
         if registry_cls is None:
             console.print(f"[red]Unknown registry: {registry_name}[/red]")
             console.print(
-                "[dim]Run 'jarvis registry list' to see available registries.[/dim]"
+                "[dim]Run 'nivos registry list' to see available registries.[/dim]"
             )
             return
 

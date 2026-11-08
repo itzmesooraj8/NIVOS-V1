@@ -6,8 +6,8 @@ import logging
 import re
 from typing import List, Tuple
 
-from openjarvis.core.types import Trace
-from openjarvis.evals.core.backend import InferenceBackend
+from nivos.core.types import Trace
+from nivos.evals.core.backend import InferenceBackend
 
 LOGGER = logging.getLogger(__name__)
 

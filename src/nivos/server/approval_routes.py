@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Optional
 
-from openjarvis.tools.approval_store import (
+from nivos.tools.approval_store import (
     STATUS_APPROVED,
     STATUS_DENIED,
     ApprovalStore,

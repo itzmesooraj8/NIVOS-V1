@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
-from openjarvis.evals.core.tracker import ResultTracker
-from openjarvis.evals.core.types import EvalResult, MetricStats, RunConfig, RunSummary
+from nivos.evals.core.tracker import ResultTracker
+from nivos.evals.core.types import EvalResult, MetricStats, RunConfig, RunSummary
 
 try:
     import wandb

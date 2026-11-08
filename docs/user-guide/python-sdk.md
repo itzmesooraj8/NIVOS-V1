@@ -7,7 +7,7 @@ search:
 
 # Python SDK
 
-The Nivos Python SDK provides a high-level interface for interacting with local inference engines, managing memory, and running agent workflows. The primary entry point is the `Jarvis` class.
+The Nivos Python SDK provides a high-level interface for interacting with local inference engines, managing memory, and running agent workflows. The primary entry point is the `Nivos` class.
 
 ## Installation
 
@@ -20,9 +20,9 @@ uv sync
 ## Quick Start
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis()
+j = Nivos()
 response = j.ask("What is the capital of France?")
 print(response)
 j.close()
@@ -30,14 +30,14 @@ j.close()
 
 ---
 
-## Jarvis Class
+## Nivos Class
 
 ### Constructor
 
 ```python
-Jarvis(
+Nivos(
     *,
-    config: JarvisConfig | None = None,
+    config: NivosConfig | None = None,
     config_path: str | None = None,
     engine_key: str | None = None,
     model: str | None = None,
@@ -46,34 +46,34 @@ Jarvis(
 
 | Parameter     | Type             | Default | Description                                                    |
 |---------------|------------------|---------|----------------------------------------------------------------|
-| `config`      | `JarvisConfig`   | `None`  | Provide a pre-built configuration object                       |
+| `config`      | `NivosConfig`   | `None`  | Provide a pre-built configuration object                       |
 | `config_path` | `str`            | `None`  | Path to a TOML configuration file                              |
 | `engine_key`  | `str`            | `None`  | Override the engine backend (`"ollama"`, `"vllm"`, etc.)       |
 | `model`       | `str`            | `None`  | Override the default model (e.g., `"qwen3:8b"`)               |
 
-If no `config` or `config_path` is provided, the SDK loads configuration from the default location (`~/.openjarvis/config.toml`), falling back to built-in defaults.
+If no `config` or `config_path` is provided, the SDK loads configuration from the default location (`~/.nivos/config.toml`), falling back to built-in defaults.
 
 **Examples:**
 
 ```python
 # Default configuration — auto-detects engine
-j = Jarvis()
+j = Nivos()
 
 # Override the model
-j = Jarvis(model="qwen3:8b")
+j = Nivos(model="qwen3:8b")
 
 # Override the engine
-j = Jarvis(engine_key="ollama")
+j = Nivos(engine_key="ollama")
 
 # Load from a specific config file
-j = Jarvis(config_path="/path/to/config.toml")
+j = Nivos(config_path="/path/to/config.toml")
 ```
 
 ### Properties
 
 | Property  | Type           | Description                       |
 |-----------|----------------|-----------------------------------|
-| `config`  | `JarvisConfig` | The active configuration object   |
+| `config`  | `NivosConfig` | The active configuration object   |
 | `version` | `str`          | The Nivos version string     |
 | `memory`  | `MemoryHandle` | Proxy for memory operations       |
 
@@ -218,7 +218,7 @@ Available tools: `calculator`, `think`, `retrieval`, `llm`, `file_read`
 
 ## MemoryHandle
 
-The `Jarvis.memory` attribute provides a `MemoryHandle` for document indexing, search, and statistics. The memory backend is lazily initialized on first use.
+The `Nivos.memory` attribute provides a `MemoryHandle` for document indexing, search, and statistics. The memory backend is lazily initialized on first use.
 
 ### `index()`
 
@@ -326,17 +326,17 @@ print(engines)  # ["ollama", "vllm", "llamacpp", ...]
 
 ### `close()`
 
-Release all resources held by the `Jarvis` instance, including the memory backend, telemetry store, and engine connection.
+Release all resources held by the `Nivos` instance, including the memory backend, telemetry store, and engine connection.
 
 ```python
 j.close()
 ```
 
 !!! tip "Context Manager Pattern"
-    While `Jarvis` does not implement `__enter__`/`__exit__` directly, you should always call `close()` when done to free database connections and other resources:
+    While `Nivos` does not implement `__enter__`/`__exit__` directly, you should always call `close()` when done to free database connections and other resources:
 
     ```python
-    j = Jarvis()
+    j = Nivos()
     try:
         response = j.ask("Hello")
         print(response)
@@ -349,10 +349,10 @@ j.close()
 ## Complete Example
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
 # Initialize with auto-detected engine
-j = Jarvis(model="qwen3:8b")
+j = Nivos(model="qwen3:8b")
 
 # Index documents for context-augmented responses
 result = j.memory.index("./docs/")

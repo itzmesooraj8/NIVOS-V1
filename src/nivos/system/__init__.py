@@ -1,19 +1,19 @@
-"""Top-level system composition: JarvisSystem, SystemBuilder, and helpers."""
+"""Top-level system composition: NivosSystem, SystemBuilder, and helpers."""
 
-from openjarvis.system.builder import SystemBuilder
-from openjarvis.system.bundles import (
+from nivos.system.builder import SystemBuilder
+from nivos.system.bundles import (
     AgentRuntime,
     Observability,
     Scheduling,
     SecurityContext,
 )
-from openjarvis.system.core import JarvisSystem
-from openjarvis.system.orchestrator import QueryOrchestrator
-from openjarvis.system.protocols import OrchestratorDeps
+from nivos.system.core import NivosSystem
+from nivos.system.orchestrator import QueryOrchestrator
+from nivos.system.protocols import OrchestratorDeps
 
 __all__ = [
     "AgentRuntime",
-    "JarvisSystem",
+    "NivosSystem",
     "Observability",
     "OrchestratorDeps",
     "QueryOrchestrator",

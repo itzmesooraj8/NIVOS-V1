@@ -8,8 +8,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from openjarvis.scheduler.scheduler import ScheduledTask, TaskScheduler
-from openjarvis.scheduler.store import SchedulerStore
+from nivos.scheduler.scheduler import ScheduledTask, TaskScheduler
+from nivos.scheduler.store import SchedulerStore
 
 
 @pytest.fixture()
@@ -209,7 +209,7 @@ class TestComputeNextRun:
             schedule_value="0 5 * * *",
             metadata={"timezone": "America/Los_Angeles"},
         )
-        monkeypatch.setattr("openjarvis.scheduler.scheduler.datetime", FixedDatetime)
+        monkeypatch.setattr("nivos.scheduler.scheduler.datetime", FixedDatetime)
 
         next_run = scheduler._compute_next_run(task)
 

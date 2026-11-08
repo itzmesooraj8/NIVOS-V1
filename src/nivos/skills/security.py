@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import List, Set
 
-from openjarvis.skills.types import SkillManifest
+from nivos.skills.types import SkillManifest
 
 DANGEROUS_CAPABILITIES: frozenset[str] = frozenset(
     {"shell:execute", "network:listen", "filesystem:write"}

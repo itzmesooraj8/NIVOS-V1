@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 
 #[pyclass(name = "SchedulerStore", unsendable)]
 pub struct PySchedulerStore {
-    inner: openjarvis_scheduler::SchedulerStore,
+    inner: nivos_scheduler::SchedulerStore,
 }
 
 #[pymethods]
@@ -13,12 +13,12 @@ impl PySchedulerStore {
     #[pyo3(signature = (db_path=":memory:"))]
     fn new(db_path: &str) -> Self {
         Self {
-            inner: openjarvis_scheduler::SchedulerStore::new(db_path),
+            inner: nivos_scheduler::SchedulerStore::new(db_path),
         }
     }
 
     fn create_task(&self, name: &str, schedule_type: &str, schedule_value: &str) -> PyResult<String> {
-        let st = openjarvis_scheduler::ScheduleType::parse(schedule_type).ok_or_else(|| {
+        let st = nivos_scheduler::ScheduleType::parse(schedule_type).ok_or_else(|| {
             PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
                 "invalid schedule_type '{schedule_type}', expected cron/interval/once"
             ))
@@ -38,7 +38,7 @@ impl PySchedulerStore {
     }
 
     fn update_status(&self, id: &str, status: &str) -> PyResult<bool> {
-        let s = openjarvis_scheduler::TaskStatus::parse(status).ok_or_else(|| {
+        let s = nivos_scheduler::TaskStatus::parse(status).ok_or_else(|| {
             PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
                 "invalid status '{status}', expected active/paused/cancelled/completed"
             ))
@@ -57,5 +57,5 @@ impl PySchedulerStore {
 
 #[pyfunction]
 pub fn parse_cron_next(expr: &str, after: f64) -> Option<f64> {
-    openjarvis_scheduler::parse_cron_next(expr, after)
+    nivos_scheduler::parse_cron_next(expr, after)
 }

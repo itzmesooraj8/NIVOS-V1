@@ -15,15 +15,15 @@ import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from openjarvis.channels._stubs import (
+from nivos.channels._stubs import (
     BaseChannel,
     ChannelHandler,
     ChannelMessage,
     ChannelStatus,
 )
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.paths import get_config_dir
-from openjarvis.core.registry import ChannelRegistry
+from nivos.core.events import EventBus, EventType
+from nivos.core.paths import get_config_dir
+from nivos.core.registry import ChannelRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class WhatsAppBaileysChannel(BaseChannel):
     ----------
     auth_dir:
         Directory for Baileys auth state persistence.  Defaults to
-        ``~/.openjarvis/whatsapp_baileys_bridge/auth``.
+        ``~/.nivos/whatsapp_baileys_bridge/auth``.
     assistant_name:
         Display name used by the assistant in conversations.
     assistant_has_own_number:
@@ -68,7 +68,7 @@ class WhatsAppBaileysChannel(BaseChannel):
         self,
         *,
         auth_dir: str = "",
-        assistant_name: str = "Jarvis",
+        assistant_name: str = "Nivos",
         assistant_has_own_number: bool = False,
         bus: Optional[EventBus] = None,
     ) -> None:

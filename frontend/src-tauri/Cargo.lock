@@ -2827,7 +2827,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "openjarvis-desktop"
+name = "nivos-desktop"
 version = "1.0.1"
 dependencies = [
  "dispatch",

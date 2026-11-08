@@ -11,7 +11,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence
 
-from openjarvis.core.types import Message
+from nivos.core.types import Message
 
 
 @dataclass(slots=True)

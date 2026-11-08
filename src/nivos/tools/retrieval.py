@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
-from openjarvis.tools.storage._stubs import MemoryBackend
-from openjarvis.tools.storage.context import format_context
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
+from nivos.tools.storage._stubs import MemoryBackend
+from nivos.tools.storage.context import format_context
 
 
 @ToolRegistry.register("retrieval")

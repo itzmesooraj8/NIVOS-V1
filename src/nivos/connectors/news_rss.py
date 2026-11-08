@@ -21,9 +21,9 @@ from urllib.parse import urljoin, urlparse
 
 import httpx
 
-from openjarvis.connectors._stubs import BaseConnector, Document, SyncStatus
-from openjarvis.core.config import DEFAULT_CONFIG_DIR
-from openjarvis.core.registry import ConnectorRegistry
+from nivos.connectors._stubs import BaseConnector, Document, SyncStatus
+from nivos.core.config import DEFAULT_CONFIG_DIR
+from nivos.core.registry import ConnectorRegistry
 
 _DEFAULT_CONFIG_PATH = str(DEFAULT_CONFIG_DIR / "connectors" / "news_rss.json")
 _MAX_REDIRECTS = 5
@@ -44,7 +44,7 @@ class _FeedTarget:
 
 def _resolve_host_addresses(hostname: str, port: int) -> tuple[str, ...]:
     """Resolve once, reject every non-global answer, and return pinned IPs."""
-    from openjarvis.security.ssrf import is_private_ip
+    from nivos.security.ssrf import is_private_ip
 
     try:
         results = socket.getaddrinfo(
@@ -93,7 +93,7 @@ def _validate_feed_url(url: str) -> _FeedTarget:
     except ValueError as exc:
         raise ValueError("RSS feed URL contains an invalid port") from exc
 
-    from openjarvis.security.ssrf import check_ssrf
+    from nivos.security.ssrf import check_ssrf
 
     error = check_ssrf(url)
     if error:
@@ -188,7 +188,7 @@ def _request_feed(url: str, target: _FeedTarget) -> httpx.Response:
                         "application/rss+xml, application/atom+xml, "
                         "application/xml, text/xml;q=0.9, */*;q=0.1"
                     ),
-                    "User-Agent": "OpenJarvis-RSS/1.0",
+                    "User-Agent": "Nivos-RSS/1.0",
                     "Connection": "close",
                 },
             )
@@ -316,7 +316,7 @@ class NewsRSSConnector(BaseConnector):
             normalized.append({"name": name, "url": url})
         if not normalized:
             raise ValueError("At least one RSS feed URL is required")
-        from openjarvis.security.file_utils import secure_write_json
+        from nivos.security.file_utils import secure_write_json
 
         secure_write_json(self._config_path, {"feeds": normalized})
 

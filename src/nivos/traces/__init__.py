@@ -8,8 +8,8 @@ retrieved, which tools were called, and the final response.
 Traces are the primary input to the learning system.
 """
 
-from openjarvis.traces.analyzer import TraceAnalyzer
-from openjarvis.traces.collector import TraceCollector
-from openjarvis.traces.store import TraceStore
+from nivos.traces.analyzer import TraceAnalyzer
+from nivos.traces.collector import TraceCollector
+from nivos.traces.store import TraceStore
 
 __all__ = ["TraceAnalyzer", "TraceCollector", "TraceStore"]

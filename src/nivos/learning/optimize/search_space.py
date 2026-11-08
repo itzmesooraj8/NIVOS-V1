@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from openjarvis.learning.optimize.types import SearchDimension, SearchSpace
+from nivos.learning.optimize.types import SearchDimension, SearchSpace
 
 
 def build_search_space(config: Dict[str, Any]) -> SearchSpace:

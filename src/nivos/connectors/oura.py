@@ -13,9 +13,9 @@ from typing import Any, Dict, Iterator, Optional
 
 import httpx
 
-from openjarvis.connectors._stubs import BaseConnector, Document, SyncStatus
-from openjarvis.core.config import DEFAULT_CONFIG_DIR
-from openjarvis.core.registry import ConnectorRegistry
+from nivos.connectors._stubs import BaseConnector, Document, SyncStatus
+from nivos.core.config import DEFAULT_CONFIG_DIR
+from nivos.core.registry import ConnectorRegistry
 
 _OURA_API_BASE = "https://api.ouraring.com/v2/usercollection"
 _DEFAULT_TOKEN_PATH = str(DEFAULT_CONFIG_DIR / "connectors" / "oura.json")
@@ -58,7 +58,7 @@ class OuraConnector(BaseConnector):
         if not token:
             raise ValueError("An Oura personal access token is required")
         _oura_api_get(token, "personal_info")
-        from openjarvis.security.file_utils import secure_write_json
+        from nivos.security.file_utils import secure_write_json
 
         secure_write_json(self._token_path, {"token": token})
 

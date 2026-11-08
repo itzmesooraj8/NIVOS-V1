@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from openjarvis.analytics.client import AnalyticsClient
+    from nivos.analytics.client import AnalyticsClient
 
 logger = logging.getLogger(__name__)
 

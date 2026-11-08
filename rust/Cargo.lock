@@ -1098,24 +1098,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
-name = "openjarvis-a2a"
+name = "nivos-a2a"
 version = "0.1.0"
 dependencies = [
- "openjarvis-core",
+ "nivos-core",
  "serde",
  "serde_json",
  "uuid",
 ]
 
 [[package]]
-name = "openjarvis-agents"
+name = "nivos-agents"
 version = "0.1.0"
 dependencies = [
  "async-trait",
  "once_cell",
- "openjarvis-core",
- "openjarvis-engine",
- "openjarvis-tools",
+ "nivos-core",
+ "nivos-engine",
+ "nivos-tools",
  "parking_lot",
  "regex",
  "rig-core",
@@ -1128,7 +1128,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "openjarvis-core"
+name = "nivos-core"
 version = "0.1.0"
 dependencies = [
  "chrono",
@@ -1145,13 +1145,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "openjarvis-engine"
+name = "nivos-engine"
 version = "0.1.0"
 dependencies = [
  "async-trait",
  "futures",
  "once_cell",
- "openjarvis-core",
+ "nivos-core",
  "reqwest 0.12.28",
  "rig-core",
  "schemars",
@@ -1164,12 +1164,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "openjarvis-learning"
+name = "nivos-learning"
 version = "0.1.0"
 dependencies = [
  "once_cell",
- "openjarvis-core",
- "openjarvis-traces",
+ "nivos-core",
+ "nivos-traces",
  "parking_lot",
  "rand 0.10.3",
  "regex",
@@ -1182,11 +1182,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "openjarvis-mcp"
+name = "nivos-mcp"
 version = "0.1.0"
 dependencies = [
- "openjarvis-core",
- "openjarvis-tools",
+ "nivos-core",
+ "nivos-tools",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
@@ -1195,26 +1195,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "openjarvis-python"
+name = "nivos-python"
 version = "0.1.0"
 dependencies = [
  "once_cell",
- "openjarvis-a2a",
- "openjarvis-agents",
- "openjarvis-core",
- "openjarvis-engine",
- "openjarvis-learning",
- "openjarvis-mcp",
- "openjarvis-recipes",
- "openjarvis-scheduler",
- "openjarvis-security",
- "openjarvis-sessions",
- "openjarvis-skills",
- "openjarvis-telemetry",
- "openjarvis-templates",
- "openjarvis-tools",
- "openjarvis-traces",
- "openjarvis-workflow",
+ "nivos-a2a",
+ "nivos-agents",
+ "nivos-core",
+ "nivos-engine",
+ "nivos-learning",
+ "nivos-mcp",
+ "nivos-recipes",
+ "nivos-scheduler",
+ "nivos-security",
+ "nivos-sessions",
+ "nivos-skills",
+ "nivos-telemetry",
+ "nivos-templates",
+ "nivos-tools",
+ "nivos-traces",
+ "nivos-workflow",
  "parking_lot",
  "pyo3",
  "serde",
@@ -1223,21 +1223,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "openjarvis-recipes"
+name = "nivos-recipes"
 version = "0.1.0"
 dependencies = [
- "openjarvis-core",
+ "nivos-core",
  "serde",
  "serde_json",
  "toml",
 ]
 
 [[package]]
-name = "openjarvis-scheduler"
+name = "nivos-scheduler"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "openjarvis-core",
+ "nivos-core",
  "rusqlite",
  "serde",
  "serde_json",
@@ -1245,15 +1245,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "openjarvis-security"
+name = "nivos-security"
 version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
  "futures",
  "once_cell",
- "openjarvis-core",
- "openjarvis-engine",
+ "nivos-core",
+ "nivos-engine",
  "parking_lot",
  "regex",
  "rusqlite",
@@ -1268,10 +1268,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "openjarvis-sessions"
+name = "nivos-sessions"
 version = "0.1.0"
 dependencies = [
- "openjarvis-core",
+ "nivos-core",
  "rusqlite",
  "serde",
  "serde_json",
@@ -1279,25 +1279,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "openjarvis-skills"
+name = "nivos-skills"
 version = "0.1.0"
 dependencies = [
  "ed25519-dalek",
- "openjarvis-core",
+ "nivos-core",
  "serde",
  "serde_json",
  "toml",
 ]
 
 [[package]]
-name = "openjarvis-telemetry"
+name = "nivos-telemetry"
 version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
  "futures",
- "openjarvis-core",
- "openjarvis-engine",
+ "nivos-core",
+ "nivos-engine",
  "parking_lot",
  "rusqlite",
  "serde",
@@ -1309,25 +1309,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "openjarvis-templates"
+name = "nivos-templates"
 version = "0.1.0"
 dependencies = [
- "openjarvis-core",
+ "nivos-core",
  "serde",
  "serde_json",
  "toml",
 ]
 
 [[package]]
-name = "openjarvis-tools"
+name = "nivos-tools"
 version = "0.1.0"
 dependencies = [
  "chrono",
  "meval",
  "once_cell",
- "openjarvis-core",
- "openjarvis-engine",
- "openjarvis-security",
+ "nivos-core",
+ "nivos-engine",
+ "nivos-security",
  "parking_lot",
  "regex",
  "reqwest 0.12.28",
@@ -1345,11 +1345,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "openjarvis-traces"
+name = "nivos-traces"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "openjarvis-core",
+ "nivos-core",
  "parking_lot",
  "rusqlite",
  "serde",
@@ -1360,10 +1360,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "openjarvis-workflow"
+name = "nivos-workflow"
 version = "0.1.0"
 dependencies = [
- "openjarvis-core",
+ "nivos-core",
  "serde",
  "serde_json",
  "toml",

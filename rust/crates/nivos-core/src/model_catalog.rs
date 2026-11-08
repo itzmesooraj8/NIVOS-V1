@@ -1,6 +1,6 @@
 //! Built-in model catalog with well-known ModelSpec entries.
 //!
-//! Rust translation of `src/openjarvis/intelligence/model_catalog.py`.
+//! Rust translation of `src/nivos/intelligence/model_catalog.py`.
 
 use once_cell::sync::Lazy;
 use std::collections::HashMap;

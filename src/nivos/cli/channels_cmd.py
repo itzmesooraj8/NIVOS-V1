@@ -1,4 +1,4 @@
-"""``jarvis channels`` — manage messaging channels for the agent."""
+"""``nivos channels`` — manage messaging channels for the agent."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def channels() -> None:
 @channels.command("status")
 def channels_status() -> None:
     """Show status of all configured channels."""
-    from openjarvis.channels.imessage_daemon import is_running
+    from nivos.channels.imessage_daemon import is_running
 
     console = Console()
     table = Table(title="Channel Status")
@@ -35,7 +35,7 @@ def channels_status() -> None:
         table.add_row(
             "iMessage",
             "[dim]stopped[/dim]",
-            "jarvis channels imessage-start <contact>",
+            "nivos channels imessage-start <contact>",
         )
 
     console.print(table)
@@ -56,7 +56,7 @@ def imessage_start(
 
     CHAT_IDENTIFIER is the phone number or email to monitor.
     """
-    from openjarvis.channels.imessage_daemon import (
+    from nivos.channels.imessage_daemon import (
         is_running,
         run_daemon,
     )
@@ -74,7 +74,7 @@ def imessage_start(
             [
                 sys.executable,
                 "-m",
-                "openjarvis.channels.imessage_daemon",
+                "nivos.channels.imessage_daemon",
                 "--chat",
                 chat_identifier,
             ],
@@ -95,25 +95,25 @@ def imessage_start(
         )
         console.print("Press Ctrl+C to stop.\n")
 
-        from openjarvis.agents.deep_research import (
+        from nivos.agents.deep_research import (
             DeepResearchAgent,
         )
-        from openjarvis.connectors.retriever import (
+        from nivos.connectors.retriever import (
             TwoStageRetriever,
         )
-        from openjarvis.connectors.store import KnowledgeStore
-        from openjarvis.core.config import load_config
-        from openjarvis.core.events import EventBus
-        from openjarvis.engine.ollama import OllamaEngine
-        from openjarvis.security import setup_security
-        from openjarvis.tools.knowledge_search import (
+        from nivos.connectors.store import KnowledgeStore
+        from nivos.core.config import load_config
+        from nivos.core.events import EventBus
+        from nivos.engine.ollama import OllamaEngine
+        from nivos.security import setup_security
+        from nivos.tools.knowledge_search import (
             KnowledgeSearchTool,
         )
-        from openjarvis.tools.knowledge_sql import (
+        from nivos.tools.knowledge_sql import (
             KnowledgeSQLTool,
         )
-        from openjarvis.tools.scan_chunks import ScanChunksTool
-        from openjarvis.tools.think import ThinkTool
+        from nivos.tools.scan_chunks import ScanChunksTool
+        from nivos.tools.think import ThinkTool
 
         config = load_config()
         bus = EventBus(record_history=False)
@@ -154,7 +154,7 @@ def imessage_start(
 @channels.command("imessage-stop")
 def imessage_stop() -> None:
     """Stop the iMessage daemon."""
-    from openjarvis.channels.imessage_daemon import stop_daemon
+    from nivos.channels.imessage_daemon import stop_daemon
 
     console = Console()
     if stop_daemon():

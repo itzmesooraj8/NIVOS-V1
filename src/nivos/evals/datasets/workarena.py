@@ -18,8 +18,8 @@ import os
 import random
 from typing import Iterable, List, Optional
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
 
 logger = logging.getLogger(__name__)
 
@@ -213,7 +213,7 @@ class WorkArenaDataset(DatasetProvider):
     def create_task_env(self, record: EvalRecord):
         """Return a WorkArenaTaskEnv for the given record."""
         try:
-            from openjarvis.evals.execution.workarena_env import (
+            from nivos.evals.execution.workarena_env import (
                 WorkArenaTaskEnv,
             )
 

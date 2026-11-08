@@ -1,12 +1,12 @@
 # Adding a Mining Provider
 
-The `openjarvis.mining` subsystem follows the same registry pattern as engines,
+The `nivos.mining` subsystem follows the same registry pattern as engines,
 agents, tools, memory, and channels. New mining paths should be provider
 modules, not special cases in the CLI or engine layer.
 
 ## Provider Contract
 
-Every provider implements `openjarvis.mining.MiningProvider`:
+Every provider implements `nivos.mining.MiningProvider`:
 
 - `detect(hw, engine_id, model)` is pure capability detection. It must not
   start subprocesses, hit the network, or mutate state.
@@ -21,7 +21,7 @@ Register providers through `MinerRegistry` and expose idempotent
 `ensure_registered()`:
 
 ```python
-from openjarvis.core.registry import MinerRegistry
+from nivos.core.registry import MinerRegistry
 
 
 def ensure_registered() -> None:
@@ -45,7 +45,7 @@ that every provider actually needs.
 
 ## Sidecar Contract
 
-The runtime sidecar lives at `~/.openjarvis/runtime/mining.json`. Engine
+The runtime sidecar lives at `~/.nivos/runtime/mining.json`. Engine
 handoff is data-driven:
 
 - If the sidecar has `vllm_endpoint`, engine discovery registers

@@ -10,9 +10,9 @@ Ready-to-use patterns for the most common Nivos tasks. Each snippet is self-cont
 ## Ask a Question (3 lines)
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-with Jarvis() as j:
+with Nivos() as j:
     print(j.ask("What is the capital of France?"))
 ```
 
@@ -20,10 +20,10 @@ with Jarvis() as j:
 
 ```python
 import asyncio
-from openjarvis import Jarvis
+from nivos import Nivos
 
 async def main():
-    with Jarvis() as j:
+    with Nivos() as j:
         async for token in j.ask_stream("Tell me a story"):
             print(token, end="", flush=True)
 
@@ -33,9 +33,9 @@ asyncio.run(main())
 ## Agent with Tools (5 lines)
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-with Jarvis() as j:
+with Nivos() as j:
     result = j.ask_full(
         "Search the web for the latest Python release",
         agent="orchestrator",
@@ -47,9 +47,9 @@ with Jarvis() as j:
 ## Memory: Index + Search (6 lines)
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-with Jarvis() as j:
+with Nivos() as j:
     j.memory.index("./docs/", chunk_size=512)
     results = j.memory.search("deployment options")
     for r in results:
@@ -81,16 +81,16 @@ Any OpenAI-compatible client works against this endpoint.
 ## Docker Deployment (2 commands)
 
 ```bash
-docker build -t openjarvis .
-docker run -p 8000:8000 openjarvis serve --host 0.0.0.0
+docker build -t nivos .
+docker run -p 8000:8000 nivos serve --host 0.0.0.0
 ```
 
 ## Custom Tool (10 lines)
 
 ```python
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 @ToolRegistry.register("my_tool")
 class MyTool(BaseTool):
@@ -108,9 +108,9 @@ class MyTool(BaseTool):
 ## Multi-Model Routing (5 lines)
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis()
+j = Nivos()
 # Router automatically selects the best model per query
 simple = j.ask("What is 2+2?")            # routes to fast/cheap model
 complex = j.ask("Analyze this research paper...")  # routes to capable model
@@ -120,9 +120,9 @@ j.close()
 ## Human-in-the-Loop Confirmation (6 lines)
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-with Jarvis() as j:
+with Nivos() as j:
     result = j.ask_full(
         "Delete old log files in /tmp",
         agent="orchestrator",

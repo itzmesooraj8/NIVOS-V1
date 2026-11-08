@@ -8,9 +8,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, List, Optional
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 # ---------------------------------------------------------------------------
 # Hunk / patch parsing helpers
@@ -253,7 +253,7 @@ class ApplyPatchTool(BaseTool):
         path = Path(target)
 
         # Block sensitive files
-        from openjarvis.security.file_policy import is_sensitive_file
+        from nivos.security.file_policy import is_sensitive_file
 
         if is_sensitive_file(path):
             return ToolResult(

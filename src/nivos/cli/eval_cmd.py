@@ -1,4 +1,4 @@
-"""``jarvis eval`` — evaluation framework CLI commands."""
+"""``nivos eval`` — evaluation framework CLI commands."""
 
 from __future__ import annotations
 
@@ -59,8 +59,8 @@ KNOWN_BENCHMARKS = {
 }
 
 KNOWN_BACKENDS = {
-    "jarvis-direct": "Engine-level inference (local or cloud)",
-    "jarvis-agent": "Agent-level inference with tool calling",
+    "nivos-direct": "Engine-level inference (local or cloud)",
+    "nivos-agent": "Agent-level inference with tool calling",
     "hermes": "Real Hermes Agent (Nous Research) via subprocess",
     "openclaw": "Real OpenClaw via Node subprocess",
     "terminalbench-native": (
@@ -138,13 +138,13 @@ def eval_list() -> None:
 @click.option(
     "--backend",
     "backend",
-    default="jarvis-direct",
+    default="nivos-direct",
     type=click.Choice(
-        ["jarvis-direct", "jarvis-agent", "hermes", "openclaw", "terminalbench-native"]
+        ["nivos-direct", "nivos-agent", "hermes", "openclaw", "terminalbench-native"]
     ),
     help=(
         "Inference backend. For hermes/openclaw, also pass --base-url and "
-        "--api-key (or set JARVIS_BACKEND_BASE_URL/JARVIS_BACKEND_API_KEY)."
+        "--api-key (or set NIVOS_BACKEND_BASE_URL/NIVOS_BACKEND_API_KEY)."
     ),
 )
 @click.option(
@@ -153,9 +153,9 @@ def eval_list() -> None:
     default=None,
     help=(
         "OpenAI-compatible endpoint for the model under eval. Required for "
-        "hermes/openclaw; for jarvis-direct/jarvis-agent/terminalbench-native "
+        "hermes/openclaw; for nivos-direct/nivos-agent/terminalbench-native "
         "it bypasses engine discovery and targets this URL directly "
-        "(env: JARVIS_BACKEND_BASE_URL)."
+        "(env: NIVOS_BACKEND_BASE_URL)."
     ),
 )
 @click.option(
@@ -165,14 +165,14 @@ def eval_list() -> None:
     help=(
         "API key for the --base-url endpoint, sent as a Bearer token. "
         "Required for hermes/openclaw; optional for first-party backends "
-        "(env: JARVIS_BACKEND_API_KEY)."
+        "(env: NIVOS_BACKEND_API_KEY)."
     ),
 )
 @click.option(
     "--agent",
     "agent_name",
     default=None,
-    help="Agent name for jarvis-agent backend.",
+    help="Agent name for nivos-agent backend.",
 )
 @click.option(
     "-e",
@@ -317,7 +317,7 @@ def eval_run(
     # Config-driven mode: load TOML suite, expand, run all
     if config_path is not None:
         try:
-            from openjarvis.evals.core.config import expand_suite, load_eval_config
+            from nivos.evals.core.config import expand_suite, load_eval_config
         except ImportError:
             console.print(
                 "[red]Eval framework not available. "
@@ -348,7 +348,7 @@ def eval_run(
         )
 
         try:
-            from openjarvis.evals.cli import _run_single
+            from nivos.evals.cli import _run_single
         except ImportError:
             console.print("[red]Eval CLI module not available.[/red]")
             sys.exit(1)
@@ -380,7 +380,7 @@ def eval_run(
         console.print(f"[yellow]Warning: unknown benchmark '{benchmark}'[/yellow]")
 
     try:
-        from openjarvis.evals.core.types import RunConfig
+        from nivos.evals.core.types import RunConfig
     except ImportError:
         console.print(
             "[red]Eval framework not available. "
@@ -414,13 +414,13 @@ def eval_run(
         # OpenAI-compatible endpoint for the model under eval. Required for
         # hermes/openclaw (Spec §6.2); honored by first-party backends too on
         # this CLI path. Falls back to env vars so users can also set
-        # JARVIS_BACKEND_BASE_URL/JARVIS_BACKEND_API_KEY.
-        base_url=base_url or os.environ.get("JARVIS_BACKEND_BASE_URL"),
-        api_key=api_key or os.environ.get("JARVIS_BACKEND_API_KEY"),
+        # NIVOS_BACKEND_BASE_URL/NIVOS_BACKEND_API_KEY.
+        base_url=base_url or os.environ.get("NIVOS_BACKEND_BASE_URL"),
+        api_key=api_key or os.environ.get("NIVOS_BACKEND_API_KEY"),
     )
 
     try:
-        from openjarvis.evals.cli import _run_single
+        from nivos.evals.cli import _run_single
 
         console.print(
             f"[cyan]Benchmark:[/cyan] {benchmark}\n"

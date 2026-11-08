@@ -8,7 +8,7 @@ from typing import Any
 
 import uvicorn
 
-from openjarvis.cli.daemon_cmd import clear_server_state, record_server_state
+from nivos.cli.daemon_cmd import clear_server_state, record_server_state
 
 
 class DaemonServer(uvicorn.Server):

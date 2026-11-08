@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from openjarvis.learning.optimize.types import (
+from nivos.learning.optimize.types import (
     BenchmarkScore,
     OptimizationRun,
     SampleScore,
@@ -316,7 +316,7 @@ class OptimizationStore:
     @staticmethod
     def _json_to_search_space(raw: str) -> SearchSpace:
         """Deserialize a SearchSpace from JSON."""
-        from openjarvis.learning.optimize.types import SearchDimension
+        from nivos.learning.optimize.types import SearchDimension
 
         data = json.loads(raw)
         dims = []

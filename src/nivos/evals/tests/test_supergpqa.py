@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from openjarvis.evals.core.types import EvalRecord
-from openjarvis.evals.tests.conftest import MockBackend
+from nivos.evals.core.types import EvalRecord
+from nivos.evals.tests.conftest import MockBackend
 
 
 class TestSuperGPQAScorer:
@@ -25,7 +25,7 @@ class TestSuperGPQAScorer:
         )
 
     def test_correct_extraction(self):
-        from openjarvis.evals.scorers.supergpqa_mcq import SuperGPQAScorer
+        from nivos.evals.scorers.supergpqa_mcq import SuperGPQAScorer
 
         backend = MockBackend(responses={})
         backend._default_response = "B"
@@ -39,7 +39,7 @@ class TestSuperGPQAScorer:
         assert meta["candidate_letter"] == "B"
 
     def test_incorrect_extraction(self):
-        from openjarvis.evals.scorers.supergpqa_mcq import SuperGPQAScorer
+        from nivos.evals.scorers.supergpqa_mcq import SuperGPQAScorer
 
         backend = MockBackend()
         backend._default_response = "A"
@@ -52,7 +52,7 @@ class TestSuperGPQAScorer:
         assert meta["candidate_letter"] == "A"
 
     def test_missing_reference(self):
-        from openjarvis.evals.scorers.supergpqa_mcq import SuperGPQAScorer
+        from nivos.evals.scorers.supergpqa_mcq import SuperGPQAScorer
 
         backend = MockBackend()
         scorer = SuperGPQAScorer(backend, "gpt-4o")
@@ -64,7 +64,7 @@ class TestSuperGPQAScorer:
         assert meta["reason"] == "missing_reference_letter"
 
     def test_no_extraction(self):
-        from openjarvis.evals.scorers.supergpqa_mcq import SuperGPQAScorer
+        from nivos.evals.scorers.supergpqa_mcq import SuperGPQAScorer
 
         backend = MockBackend()
         backend._default_response = "NONE"
@@ -77,7 +77,7 @@ class TestSuperGPQAScorer:
         assert meta["reason"] == "no_choice_letter_extracted"
 
     def test_valid_letters_from_options(self):
-        from openjarvis.evals.scorers.supergpqa_mcq import SuperGPQAScorer
+        from nivos.evals.scorers.supergpqa_mcq import SuperGPQAScorer
 
         backend = MockBackend()
         scorer = SuperGPQAScorer(backend, "gpt-4o")
@@ -92,7 +92,7 @@ class TestSuperGPQAScorer:
         assert letters == "ABCD"
 
     def test_extraction_with_verbose_response(self):
-        from openjarvis.evals.scorers.supergpqa_mcq import SuperGPQAScorer
+        from nivos.evals.scorers.supergpqa_mcq import SuperGPQAScorer
 
         backend = MockBackend()
         backend._default_response = "THE ANSWER IS: C"

@@ -4,16 +4,16 @@ from __future__ import annotations
 
 from typing import Any, List
 
-from openjarvis.core.types import ToolResult
-from openjarvis.mcp.client import MCPClient
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.types import ToolResult
+from nivos.mcp.client import MCPClient
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 
 class MCPToolAdapter(BaseTool):
     """Wraps a single MCP-hosted tool as a native BaseTool.
 
     This adapter enables tools discovered from external MCP servers to
-    be used seamlessly within OpenJarvis agents via the ``ToolExecutor``.
+    be used seamlessly within Nivos agents via the ``ToolExecutor``.
 
     Parameters
     ----------

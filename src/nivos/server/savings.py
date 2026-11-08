@@ -11,11 +11,11 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List
 
 # Source of truth for the methodology-version constant lives in
-# `openjarvis.core.types` so the telemetry layer can read it without
+# `nivos.core.types` so the telemetry layer can read it without
 # crossing the server → telemetry layering. Re-exported here for
 # backward compatibility with existing imports of `from
-# openjarvis.server.savings import TOKEN_COUNTING_VERSION`.
-from openjarvis.core.types import TOKEN_COUNTING_VERSION  # noqa: E402,F401
+# nivos.server.savings import TOKEN_COUNTING_VERSION`.
+from nivos.core.types import TOKEN_COUNTING_VERSION  # noqa: E402,F401
 
 # ---------------------------------------------------------------------------
 # Cloud provider pricing (USD per 1M tokens)

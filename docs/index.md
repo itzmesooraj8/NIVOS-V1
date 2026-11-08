@@ -79,9 +79,9 @@ Nivos is that stack. It is a framework for local-first personal AI, built around
 === "Python SDK"
 
     ```python
-    from openjarvis import Jarvis
+    from nivos import Nivos
 
-    j = Jarvis()                              # auto-detect engine
+    j = Nivos()                              # auto-detect engine
     response = j.ask("Explain quicksort.")
     print(response)
     ```
@@ -191,7 +191,7 @@ Nivos is built around five composable layers. Each has a clean interface and can
 
     Five-primitive design, registry pattern, query flow, and cross-cutting learning.
 
--   **[API Reference](api-reference/openjarvis/index.md)**
+-   **[API Reference](api-reference/nivos/index.md)**
 
     ---
 
@@ -220,7 +220,7 @@ Read the [blog post](https://nivos.ai/) for the architecture details and experim
 ## Citation
 
 ```bibtex
-@misc{saadfalcon2026openjarvispersonalaipersonal,
+@misc{saadfalcon2026nivospersonalaipersonal,
       title={Nivos: Personal AI, On Personal Devices}, 
       author={Jon Saad-Falcon and Avanika Narayan and Robby Manihani and Tanvir Bhathal and Herumb Shandilya and Hakki Orhun Akengin and Gabriel Bo and Andrew Park and Matthew Hart and Caia Costello and Chuan Li and Christopher Ré and Azalia Mirhoseini},
       year={2026},

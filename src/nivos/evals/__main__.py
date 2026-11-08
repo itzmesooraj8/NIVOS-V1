@@ -1,6 +1,6 @@
-"""Allow running as ``python -m openjarvis.evals``."""
+"""Allow running as ``python -m nivos.evals``."""
 
-from openjarvis.evals.cli import main
+from nivos.evals.cli import main
 
 if __name__ == "__main__":
     main()

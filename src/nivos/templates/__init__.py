@@ -1,6 +1,6 @@
 """Agent template system — pre-configured agent manifests."""
 
-from openjarvis.templates.agent_templates import (
+from nivos.templates.agent_templates import (
     AgentTemplate,
     discover_templates,
     load_template,

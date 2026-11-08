@@ -10,7 +10,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any, Optional, Type
 
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.types import EvalRecord
 
 LOGGER = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class PinchBenchTaskEnv:
         Called by AgenticRunner after agent execution, before QueryTrace
         is constructed. Builds transcript from raw EventRecorder events.
         """
-        from openjarvis.evals.scorers.pinchbench import (
+        from nivos.evals.scorers.pinchbench import (
             events_to_transcript,
             grade_pinchbench_task,
         )

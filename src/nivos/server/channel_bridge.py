@@ -6,9 +6,9 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-from openjarvis.channels._stubs import BaseChannel, ChannelStatus
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.server.session_store import SessionStore
+from nivos.channels._stubs import BaseChannel, ChannelStatus
+from nivos.core.events import EventBus, EventType
+from nivos.server.session_store import SessionStore
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ class ChannelBridge:
             if result is not None:
                 return result
 
-        # Regular chat — route to JarvisSystem.ask()
+        # Regular chat — route to NivosSystem.ask()
         return self._handle_chat(sender_id, stripped, channel_type, max_length)
 
     # --------------------------------------------------------------
@@ -268,7 +268,7 @@ class ChannelBridge:
                 result = self._system.ask(query)
                 response_text = result.get("content", str(result))
             except Exception:
-                logger.exception("Error in JarvisSystem.ask()")
+                logger.exception("Error in NivosSystem.ask()")
                 error_msg = (
                     "Sorry, I couldn't process that right now. Try again in a moment."
                 )

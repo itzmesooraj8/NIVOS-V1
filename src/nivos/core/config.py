@@ -1,6 +1,6 @@
 """Configuration loading, hardware detection, and engine recommendation.
 
-User configuration lives at ``~/.openjarvis/config.toml``.  ``load_config()``
+User configuration lives at ``~/.nivos/config.toml``.  ``load_config()``
 detects hardware, fills sensible defaults, then overlays any user overrides
 found in the TOML file.
 """
@@ -25,7 +25,7 @@ from typing import (
     get_type_hints,
 )
 
-from openjarvis.core.paths import (
+from nivos.core.paths import (
     ConfigurationError,
     get_cache_dir,
     get_config_dir,
@@ -34,12 +34,12 @@ from openjarvis.core.paths import (
 )
 
 if TYPE_CHECKING:
-    # Only used by type-checkers (mypy/pyright) for the ``JarvisConfig.mining``
+    # Only used by type-checkers (mypy/pyright) for the ``NivosConfig.mining``
     # field annotation. The runtime import is deferred inside
     # ``_parse_mining_section()`` to break the import cycle:
     # ``mining/_stubs.py`` imports ``HardwareInfo`` from this module at its
     # top level.
-    from openjarvis.mining._stubs import MiningConfig
+    from nivos.mining._stubs import MiningConfig
 
 try:
     import tomllib  # Python 3.11+
@@ -51,8 +51,8 @@ except ModuleNotFoundError:
 # ---------------------------------------------------------------------------
 
 # Legacy names, kept for the ~45 modules that import them. They are resolved
-# once at import via the env-aware resolver in ``openjarvis.core.paths`` (the
-# install-script model: ``OPENJARVIS_HOME`` / ``XDG_DATA_HOME`` are set before
+# once at import via the env-aware resolver in ``nivos.core.paths`` (the
+# install-script model: ``NIVOS_HOME`` / ``XDG_DATA_HOME`` are set before
 # the process starts). They are real module attributes — not computed lazily —
 # so existing tests can ``monkeypatch.setattr`` them and so dataclass-instance
 # defaults stay consistent. Code that must react to a mid-process env change
@@ -65,7 +65,7 @@ DEFAULT_CONFIG_PATH = get_config_path()
 
 def _ensure_config_dir() -> Path:
     """Ensure the config directory exists with restrictive permissions."""
-    from openjarvis.security.file_utils import secure_mkdir
+    from nivos.security.file_utils import secure_mkdir
 
     return secure_mkdir(get_config_dir())
 
@@ -314,7 +314,7 @@ def recommend_model(hw: HardwareInfo, engine: str) -> str:
     For Lemonade, prefer the validated Qwen3.6 35B A3B GGUF default.
     For other local engines, use the generic Qwen3.5 tier mapping.
     """
-    from openjarvis.intelligence.model_catalog import BUILTIN_MODELS
+    from nivos.intelligence.model_catalog import BUILTIN_MODELS
 
     available_gb = _available_memory_gb(hw)
     if available_gb <= 0:
@@ -740,7 +740,7 @@ class ACEOptimizerConfig:
     inference time.
 
     See https://github.com/ace-agent/ace for the upstream reference.
-    Install via ``pip install -e openjarvis[learning-ace]`` once the
+    Install via ``pip install -e nivos[learning-ace]`` once the
     optional dep is available (ACE is not on PyPI as of v1.0.1; the
     extra installs from the upstream git repo).
     """
@@ -753,7 +753,7 @@ class ACEOptimizerConfig:
 
     # Provider passed to ACE (``sambanova`` | ``together`` | ``openai``
     # | ``commonstack``). We default to ``openai`` since that's what
-    # most OpenJarvis users have credentials for.
+    # most Nivos users have credentials for.
     api_provider: str = "openai"
 
     # Run parameters. Defaults mirror ACE's offline-mode quickstart.
@@ -764,9 +764,9 @@ class ACEOptimizerConfig:
     max_tokens: int = 4_096
 
     # Where ACE writes intermediate playbooks + final_results.json.
-    # Empty string defaults to ``~/.openjarvis/learning/ace/<task>/``.
+    # Empty string defaults to ``~/.nivos/learning/ace/<task>/``.
     save_dir: str = ""
-    task_name: str = "openjarvis"
+    task_name: str = "nivos"
 
     # Standard filter / threshold knobs shared with DSPy / GEPA.
     min_traces: int = 20
@@ -969,7 +969,7 @@ class StorageConfig:
     chunk_overlap: int = 64
 
     # Automatic memory service — extracts durable facts from conversations in
-    # the background and persists them across sessions (see openjarvis.memory).
+    # the background and persists them across sessions (see nivos.memory).
     enabled: bool = False  # start the memory service with serve/chat
     backend: str = "local"  # fact-store backend ("local" = on-disk JSONL)
     extraction_model: str = ""  # model for fact extraction ("" = active model)
@@ -1140,10 +1140,10 @@ class AgentConfig:
     system_prompt_path: str = ""  # path to system prompt file (.txt, .md)
     context_from_memory: bool = True  # inject relevant memory context into prompts
     default_system_prompt: str = (
-        "You are OpenJarvis, a helpful AI assistant running locally on the "
+        "You are Nivos, a helpful AI assistant running locally on the "
         "user's own hardware. You are not a cloud service, and you are not "
         "Claude, ChatGPT, Gemini, or any other branded assistant. If asked "
-        "who or what you are, identify yourself as OpenJarvis. Respond "
+        "who or what you are, identify yourself as Nivos. Respond "
         "helpfully, concisely, and accurately."
     )
 
@@ -1213,7 +1213,7 @@ class AnalyticsConfig:
 
     Separate concern from :class:`TelemetryConfig`, which stores local
     FLOPs/energy/inference metrics in SQLite. This controls anonymized
-    usage events sent to the OpenJarvis team's PostHog instance to
+    usage events sent to the Nivos team's PostHog instance to
     measure setup success, retention, feature usage, and churn.
 
     Backend properties are limited to declared usage metadata; external
@@ -1383,8 +1383,8 @@ class BlueBubblesChannelConfig:
 class WhatsAppBaileysChannelConfig:
     """Per-channel config for WhatsApp via Baileys protocol."""
 
-    auth_dir: str = ""  # Defaults to ~/.openjarvis/whatsapp_auth
-    assistant_name: str = "Jarvis"
+    auth_dir: str = ""  # Defaults to ~/.nivos/whatsapp_auth
+    assistant_name: str = "Nivos"
     assistant_has_own_number: bool = False
 
 
@@ -1556,7 +1556,7 @@ class SandboxConfig:
     """Container sandbox settings."""
 
     enabled: bool = False
-    image: str = "openjarvis-sandbox:latest"
+    image: str = "nivos-sandbox:latest"
     timeout: int = 300
     workspace: str = ""
     mount_allowlist_path: str = ""
@@ -1572,7 +1572,7 @@ class SchedulerConfig:
 
     enabled: bool = False
     poll_interval: int = 60
-    db_path: str = ""  # Defaults to ~/.openjarvis/scheduler.db
+    db_path: str = ""  # Defaults to ~/.nivos/scheduler.db
 
 
 @dataclass(slots=True)
@@ -1598,7 +1598,7 @@ class SessionConfig:
 class A2AConfig:
     """Settings for A2A integrations and configuration diagnostics.
 
-    The built-in ``jarvis serve`` app does not mount A2A endpoints; ``enabled``
+    The built-in ``nivos serve`` app does not mount A2A endpoints; ``enabled``
     does not change that app's route surface. Library integrations using
     ``A2AServer`` must configure their transport and authentication explicitly.
     """
@@ -1715,7 +1715,7 @@ class SkillsConfig:
     auto_discover: bool = True
     auto_sync: bool = False
     nudge_interval: int = 15
-    index_repo: str = "https://github.com/openjarvis/skill-index.git"
+    index_repo: str = "https://github.com/nivos/skill-index.git"
     index_dir: str = field(
         default_factory=lambda: str(get_config_dir() / "skill-index")
     )
@@ -1740,7 +1740,7 @@ class DigestConfig:
     enabled: bool = False
     schedule: str = "0 6 * * *"
     timezone: str = "America/Los_Angeles"
-    persona: str = "jarvis"
+    persona: str = "nivos"
     sections: List[str] = field(
         default_factory=lambda: ["messages", "calendar", "health", "world"]
     )
@@ -1768,8 +1768,8 @@ class DigestConfig:
 
 
 @dataclass
-class JarvisConfig:
-    """Top-level configuration for OpenJarvis."""
+class NivosConfig:
+    """Top-level configuration for Nivos."""
 
     installed_at: str = ""
     installer_version: str = ""
@@ -1818,7 +1818,7 @@ class JarvisConfig:
         source = self.__dict__.get("_config_source_path")
         if source is not None:
             return source
-        if custom_path := os.environ.get("OPENJARVIS_CONFIG"):
+        if custom_path := (os.environ.get("NIVOS_CONFIG") or os.environ.get("OPENJARVIS_CONFIG")):
             return Path(custom_path).expanduser().resolve()
         return get_config_path()
 
@@ -1841,9 +1841,9 @@ class JarvisConfig:
 # Config key validation
 # ---------------------------------------------------------------------------
 
-# Sections that users may set via ``jarvis config set``.
+# Sections that users may set via ``nivos config set``.
 # ``hardware`` is auto-detected and not user-settable.
-_SETTABLE_SECTIONS = frozenset(JarvisConfig.__dataclass_fields__.keys()) - {
+_SETTABLE_SECTIONS = frozenset(NivosConfig.__dataclass_fields__.keys()) - {
     "hardware",
     "mining",
 }
@@ -1853,7 +1853,7 @@ def validate_config_key(dotted_key: str) -> type:
     """Validate a dotted config key and return the leaf field's Python type.
 
     Raises :class:`ValueError` when the key does not map to a known field.
-    The function walks the ``JarvisConfig`` dataclass hierarchy using
+    The function walks the ``NivosConfig`` dataclass hierarchy using
     ``dataclasses.fields()``.
 
     Examples::
@@ -1882,7 +1882,7 @@ def validate_config_key(dotted_key: str) -> type:
         )
 
     # Walk the dataclass tree
-    current_cls = JarvisConfig
+    current_cls = NivosConfig
     for i, part in enumerate(parts):
         field_map = {f.name: f for f in dc_fields(current_cls)}
         if part not in field_map:
@@ -1897,7 +1897,7 @@ def validate_config_key(dotted_key: str) -> type:
         fld_type = fld.type
         if isinstance(fld_type, str):
             # Evaluate forward references in the config module namespace
-            import openjarvis.core.config as _cfg_mod
+            import nivos.core.config as _cfg_mod
 
             fld_type = eval(fld_type, vars(_cfg_mod))  # noqa: S307
 
@@ -1996,7 +1996,7 @@ def _apply_toml_section(target: Any, section: Dict[str, Any]) -> None:
                 setattr(target, key, value)
 
 
-def _migrate_toml_data(data: Dict[str, Any], cfg: "JarvisConfig") -> None:
+def _migrate_toml_data(data: Dict[str, Any], cfg: "NivosConfig") -> None:
     """Migrate old-format TOML keys to new structure in-place.
 
     Handles cross-section moves that can't be solved by backward-compat
@@ -2043,7 +2043,7 @@ def _parse_mining_section(data: dict) -> Optional["MiningConfig"]:
     # imports ``HardwareInfo`` from this module at its top level. By the
     # time ``_parse_mining_section`` is called, ``core.config`` is already
     # fully initialized in ``sys.modules``, so the cycle is harmless.
-    from openjarvis.mining._stubs import MiningConfig, PoolTarget, SoloTarget
+    from nivos.mining._stubs import MiningConfig, PoolTarget, SoloTarget
 
     section = data["mining"]
     extra = section.get("extra", {}) or {}
@@ -2072,24 +2072,24 @@ def _parse_mining_section(data: dict) -> Optional["MiningConfig"]:
 
 
 @functools.lru_cache(maxsize=1)
-def load_config(path: Optional[Path] = None) -> JarvisConfig:
+def load_config(path: Optional[Path] = None) -> NivosConfig:
     """Detect hardware, build defaults, overlay TOML overrides.
 
     Parameters
     ----------
     path:
-        Explicit config file. If not set, uses ``OPENJARVIS_CONFIG`` when set,
-        otherwise ``~/.openjarvis/config.toml``.
+        Explicit config file. If not set, uses ``NIVOS_CONFIG`` when set,
+        otherwise ``~/.nivos/config.toml``.
     """
     _ensure_config_dir()
     hw = detect_hardware()
-    cfg = JarvisConfig(hardware=hw)
+    cfg = NivosConfig(hardware=hw)
     cfg.engine.default = recommend_engine(hw)
 
     if path is not None:
         config_path = Path(path).expanduser().resolve()
-    elif os.environ.get("OPENJARVIS_CONFIG"):
-        config_path = Path(os.environ["OPENJARVIS_CONFIG"]).expanduser().resolve()
+    elif custom_cfg := (os.environ.get("NIVOS_CONFIG") or os.environ.get("OPENJARVIS_CONFIG")):
+        config_path = Path(custom_cfg).expanduser().resolve()
     else:
         config_path = get_config_path()
     cfg._config_path = config_path
@@ -2169,7 +2169,7 @@ def load_config(path: Optional[Path] = None) -> JarvisConfig:
 
 
 # ---------------------------------------------------------------------------
-# Default TOML generation (for ``jarvis init``)
+# Default TOML generation (for ``nivos init``)
 # ---------------------------------------------------------------------------
 
 
@@ -2192,9 +2192,9 @@ def generate_minimal_toml(
             f"# set to remote URL if engine runs elsewhere\n"
         )
     return f"""\
-# OpenJarvis configuration
+# Nivos configuration
 # Hardware: {hw.cpu_brand} ({hw.cpu_count} cores, {hw.ram_gb} GB RAM){gpu_comment}
-# Full reference config: jarvis init --full
+# Full reference config: nivos init --full
 
 [engine]
 default = "{engine}"
@@ -2213,7 +2213,7 @@ enabled = ["code_interpreter", "web_search", "file_read", "shell_exec"]
 def generate_default_toml(
     hw: HardwareInfo, engine: str | None = None, *, host: str | None = None
 ) -> str:
-    """Render a commented TOML string suitable for ``~/.openjarvis/config.toml``."""
+    """Render a commented TOML string suitable for ``~/.nivos/config.toml``."""
     engine = engine or recommend_engine(hw)
     model = recommend_model(hw, engine)
     gpu_line = ""
@@ -2225,8 +2225,8 @@ def generate_default_toml(
         model_comment = "  # recommended for your hardware"
 
     result = f"""\
-# OpenJarvis configuration
-# Generated by `jarvis init`
+# Nivos configuration
+# Generated by `nivos init`
 #
 # Hardware: {hw.cpu_brand} ({hw.cpu_count} cores, {hw.ram_gb} GB RAM)
 {gpu_line}
@@ -2298,8 +2298,8 @@ context_from_memory = true
 default_backend = "sqlite"
 
 # Automatic long-term memory: extracts durable facts from conversations in the
-# background and persists them. Starts/stops with `jarvis serve` and
-# `jarvis chat`; manage stored facts with `jarvis memory list` / `clear`.
+# background and persists them. Starts/stops with `nivos serve` and
+# `nivos chat`; manage stored facts with `nivos memory list` / `clear`.
 [memory]
 enabled = false               # set true to enable the memory service
 backend = "local"             # fact-store backend (local = on-disk JSONL)
@@ -2427,7 +2427,7 @@ ssrf_protection = true
 
 # [sandbox]
 # enabled = false
-# image = "openjarvis-sandbox:latest"
+# image = "nivos-sandbox:latest"
 # timeout = 300
 # max_concurrent = 5
 # runtime = "docker"
@@ -2435,11 +2435,11 @@ ssrf_protection = true
 # [scheduler]
 # enabled = false
 # poll_interval = 60
-# db_path = ""                # Defaults to ~/.openjarvis/scheduler.db
+# db_path = ""                # Defaults to ~/.nivos/scheduler.db
 
 # [channel.whatsapp_baileys]
-# auth_dir = ""               # Defaults to ~/.openjarvis/whatsapp_auth
-# assistant_name = "Jarvis"
+# auth_dir = ""               # Defaults to ~/.nivos/whatsapp_auth
+# assistant_name = "Nivos"
 # assistant_has_own_number = false
 """
     if host:
@@ -2479,7 +2479,7 @@ __all__ = [
     "IRCChannelConfig",
     "IntelligenceConfig",
     "IntelligenceLearningConfig",
-    "JarvisConfig",
+    "NivosConfig",
     "LearningConfig",
     "LMStudioEngineConfig",
     "LlamaCppEngineConfig",

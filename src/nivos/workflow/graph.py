@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from typing import Dict, List, Optional, Set, Tuple
 
-from openjarvis.workflow.types import WorkflowEdge, WorkflowNode
+from nivos.workflow.types import WorkflowEdge, WorkflowNode
 
 
 class WorkflowGraph:

@@ -5,10 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, List, Optional
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._paths import resolve_allowed_dirs
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.core.registry import ToolRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._paths import resolve_allowed_dirs
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 # Maximum file size to read (1 MB)
 _MAX_SIZE_BYTES = 1_048_576
@@ -72,7 +72,7 @@ class FileReadTool(BaseTool):
             # A relative name means "inside the sandbox", not the process cwd.
             path = self._allowed_dirs[0] / path
         # Block sensitive files (secrets, credentials, keys)
-        from openjarvis.security.file_policy import is_sensitive_file
+        from nivos.security.file_policy import is_sensitive_file
 
         if is_sensitive_file(path):
             return ToolResult(
@@ -114,7 +114,7 @@ class FileReadTool(BaseTool):
                 success=False,
             )
         try:
-            from openjarvis._rust_bridge import get_rust_module
+            from nivos._rust_bridge import get_rust_module
 
             _rust = get_rust_module()
             text = _rust.FileReadTool().execute(str(path))

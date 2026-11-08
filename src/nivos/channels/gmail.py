@@ -9,14 +9,14 @@ import threading
 from email.mime.text import MIMEText
 from typing import Any, Dict, List, Optional
 
-from openjarvis.channels._stubs import (
+from nivos.channels._stubs import (
     BaseChannel,
     ChannelHandler,
     ChannelMessage,
     ChannelStatus,
 )
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.registry import ChannelRegistry
+from nivos.core.events import EventBus, EventType
+from nivos.core.registry import ChannelRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +131,7 @@ class GmailChannel(BaseChannel):
         except ImportError:
             logger.warning(
                 "Google API libraries not installed; "
-                "install with: pip install openjarvis[channel-gmail]",
+                "install with: pip install nivos[channel-gmail]",
             )
             self._status = ChannelStatus.ERROR
         except Exception:
@@ -171,7 +171,7 @@ class GmailChannel(BaseChannel):
             msg["From"] = self._user_id
             msg["Subject"] = (metadata or {}).get(
                 "subject",
-                "Message from OpenJarvis",
+                "Message from Nivos",
             )
 
             raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")

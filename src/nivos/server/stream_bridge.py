@@ -14,10 +14,10 @@ from typing import AsyncGenerator
 
 from fastapi.responses import StreamingResponse
 
-from openjarvis.agents._stubs import AgentContext, BaseAgent
-from openjarvis.core.events import Event, EventBus, EventType
-from openjarvis.engine._base import looks_like_context_length_error
-from openjarvis.server.models import (
+from nivos.agents._stubs import AgentContext, BaseAgent
+from nivos.core.events import Event, EventBus, EventType
+from nivos.engine._base import looks_like_context_length_error
+from nivos.server.models import (
     ChatCompletionChunk,
     ChatCompletionRequest,
     DeltaMessage,
@@ -123,7 +123,7 @@ class AgentStreamBridge:
         ctx = AgentContext()
         # Build conversation context from prior messages
         if len(self._request.messages) > 1:
-            from openjarvis.core.types import Message, Role
+            from nivos.core.types import Message, Role
 
             for m in self._request.messages[:-1]:
                 role = Role(m.role) if m.role in {r.value for r in Role} else Role.USER
@@ -197,7 +197,7 @@ class AgentStreamBridge:
             except Exception as exc:
                 import logging
 
-                logger = logging.getLogger("openjarvis.server")
+                logger = logging.getLogger("nivos.server")
                 logger.error("Agent stream error: %s", exc, exc_info=True)
 
                 error_str = str(exc)

@@ -10,7 +10,7 @@ from unittest import mock
 
 from click.testing import CliRunner
 
-from openjarvis.cli import gui_cmd
+from nivos.cli import gui_cmd
 
 
 def test_gui_custom_ports_use_project_root_and_same_origin_proxy(
@@ -77,7 +77,7 @@ def test_gui_custom_ports_use_project_root_and_same_origin_proxy(
         "--strictPort",
     ]
     assert kwargs["cwd"] == frontend
-    assert kwargs["env"]["OPENJARVIS_VITE_PROXY_TARGET"] == "http://127.0.0.1:8123"
+    assert kwargs["env"]["NIVOS_VITE_PROXY_TARGET"] == "http://127.0.0.1:8123"
     assert kwargs["env"]["VITE_API_URL"] == ""
     wait_for_port.assert_called_once_with(
         process, "127.0.0.1", 5180, on_poll=owner_type.return_value.refresh
@@ -126,7 +126,7 @@ def test_gui_single_port_normal_mode(tmp_path: Path) -> None:
     frontend = tmp_path / "frontend"
     frontend.mkdir()
     (frontend / "index.html").write_text("<html></html>")
-    static = tmp_path / "src" / "openjarvis" / "server" / "static"
+    static = tmp_path / "src" / "nivos" / "server" / "static"
     static.mkdir(parents=True)
     (static / "index.html").write_text("<html></html>")
 
@@ -151,7 +151,7 @@ def test_gui_single_port_normal_mode(tmp_path: Path) -> None:
 def test_gui_normal_mode_builds_static_when_outdated(tmp_path: Path) -> None:
     frontend = tmp_path / "frontend"
     frontend.mkdir()
-    static = tmp_path / "src" / "openjarvis" / "server" / "static"
+    static = tmp_path / "src" / "nivos" / "server" / "static"
     static.mkdir(parents=True)
 
     with (

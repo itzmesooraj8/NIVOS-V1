@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 
 #[pyclass(name = "Recipe")]
 pub struct PyRecipe {
-    inner: openjarvis_recipes::Recipe,
+    inner: nivos_recipes::Recipe,
 }
 
 #[pymethods]
@@ -61,7 +61,7 @@ impl PyRecipe {
 
 #[pyfunction]
 pub fn load_recipe(toml_str: &str) -> PyResult<PyRecipe> {
-    let recipe = openjarvis_recipes::load_recipe(toml_str)
+    let recipe = nivos_recipes::load_recipe(toml_str)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e))?;
     Ok(PyRecipe { inner: recipe })
 }

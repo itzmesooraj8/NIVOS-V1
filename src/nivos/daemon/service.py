@@ -5,12 +5,12 @@ from pathlib import Path
 
 SYSTEMD_TEMPLATE = """\
 [Unit]
-Description=OpenJarvis Gateway Daemon
+Description=Nivos Gateway Daemon
 After=network.target
 
 [Service]
 Type=simple
-ExecStart={python} -m openjarvis.daemon.gateway
+ExecStart={python} -m nivos.daemon.gateway
 Restart=on-failure
 RestartSec=5
 
@@ -25,12 +25,12 @@ LAUNCHD_TEMPLATE = """\
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.openjarvis.gateway</string>
+    <string>com.nivos.gateway</string>
     <key>ProgramArguments</key>
     <array>
         <string>{python}</string>
         <string>-m</string>
-        <string>openjarvis.daemon.gateway</string>
+        <string>nivos.daemon.gateway</string>
     </array>
     <key>RunAtLoad</key>
     <true/>

@@ -146,10 +146,10 @@ def create_sandbox_runner(config: Any = None) -> Any:
 
     # Fall back to Docker ContainerRunner
     try:
-        from openjarvis.sandbox.runner import ContainerRunner
+        from nivos.sandbox.runner import ContainerRunner
 
         return ContainerRunner(
-            image=getattr(config, "image", "openjarvis-sandbox:latest"),
+            image=getattr(config, "image", "nivos-sandbox:latest"),
             timeout=getattr(config, "timeout", 300),
         )
     except ImportError:

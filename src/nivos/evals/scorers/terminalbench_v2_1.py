@@ -12,8 +12,8 @@ Two modes:
    present). The scorer runs the script in the task container and then the
    tests, same as before.
 
-This means the same scorer supports both ``backend = "jarvis-direct"`` and
-``backend = "jarvis-agent"`` TB v2.1 configs.
+This means the same scorer supports both ``backend = "nivos-direct"`` and
+``backend = "nivos-agent"`` TB v2.1 configs.
 """
 
 from __future__ import annotations
@@ -25,8 +25,8 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
-from openjarvis.evals.core.scorer import Scorer
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.scorer import Scorer
+from nivos.evals.core.types import EvalRecord
 
 LOGGER = logging.getLogger(__name__)
 

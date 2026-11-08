@@ -1,10 +1,10 @@
 # Code Assistant — agent with code execution, file I/O, and shell access
-# Copy to ~/.openjarvis/config.toml
+# Copy to ~/.nivos/config.toml
 #
 # Usage:
-#   jarvis ask "Write a Python script that parses CSV files"
-#   jarvis ask "Read main.py and explain the architecture"
-#   jarvis ask --agent orchestrator "Find and fix the bug in test_utils.py"
+#   nivos ask "Write a Python script that parses CSV files"
+#   nivos ask "Read main.py and explain the architecture"
+#   nivos ask --agent orchestrator "Find and fix the bug in test_utils.py"
 
 [engine]
 default = "ollama"

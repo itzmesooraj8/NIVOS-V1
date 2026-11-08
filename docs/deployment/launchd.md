@@ -8,7 +8,7 @@ Before installing the service, ensure that Nivos is installed and the `nivos` co
 
 ```bash
 git clone https://github.com/nivos/nivos.git && cd Nivos && uv sync --extra server
-which jarvis  # Verify the installation path
+which nivos  # Verify the installation path
 ```
 
 Also ensure that an inference engine (such as Ollama) is running and accessible on the machine.
@@ -18,8 +18,8 @@ Also ensure that an inference engine (such as Ollama) is running and accessible 
 Copy the plist file to `~/Library/LaunchAgents` and load it:
 
 ```bash
-cp deploy/launchd/com.openjarvis.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.openjarvis.plist
+cp deploy/launchd/com.nivos.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.nivos.plist
 ```
 
 The service starts immediately (due to `RunAtLoad`) and will automatically restart at each login.
@@ -28,17 +28,17 @@ The service starts immediately (due to `RunAtLoad`) and will automatically resta
     The plist binds `127.0.0.1` — reachable from this Mac but not the network,
     the right default for a personal device, and no API key is needed. To
     expose it on your LAN, change the host to `0.0.0.0` **and** uncomment the
-    `EnvironmentVariables` block to set `OPENJARVIS_API_KEY`
+    `EnvironmentVariables` block to set `NIVOS_API_KEY`
     (`nivos auth generate-key`); an unauthenticated `0.0.0.0` server refuses
     to start.
 
 Verify it is running:
 
 ```bash
-launchctl list | grep openjarvis
+launchctl list | grep nivos
 ```
 
-You should see a line with the PID and the label `com.openjarvis`. A `0` in the status column indicates the service is running normally.
+You should see a line with the PID and the label `com.nivos`. A `0` in the status column indicates the service is running normally.
 
 Confirm the server is responding:
 
@@ -48,7 +48,7 @@ curl http://localhost:8000/health
 
 ## Plist Reference
 
-The provided plist file at `deploy/launchd/com.openjarvis.plist`:
+The provided plist file at `deploy/launchd/com.nivos.plist`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -57,10 +57,10 @@ The provided plist file at `deploy/launchd/com.openjarvis.plist`:
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.openjarvis</string>
+    <string>com.nivos</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/jarvis</string>
+        <string>/usr/local/bin/nivos</string>
         <string>serve</string>
         <string>--host</string>
         <string>127.0.0.1</string>
@@ -70,7 +70,7 @@ The provided plist file at `deploy/launchd/com.openjarvis.plist`:
     <!-- To expose on the LAN: set host to 0.0.0.0 and uncomment this block.
     <key>EnvironmentVariables</key>
     <dict>
-        <key>OPENJARVIS_API_KEY</key>
+        <key>NIVOS_API_KEY</key>
         <string>REPLACE_WITH_A_REAL_KEY</string>
     </dict>
     -->
@@ -79,9 +79,9 @@ The provided plist file at `deploy/launchd/com.openjarvis.plist`:
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/tmp/openjarvis.stdout.log</string>
+    <string>/tmp/nivos.stdout.log</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/openjarvis.stderr.log</string>
+    <string>/tmp/nivos.stderr.log</string>
 </dict>
 </plist>
 ```
@@ -90,12 +90,12 @@ The provided plist file at `deploy/launchd/com.openjarvis.plist`:
 
 | Key                  | Value                          | Description                                                                                          |
 |----------------------|--------------------------------|------------------------------------------------------------------------------------------------------|
-| `Label`              | `com.openjarvis`               | Unique identifier for the service. Used with `launchctl` commands to manage the service.             |
+| `Label`              | `com.nivos`               | Unique identifier for the service. Used with `launchctl` commands to manage the service.             |
 | `ProgramArguments`   | `["/usr/local/bin/nivos", "serve", "--host", "127.0.0.1", "--port", "8000"]` | The command and arguments to execute. Binds loopback by default; see the note above to expose on the LAN with an API key. |
 | `RunAtLoad`          | `true`                         | Start the service immediately when the plist is loaded (and on each login).                          |
 | `KeepAlive`          | `true`                         | Automatically restart the service if it exits for any reason. launchd monitors the process and relaunches it. |
-| `StandardOutPath`    | `/tmp/openjarvis.stdout.log`   | File where standard output is written. Contains server startup messages and access logs.             |
-| `StandardErrorPath`  | `/tmp/openjarvis.stderr.log`   | File where standard error is written. Contains error messages and stack traces.                      |
+| `StandardOutPath`    | `/tmp/nivos.stdout.log`   | File where standard output is written. Contains server startup messages and access logs.             |
+| `StandardErrorPath`  | `/tmp/nivos.stderr.log`   | File where standard error is written. Contains error messages and stack traces.                      |
 
 ## Viewing Logs
 
@@ -103,13 +103,13 @@ Server output is written to the two log files specified in the plist:
 
 ```bash
 # View standard output (startup messages, access logs)
-cat /tmp/openjarvis.stdout.log
+cat /tmp/nivos.stdout.log
 
 # View standard error (errors, warnings)
-cat /tmp/openjarvis.stderr.log
+cat /tmp/nivos.stderr.log
 
 # Follow logs in real time
-tail -f /tmp/openjarvis.stdout.log /tmp/openjarvis.stderr.log
+tail -f /tmp/nivos.stdout.log /tmp/nivos.stderr.log
 ```
 
 !!! tip "Persistent log location"
@@ -117,9 +117,9 @@ tail -f /tmp/openjarvis.stdout.log /tmp/openjarvis.stderr.log
 
     ```xml
     <key>StandardOutPath</key>
-    <string>/Users/yourname/.openjarvis/openjarvis.stdout.log</string>
+    <string>/Users/yourname/.nivos/nivos.stdout.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/yourname/.openjarvis/openjarvis.stderr.log</string>
+    <string>/Users/yourname/.nivos/nivos.stderr.log</string>
     ```
 
     After changing the plist, unload and reload the service for the changes to take effect.
@@ -130,10 +130,10 @@ tail -f /tmp/openjarvis.stdout.log /tmp/openjarvis.stderr.log
 
 ```bash
 # Load the service (starts it due to RunAtLoad)
-launchctl load ~/Library/LaunchAgents/com.openjarvis.plist
+launchctl load ~/Library/LaunchAgents/com.nivos.plist
 
 # Unload the service (stops it and prevents it from starting at login)
-launchctl unload ~/Library/LaunchAgents/com.openjarvis.plist
+launchctl unload ~/Library/LaunchAgents/com.nivos.plist
 ```
 
 ### Starting and Stopping
@@ -142,10 +142,10 @@ If the service is loaded but you want to manually stop or start it without unloa
 
 ```bash
 # Stop the service
-launchctl stop com.openjarvis
+launchctl stop com.nivos
 
 # Start the service
-launchctl start com.openjarvis
+launchctl start com.nivos
 ```
 
 !!! warning
@@ -154,8 +154,8 @@ launchctl start com.openjarvis
 ### Checking Status
 
 ```bash
-# List all loaded services matching "openjarvis"
-launchctl list | grep openjarvis
+# List all loaded services matching "nivos"
+launchctl list | grep nivos
 ```
 
 The output columns are:
@@ -164,7 +164,7 @@ The output columns are:
 |--------|----------------------------------------------------------------|
 | PID    | Process ID (or `-` if not running)                             |
 | Status | Last exit status (`0` = normal)                                |
-| Label  | The service label (`com.openjarvis`)                           |
+| Label  | The service label (`com.nivos`)                           |
 
 ## Configuration Changes
 
@@ -175,7 +175,7 @@ Edit the `ProgramArguments` array in the plist. Each argument must be a separate
 ```xml
 <key>ProgramArguments</key>
 <array>
-    <string>/usr/local/bin/jarvis</string>
+    <string>/usr/local/bin/nivos</string>
     <string>serve</string>
     <string>--host</string>
     <string>127.0.0.1</string>
@@ -191,7 +191,7 @@ Add additional arguments to the array:
 ```xml
 <key>ProgramArguments</key>
 <array>
-    <string>/usr/local/bin/jarvis</string>
+    <string>/usr/local/bin/nivos</string>
     <string>serve</string>
     <string>--host</string>
     <string>0.0.0.0</string>
@@ -211,9 +211,9 @@ Add an `EnvironmentVariables` dictionary to the plist:
 ```xml
 <key>EnvironmentVariables</key>
 <dict>
-    <key>OPENJARVIS_ENGINE_DEFAULT</key>
+    <key>NIVOS_ENGINE_DEFAULT</key>
     <string>ollama</string>
-    <key>OPENJARVIS_OLLAMA_HOST</key>
+    <key>NIVOS_OLLAMA_HOST</key>
     <string>http://localhost:11434</string>
 </dict>
 ```
@@ -225,7 +225,7 @@ If `nivos` is installed in a virtual environment or a non-standard location, upd
 ```xml
 <key>ProgramArguments</key>
 <array>
-    <string>/Users/yourname/.local/bin/jarvis</string>
+    <string>/Users/yourname/.local/bin/nivos</string>
     <string>serve</string>
     <string>--host</string>
     <string>0.0.0.0</string>
@@ -239,8 +239,8 @@ If `nivos` is installed in a virtual environment or a non-standard location, upd
 After editing the plist file, unload and reload the service:
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.openjarvis.plist
-launchctl load ~/Library/LaunchAgents/com.openjarvis.plist
+launchctl unload ~/Library/LaunchAgents/com.nivos.plist
+launchctl load ~/Library/LaunchAgents/com.nivos.plist
 ```
 
 ## System-Wide Installation
@@ -252,9 +252,9 @@ The instructions above install the service as a **user agent** (runs only when y
 3. Optionally add a `UserName` key to run as a specific user.
 
 ```bash
-sudo cp deploy/launchd/com.openjarvis.plist /Library/LaunchDaemons/
-sudo chown root:wheel /Library/LaunchDaemons/com.openjarvis.plist
-sudo launchctl load /Library/LaunchDaemons/com.openjarvis.plist
+sudo cp deploy/launchd/com.nivos.plist /Library/LaunchDaemons/
+sudo chown root:wheel /Library/LaunchDaemons/com.nivos.plist
+sudo launchctl load /Library/LaunchDaemons/com.nivos.plist
 ```
 
 !!! note
@@ -262,5 +262,5 @@ sudo launchctl load /Library/LaunchDaemons/com.openjarvis.plist
 
     ```xml
     <key>UserName</key>
-    <string>openjarvis</string>
+    <string>nivos</string>
     ```

@@ -12,8 +12,8 @@ import logging
 from dataclasses import dataclass
 from typing import Callable
 
-from openjarvis.learning.spec_search.gate.regression import regression_check
-from openjarvis.learning.spec_search.models import BenchmarkSnapshot
+from nivos.learning.spec_search.gate.regression import regression_check
+from nivos.learning.spec_search.models import BenchmarkSnapshot
 
 logger = logging.getLogger(__name__)
 

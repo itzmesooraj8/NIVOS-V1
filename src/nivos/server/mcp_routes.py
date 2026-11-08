@@ -14,12 +14,12 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from openjarvis.core.paths import get_config_dir
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.mcp.client import MCPClient
-from openjarvis.mcp.transport import StdioTransport, StreamableHTTPTransport
-from openjarvis.plugins.loader import get_plugin_loader
-from openjarvis.tools.mcp_adapter import MCPToolAdapter
+from nivos.core.paths import get_config_dir
+from nivos.core.registry import ToolRegistry
+from nivos.mcp.client import MCPClient
+from nivos.mcp.transport import StdioTransport, StreamableHTTPTransport
+from nivos.plugins.loader import get_plugin_loader
+from nivos.tools.mcp_adapter import MCPToolAdapter
 
 logger = logging.getLogger(__name__)
 

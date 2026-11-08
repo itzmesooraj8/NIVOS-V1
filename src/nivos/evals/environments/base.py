@@ -7,7 +7,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
 
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.types import EvalRecord
 
 _THINK_TAG_RE = re.compile(r"<think>.*?</think>", re.DOTALL)
 

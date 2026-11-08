@@ -8,10 +8,10 @@ import httpx
 import pytest
 import respx
 
-from openjarvis.core.registry import EngineRegistry
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._base import EngineConnectionError
-from openjarvis.engine.openai_compat_engines import VLLMEngine
+from nivos.core.registry import EngineRegistry
+from nivos.core.types import Message, Role
+from nivos.engine._base import EngineConnectionError
+from nivos.engine.openai_compat_engines import VLLMEngine
 
 VLLM_HOST = "http://testhost:8000"
 NEW_MODELS = ["gpt-oss:120b", "qwen3:8b", "glm-4.7-flash", "trinity-mini"]

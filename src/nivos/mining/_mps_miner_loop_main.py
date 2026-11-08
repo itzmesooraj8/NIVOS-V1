@@ -35,7 +35,7 @@ from ._miner_loop_main import (
     _send_request,
 )
 
-logger = logging.getLogger("openjarvis.mining.mps_miner_loop")
+logger = logging.getLogger("nivos.mining.mps_miner_loop")
 
 
 class MpsNoisyGemmAdapter:
@@ -280,7 +280,7 @@ async def _main_loop(args: argparse.Namespace) -> None:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(prog="openjarvis.mining._mps_miner_loop_main")
+    p = argparse.ArgumentParser(prog="nivos.mining._mps_miner_loop_main")
     p.add_argument("--gateway-host", default="127.0.0.1")
     p.add_argument("--gateway-port", type=int, default=8337)
     p.add_argument("--m", type=int, default=128)

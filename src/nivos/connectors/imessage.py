@@ -22,9 +22,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Iterator, List, Optional, Tuple
 
-from openjarvis.connectors._stubs import BaseConnector, Document, SyncStatus
-from openjarvis.core.registry import ConnectorRegistry
-from openjarvis.tools._stubs import ToolSpec
+from nivos.connectors._stubs import BaseConnector, Document, SyncStatus
+from nivos.core.registry import ConnectorRegistry
+from nivos.tools._stubs import ToolSpec
 
 # ---------------------------------------------------------------------------
 # Constants

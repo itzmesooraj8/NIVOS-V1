@@ -1,10 +1,10 @@
-"""Load system prompt and few-shot overrides from $OPENJARVIS_HOME.
+"""Load system prompt and few-shot overrides from $NIVOS_HOME.
 
 LLM-guided spec search (M1) proposes edits that get written to disk by appliers.
 This module lets agents pick those overrides up at runtime:
 
-- System prompts: ``$OPENJARVIS_HOME/agents/{name}/system_prompt.md``
-- Few-shot exemplars: ``$OPENJARVIS_HOME/agents/{name}/few_shot.json``
+- System prompts: ``$NIVOS_HOME/agents/{name}/system_prompt.md``
+- Few-shot exemplars: ``$NIVOS_HOME/agents/{name}/few_shot.json``
 
 Override files are templates — they may contain ``{tool_descriptions}`` and
 other format placeholders that the agent fills in via ``.format()``, exactly
@@ -18,23 +18,23 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from openjarvis.core.paths import get_config_dir
+from nivos.core.paths import get_config_dir
 
 logger = logging.getLogger(__name__)
 
 
-def _openjarvis_home() -> Path:
-    """Resolve the OpenJarvis root, honoring OPENJARVIS_HOME / XDG_DATA_HOME."""
+def _nivos_home() -> Path:
+    """Resolve the Nivos root, honoring NIVOS_HOME / XDG_DATA_HOME."""
     return get_config_dir()
 
 
 def load_system_prompt_override(agent_name: str) -> str | None:
     """Return the override prompt for *agent_name*, or ``None``.
 
-    Looks for ``$OPENJARVIS_HOME/agents/<agent_name>/system_prompt.md``.
-    ``OPENJARVIS_HOME`` defaults to ``~/.openjarvis`` when unset.
+    Looks for ``$NIVOS_HOME/agents/<agent_name>/system_prompt.md``.
+    ``NIVOS_HOME`` defaults to ``~/.nivos`` when unset.
     """
-    home = _openjarvis_home()
+    home = _nivos_home()
     prompt_path = home / "agents" / agent_name / "system_prompt.md"
     if not prompt_path.exists():
         return None
@@ -56,10 +56,10 @@ def load_few_shot_exemplars(
 ) -> list[dict[str, Any]]:
     """Return few-shot exemplars for *agent_name*, or empty list.
 
-    Looks for ``$OPENJARVIS_HOME/agents/<agent_name>/few_shot.json``.
+    Looks for ``$NIVOS_HOME/agents/<agent_name>/few_shot.json``.
     Expected format: ``[{"input": "Q", "output": "A"}, ...]``.
     """
-    home = _openjarvis_home()
+    home = _nivos_home()
     fs_path = home / "agents" / agent_name / "few_shot.json"
     if not fs_path.exists():
         return []

@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, Iterator, List, Optional
 
-from openjarvis.tools._stubs import ToolSpec
+from nivos.tools._stubs import ToolSpec
 
 
 @dataclass(slots=True)

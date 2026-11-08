@@ -30,8 +30,8 @@ except ImportError:
     torch = None  # type: ignore[assignment]
     F = None  # type: ignore[assignment]
 
-from openjarvis.core.registry import LearningRegistry
-from openjarvis.learning._stubs import IntelligenceLearningPolicy
+from nivos.core.registry import LearningRegistry
+from nivos.learning._stubs import IntelligenceLearningPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +120,7 @@ class OrchestratorGRPOTrainer:
     # -- Initialisation ------------------------------------------------------
 
     def _init_model(self) -> None:
-        from openjarvis.learning.intelligence.orchestrator.policy_model import (
+        from nivos.learning.intelligence.orchestrator.policy_model import (
             OrchestratorPolicyModel,
         )
 
@@ -232,12 +232,12 @@ class OrchestratorGRPOTrainer:
         all_advantages: list[float] = []
         all_rewards: list[float] = []
 
-        from openjarvis.learning.intelligence.orchestrator.reward import (
+        from nivos.learning.intelligence.orchestrator.reward import (
             MultiObjectiveReward,
             Normalizers,
             RewardWeights,
         )
-        from openjarvis.learning.intelligence.orchestrator.types import (
+        from nivos.learning.intelligence.orchestrator.types import (
             Episode,
         )
 

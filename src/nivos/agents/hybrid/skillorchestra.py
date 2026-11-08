@@ -10,7 +10,7 @@ agent that maximizes weighted competence minus λ·cost.
 What we reproduce here: the **deployment-time** step only. The full
 explore/learn/select pipeline requires multi-model serving + the FRAMES
 wiki retriever + a multi-hour LLM-driven learning loop that's out of
-scope for the OpenJarvis port (and was out of scope in the hybrid harness).
+scope for the Nivos port (and was out of scope in the hybrid harness).
 
 So this agent uses the orchestrator's *inference logic* with a small
 handbook that's synthesized per-task on the fly: cloud (Opus) reads the
@@ -32,11 +32,11 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Optional, Tuple
 
-from openjarvis.agents._stubs import AgentContext
-from openjarvis.agents.hybrid._base import LocalCloudAgent
-from openjarvis.agents.hybrid._prices import supports_temperature
-from openjarvis.agents.hybrid.mini_swe_agent import run_swe_agent_loop
-from openjarvis.core.registry import AgentRegistry
+from nivos.agents._stubs import AgentContext
+from nivos.agents.hybrid._base import LocalCloudAgent
+from nivos.agents.hybrid._prices import supports_temperature
+from nivos.agents.hybrid.mini_swe_agent import run_swe_agent_loop
+from nivos.core.registry import AgentRegistry
 
 # ---------- Skill catalog (compact, GAIA-relevant) ----------
 #

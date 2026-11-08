@@ -14,8 +14,8 @@ from __future__ import annotations
 import random
 from typing import Any, Dict, Iterable, List, Optional
 
-from openjarvis.evals.core.dataset import DatasetProvider
-from openjarvis.evals.core.types import EvalRecord
+from nivos.evals.core.dataset import DatasetProvider
+from nivos.evals.core.types import EvalRecord
 
 _PROMPT_TEMPLATE = """Answer the following question using ONLY the provided documents. Cite which document(s) support each claim (e.g., [Doc 1], [Doc 3]).
 

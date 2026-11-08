@@ -13,7 +13,7 @@ Swift bindings at install time::
     DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \\
         uv pip install -e '.[afm]'
 
-    jarvis ask --engine afm --model afm-3-core "..."
+    nivos ask --engine afm --model afm-3-core "..."
 
 Measurement caveats specific to this backend — read before comparing numbers
 against MLX or Ollama:
@@ -31,7 +31,7 @@ against MLX or Ollama:
   label only — :meth:`AppleFMEngine.describe` records the SDK version, context
   size and host chip so a run can be attributed after the fact.
 * There is no Private Cloud Compute path in the Python SDK, which suits
-  OpenJarvis: off-device inference would make the on-device energy
+  Nivos: off-device inference would make the on-device energy
   measurement meaningless.
 """
 
@@ -52,22 +52,22 @@ from typing import Any, Dict, List, Optional
 # engine simply does not register.
 import apple_fm_sdk as fm
 
-from openjarvis.core.registry import EngineRegistry
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._apple_fm_support import (
+from nivos.core.registry import EngineRegistry
+from nivos.core.types import Message, Role
+from nivos.engine._apple_fm_support import (
     MODEL_LABELS,
     SnapshotAccumulator,
     build_options_kwargs,
     parse_sampling_spec,
     validate_model_label,
 )
-from openjarvis.engine._async_loop import AsyncLoopRunner
-from openjarvis.engine._base import (
+from nivos.engine._async_loop import AsyncLoopRunner
+from nivos.engine._base import (
     EngineConnectionError,
     EngineContextLengthError,
     InferenceEngine,
 )
-from openjarvis.engine._stubs import StreamChunk
+from nivos.engine._stubs import StreamChunk
 
 logger = logging.getLogger(__name__)
 
@@ -218,7 +218,7 @@ class AppleFMEngine(InferenceEngine):
 
     def _ensure_loop(self) -> AsyncLoopRunner:
         if self._loop is None:
-            self._loop = AsyncLoopRunner(name="openjarvis-afm")
+            self._loop = AsyncLoopRunner(name="nivos-afm")
         return self._loop
 
     def health(self) -> bool:

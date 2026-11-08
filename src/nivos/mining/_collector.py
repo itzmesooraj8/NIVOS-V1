@@ -1,4 +1,4 @@
-# src/openjarvis/mining/_collector.py
+# src/nivos/mining/_collector.py
 """Background poller for mining telemetry.
 
 Shipped in v1 but not wired into the gateway daemon. v1's status command
@@ -15,8 +15,8 @@ from typing import Any
 
 import httpx
 
-from openjarvis.mining._metrics import parse_gateway_metrics
-from openjarvis.mining._stubs import MiningStats, Sidecar
+from nivos.mining._metrics import parse_gateway_metrics
+from nivos.mining._stubs import MiningStats, Sidecar
 
 log = logging.getLogger(__name__)
 

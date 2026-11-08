@@ -1,6 +1,6 @@
 """Secure file and directory creation helpers.
 
-All OpenJarvis data files under ``~/.openjarvis/`` should be created
+All Nivos data files under ``~/.nivos/`` should be created
 through these helpers to ensure consistent, restrictive permissions.
 """
 

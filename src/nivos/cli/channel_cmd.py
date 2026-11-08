@@ -1,4 +1,4 @@
-"""``jarvis channel`` -- channel management commands."""
+"""``nivos channel`` -- channel management commands."""
 
 from __future__ import annotations
 
@@ -24,8 +24,8 @@ def _get_channel(
     Resolution order: ``--channel-type`` flag >
     ``config.channel.default_channel`` > error.
     """
-    import openjarvis.channels  # noqa: F401 -- trigger registration
-    from openjarvis.core.registry import ChannelRegistry
+    import nivos.channels  # noqa: F401 -- trigger registration
+    from nivos.core.registry import ChannelRegistry
 
     key = channel_type or config.channel.default_channel
     if not key:
@@ -171,7 +171,7 @@ def channel_list(
 ) -> None:
     """List available channels."""
     console = Console()
-    from openjarvis.core.config import load_config
+    from nivos.core.config import load_config
 
     config = load_config()
 
@@ -213,7 +213,7 @@ def channel_send(
 ) -> None:
     """Send a message to a channel."""
     console = Console()
-    from openjarvis.core.config import load_config
+    from nivos.core.config import load_config
 
     config = load_config()
 
@@ -243,7 +243,7 @@ def channel_status(
 ) -> None:
     """Show channel connection status."""
     console = Console()
-    from openjarvis.core.config import load_config
+    from nivos.core.config import load_config
 
     config = load_config()
 

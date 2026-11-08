@@ -27,7 +27,7 @@ What it does
    for transient blips; we layer our own loop on top for sustained walls).
 2. Wraps ``chat.completions.create`` with:
 
-   - A **per-org semaphore** (``OPENJARVIS_OPENAI_MAX_CONCURRENCY``,
+   - A **per-org semaphore** (``NIVOS_OPENAI_MAX_CONCURRENCY``,
      default 4) that throttles sustained concurrency. Single bursts are
      fine — prepaid quotas wall on sustained rate, not on a brief spike.
      The semaphore is **only acquired for cloud calls** (``api.openai.com``);
@@ -45,14 +45,14 @@ What it does
 Env knobs
 ---------
 
-- ``OPENJARVIS_OPENAI_MAX_CONCURRENCY`` (default ``4``) — semaphore
+- ``NIVOS_OPENAI_MAX_CONCURRENCY`` (default ``4``) — semaphore
   capacity. Set to e.g. ``2`` if the wall is still hit; set to ``0`` to
   disable throttling entirely (passes through to the SDK).
-- ``OPENJARVIS_OPENAI_MAX_RETRIES`` (default ``8``) — outer retry loop
+- ``NIVOS_OPENAI_MAX_RETRIES`` (default ``8``) — outer retry loop
   cap (separate from the SDK's own ``max_retries``).
-- ``OPENJARVIS_OPENAI_RETRY_BASE`` (default ``2.0``) — base seconds for
+- ``NIVOS_OPENAI_RETRY_BASE`` (default ``2.0``) — base seconds for
   exponential backoff. Schedule is ``min(60, base * 2**attempt) * jitter``.
-- ``OPENJARVIS_OPENAI_RETRY_CAP`` (default ``60.0``) — max single-step
+- ``NIVOS_OPENAI_RETRY_CAP`` (default ``60.0``) — max single-step
   sleep in seconds.
 """
 
@@ -85,10 +85,10 @@ def _env_float(name: str, default: float) -> float:
         return default
 
 
-_MAX_CONCURRENCY = _env_int("OPENJARVIS_OPENAI_MAX_CONCURRENCY", 4)
-_MAX_RETRIES = _env_int("OPENJARVIS_OPENAI_MAX_RETRIES", 8)
-_RETRY_BASE = _env_float("OPENJARVIS_OPENAI_RETRY_BASE", 2.0)
-_RETRY_CAP = _env_float("OPENJARVIS_OPENAI_RETRY_CAP", 60.0)
+_MAX_CONCURRENCY = _env_int("NIVOS_OPENAI_MAX_CONCURRENCY", 4)
+_MAX_RETRIES = _env_int("NIVOS_OPENAI_MAX_RETRIES", 8)
+_RETRY_BASE = _env_float("NIVOS_OPENAI_RETRY_BASE", 2.0)
+_RETRY_CAP = _env_float("NIVOS_OPENAI_RETRY_CAP", 60.0)
 
 
 # Single process-wide semaphore. ``BoundedSemaphore(0)`` would block

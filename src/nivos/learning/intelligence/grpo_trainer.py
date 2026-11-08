@@ -10,9 +10,9 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Protocol, runtime_checkable
 
-from openjarvis.core.config import GRPOConfig
-from openjarvis.core.registry import LearningRegistry
-from openjarvis.learning._stubs import IntelligenceLearningPolicy
+from nivos.core.config import GRPOConfig
+from nivos.core.registry import LearningRegistry
+from nivos.learning._stubs import IntelligenceLearningPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +138,7 @@ class GRPOTrainer:
 
     def _mine_prompts(self, trace_store: Any) -> List[str]:
         """Extract unique prompts from the trace store."""
-        from openjarvis.learning.training.data import TrainingDataMiner
+        from nivos.learning.training.data import TrainingDataMiner
 
         miner = TrainingDataMiner(trace_store, min_quality=0.5)
         agent_filter = self.config.agent_filter or None
@@ -363,7 +363,7 @@ class _GRPOLearningPolicy(IntelligenceLearningPolicy):
         pass
 
     def update(self, trace_store: Any, **kwargs: object) -> Dict[str, Any]:
-        from openjarvis.core.config import GRPOConfig
+        from nivos.core.config import GRPOConfig
 
         config = GRPOConfig()
         trainer = GRPOTrainer(config)

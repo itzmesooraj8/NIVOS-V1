@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 from typing import List, Optional
 
-from openjarvis.core.registry import ModelRegistry
-from openjarvis.core.types import RoutingContext
-from openjarvis.learning._stubs import QueryAnalyzer, RouterPolicy
+from nivos.core.registry import ModelRegistry
+from nivos.core.types import RoutingContext
+from nivos.learning._stubs import QueryAnalyzer, RouterPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ def build_routing_context(
     When *model* is provided, the suggested token budget is adjusted
     for thinking models that need extra headroom.
     """
-    from openjarvis.learning.routing.complexity import (
+    from nivos.learning.routing.complexity import (
         adjust_tokens_for_model,
         score_complexity,
     )

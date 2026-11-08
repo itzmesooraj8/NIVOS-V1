@@ -10,9 +10,9 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List
 
-from openjarvis.core.config import SFTConfig
-from openjarvis.core.registry import LearningRegistry
-from openjarvis.learning._stubs import IntelligenceLearningPolicy
+from nivos.core.config import SFTConfig
+from nivos.core.registry import LearningRegistry
+from nivos.learning._stubs import IntelligenceLearningPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class SFTTrainer:
 
     def _mine_pairs(self, trace_store: Any) -> List[Dict[str, Any]]:
         """Extract SFT pairs from the trace store using TrainingDataMiner."""
-        from openjarvis.learning.training.data import TrainingDataMiner
+        from nivos.learning.training.data import TrainingDataMiner
 
         miner = TrainingDataMiner(trace_store, min_quality=0.7)
         agent_filter = self.config.agent_filter or None
@@ -86,7 +86,7 @@ class SFTTrainer:
     def _train_lora(self, pairs: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Train using LoRA via the existing LoRATrainer."""
         try:
-            from openjarvis.learning.training.lora import (
+            from nivos.learning.training.lora import (
                 HAS_TORCH,
                 LoRATrainer,
                 LoRATrainingConfig,
@@ -137,7 +137,7 @@ class _SFTLearningPolicy(IntelligenceLearningPolicy):
         pass
 
     def update(self, trace_store: Any, **kwargs: object) -> Dict[str, Any]:
-        from openjarvis.core.config import SFTConfig
+        from nivos.core.config import SFTConfig
 
         config = SFTConfig()
         trainer = SFTTrainer(config)
