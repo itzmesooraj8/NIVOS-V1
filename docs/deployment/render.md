@@ -11,7 +11,7 @@ through the cloud engine.
    fork.
 2. Provide `OPENAI_API_KEY` when Render asks for the Blueprint secret.
 3. Apply the Blueprint and wait for `/health` to become healthy.
-4. Retrieve the generated `OPENJARVIS_API_KEY` from the Render dashboard and
+4. Retrieve the generated `NIVOS_API_KEY` from the Render dashboard and
    send it as `Authorization: Bearer <key>` with API requests.
 
 The Blueprint pins both the `PORT` environment variable and the server's
@@ -29,14 +29,14 @@ and replace the secret in your own Blueprint.
 
 !!! warning "Free instances do not preserve Nivos data"
     Render's free web-service filesystem is ephemeral. Everything written to
-    `/home/openjarvis/.openjarvis` — including configuration, credentials,
+    `/home/nivos/.nivos` — including configuration, credentials,
     connector tokens, local databases, and learned state — is lost whenever
     the service restarts, spins down, or redeploys. Free instances also spin
     down after periods without inbound traffic and are not suitable for
     production or durable personal-assistant state.
 
 For durable state, upgrade the service to a paid instance and attach a
-persistent disk at `/home/openjarvis/.openjarvis`, or configure the relevant
+persistent disk at `/home/nivos/.nivos`, or configure the relevant
 feature to use an external managed datastore. Only data below a persistent
 disk's mount path survives a restart; attaching a disk elsewhere does not
 preserve the default Nivos home.

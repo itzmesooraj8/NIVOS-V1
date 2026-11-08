@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.plugins.loader import PluginLoader, PluginManifest
+from nivos.core.registry import ToolRegistry
+from nivos.plugins.loader import PluginLoader, PluginManifest
 
 
 def test_discover_plugins_from_directory(tmp_path):
@@ -65,8 +65,8 @@ def test_plugin_with_python_entrypoint(tmp_path):
     )
 
     py_code = """
-from openjarvis.tools._stubs import BaseTool, ToolSpec
-from openjarvis.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
+from nivos.core.types import ToolResult
 
 class DynamicPluginTool(BaseTool):
     tool_id = "dynamic_plugin_tool"

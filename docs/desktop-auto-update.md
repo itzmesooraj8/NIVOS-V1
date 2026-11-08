@@ -84,18 +84,18 @@ reinstall.
 
 ## Disabling the updater locally
 
-For frontend development, set `VITE_OPENJARVIS_NO_UPDATER=1` in your
+For frontend development, set `VITE_NIVOS_NO_UPDATER=1` in your
 shell before running `npm run tauri dev`. Vite injects any
 `VITE_`-prefixed env var into `import.meta.env`, and the
 `UpdateChecker.tsx` component honors it to skip the 30-minute poll.
 
 ```bash
-export VITE_OPENJARVIS_NO_UPDATER=1
+export VITE_NIVOS_NO_UPDATER=1
 npm run tauri dev
 ```
 
 This is purely a dev escape hatch — it has no effect on production
-builds (where `import.meta.env.VITE_OPENJARVIS_NO_UPDATER` will be
+builds (where `import.meta.env.VITE_NIVOS_NO_UPDATER` will be
 `undefined` unless you explicitly set it at build time).
 
 ## Verifying a release manually

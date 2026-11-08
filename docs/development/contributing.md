@@ -88,7 +88,7 @@ uv run pytest tests/learning/ -v     # All learning tests
 ### Test Coverage
 
 ```bash
-uv run pytest tests/ --cov=openjarvis --cov-report=html
+uv run pytest tests/ --cov=nivos --cov-report=html
 ```
 
 ### Test Markers
@@ -170,15 +170,15 @@ docstrings with the NumPy docstring style.
 
 ## Project Structure
 
-The source code is organized under `src/openjarvis/`:
+The source code is organized under `src/nivos/`:
 
 ```
-src/openjarvis/
+src/nivos/
     __init__.py                 # Package root, __version__
-    sdk.py                      # Jarvis class — high-level Python SDK
+    sdk.py                      # Nivos class — high-level Python SDK
 
     core/                       # Shared infrastructure
-        config.py               # JarvisConfig, hardware detection, TOML loader
+        config.py               # NivosConfig, hardware detection, TOML loader
         events.py               # EventBus pub/sub system
         registry.py             # RegistryBase[T] and all typed registries
         types.py                # Message, ModelSpec, ToolResult, Trace, etc.
@@ -288,7 +288,7 @@ implementations are added by decorating a class -- no factory modifications
 needed:
 
 ```python
-from openjarvis.core.registry import EngineRegistry
+from nivos.core.registry import EngineRegistry
 
 @EngineRegistry.register("my_engine")
 class MyEngine(InferenceEngine):
@@ -315,7 +315,7 @@ pattern to fail gracefully when deps are not installed:
 ```python
 # In __init__.py — import to trigger registration
 try:
-    import openjarvis.memory.faiss_backend  # noqa: F401
+    import nivos.memory.faiss_backend  # noqa: F401
 except ImportError:
     pass
 ```
@@ -359,7 +359,7 @@ class BenchmarkResult:
 
 ### Import Style
 
-- Absolute imports only (`from openjarvis.core.registry import ...`)
+- Absolute imports only (`from nivos.core.registry import ...`)
 - Sort imports with `ruff` (isort rules enabled)
 - Place `from __future__ import annotations` as the first import
 

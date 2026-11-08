@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from openjarvis.learning._stubs import RoutingContext
-from openjarvis.learning.routing.heuristic_reward import HeuristicRewardFunction
+from nivos.learning._stubs import RoutingContext
+from nivos.learning.routing.heuristic_reward import HeuristicRewardFunction
 
 
 class TestHeuristicRewardFunction:

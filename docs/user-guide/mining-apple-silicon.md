@@ -147,11 +147,11 @@ Session
 |---|---|---|
 | `mine doctor` says `Pearl Python packages not installed` | Wheels not built yet | Run `nivos mine init` |
 | `pearl-gateway` log shows `connection refused` to `http://localhost:44107` | `pearld` not running | Start `pearld` per Pearl's README |
-| `mine status` shows `last_error: gateway metrics unreachable` | `pearl-gateway` crashed | Check `~/.openjarvis/logs/mining/pearl-gateway.log` |
+| `mine status` shows `last_error: gateway metrics unreachable` | `pearl-gateway` crashed | Check `~/.nivos/logs/mining/pearl-gateway.log` |
 | Build fails with `error: linker 'cc' not found` | Xcode CLT not installed | `xcode-select --install` |
 | `maturin build` complains about `tikv-jemallocator` | macOS SDK too old | Update macOS / Xcode |
 
-For anything not on this list, capture `~/.openjarvis/logs/mining/` and open
+For anything not on this list, capture `~/.nivos/logs/mining/` and open
 an issue at https://github.com/nivos/nivos/issues.
 
 ## What changes in v2 / v3

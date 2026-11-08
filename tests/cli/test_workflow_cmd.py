@@ -1,10 +1,10 @@
-"""Tests for the ``jarvis workflow`` CLI commands."""
+"""Tests for the ``nivos workflow`` CLI commands."""
 
 from __future__ import annotations
 
 from click.testing import CliRunner
 
-from openjarvis.cli import cli
+from nivos.cli import cli
 
 
 class TestWorkflowCmd:

@@ -163,7 +163,7 @@ uv sync
 
 ```bash
 nivos --version
-# jarvis, version 0.1.0
+# nivos, version 0.1.0
 ```
 
 ### First commands
@@ -197,7 +197,7 @@ nivos chat
 
 ## Python SDK
 
-For programmatic access, the `Jarvis` class provides a high-level sync API.
+For programmatic access, the `Nivos` class provides a high-level sync API.
 
 ### Install
 
@@ -210,9 +210,9 @@ uv sync
 ### Quick example
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis()
+j = Nivos()
 print(j.ask("Explain quicksort in two sentences."))
 j.close()
 ```
@@ -235,7 +235,7 @@ print(result["turns"])         # number of agent turns
 For full control, use the `SystemBuilder`:
 
 ```python
-from openjarvis import SystemBuilder
+from nivos import SystemBuilder
 
 system = (
     SystemBuilder()

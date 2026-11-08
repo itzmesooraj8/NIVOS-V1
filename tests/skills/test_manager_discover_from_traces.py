@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, List
 
-from openjarvis.core.events import EventBus
-from openjarvis.core.types import StepType, Trace, TraceStep
-from openjarvis.skills.manager import SkillManager
+from nivos.core.events import EventBus
+from nivos.core.types import StepType, Trace, TraceStep
+from nivos.skills.manager import SkillManager
 
 
 class _FakeTraceStore:

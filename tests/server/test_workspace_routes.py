@@ -12,7 +12,7 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from openjarvis.server.app import create_app  # noqa: E402
+from nivos.server.app import create_app  # noqa: E402
 
 
 @pytest.fixture

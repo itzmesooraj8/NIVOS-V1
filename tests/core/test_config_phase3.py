@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from openjarvis.core.config import (
+from nivos.core.config import (
     AgentConfig,
     HardwareInfo,
-    JarvisConfig,
+    NivosConfig,
     ServerConfig,
     generate_default_toml,
 )
@@ -49,14 +49,14 @@ class TestServerConfig:
         assert cfg.port == 9000
 
 
-class TestJarvisConfig:
+class TestNivosConfig:
     def test_has_server(self):
-        cfg = JarvisConfig()
+        cfg = NivosConfig()
         assert hasattr(cfg, "server")
         assert isinstance(cfg.server, ServerConfig)
 
     def test_agent_config_expanded(self):
-        cfg = JarvisConfig()
+        cfg = NivosConfig()
         assert hasattr(cfg.agent, "default_tools")  # backward-compat property
         assert hasattr(cfg.agent, "tools")
         assert hasattr(cfg.agent, "objective")

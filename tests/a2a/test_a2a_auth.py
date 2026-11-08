@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from openjarvis.a2a.protocol import AgentCard
-from openjarvis.a2a.server import A2AServer
+from nivos.a2a.protocol import AgentCard
+from nivos.a2a.server import A2AServer
 
 
 def _request():

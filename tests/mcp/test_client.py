@@ -9,13 +9,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from openjarvis.mcp.client import MCPClient
-from openjarvis.mcp.protocol import MCPError, MCPResponse
-from openjarvis.mcp.server import MCPServer
-from openjarvis.mcp.transport import InProcessTransport
-from openjarvis.tools._stubs import ToolSpec
-from openjarvis.tools.calculator import CalculatorTool
-from openjarvis.tools.think import ThinkTool
+from nivos.mcp.client import MCPClient
+from nivos.mcp.protocol import MCPError, MCPResponse
+from nivos.mcp.server import MCPServer
+from nivos.mcp.transport import InProcessTransport
+from nivos.tools._stubs import ToolSpec
+from nivos.tools.calculator import CalculatorTool
+from nivos.tools.think import ThinkTool
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ class TestMCPClient:
         result = client.initialize()
         assert "protocolVersion" in result
         assert "serverInfo" in result
-        assert result["serverInfo"]["name"] == "openjarvis"
+        assert result["serverInfo"]["name"] == "nivos"
         assert client._initialized is True
 
     def test_initialize_sets_capabilities(self, client):

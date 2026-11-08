@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from openjarvis.channels._stubs import (
+from nivos.channels._stubs import (
     BaseChannel,
     ChannelHandler,
     ChannelStatus,
 )
-from openjarvis.mcp.server import MCPServer
-from openjarvis.tools.channel_tools import (
+from nivos.mcp.server import MCPServer
+from nivos.tools.channel_tools import (
     ChannelListTool,
     ChannelSendTool,
     ChannelStatusTool,
@@ -198,7 +198,7 @@ class TestChannelToolsMCPDiscovery:
     def test_auto_discover_finds_channel_tools(self):
         """MCPServer auto-discovery finds channel tools."""
         server = MCPServer()
-        from openjarvis.mcp.protocol import MCPRequest
+        from nivos.mcp.protocol import MCPRequest
 
         req = MCPRequest(method="tools/list", id=1)
         resp = server.handle(req)
@@ -210,7 +210,7 @@ class TestChannelToolsMCPDiscovery:
     def test_channel_tool_annotations(self):
         """Channel tools have correct MCP annotations."""
         server = MCPServer()
-        from openjarvis.mcp.protocol import MCPRequest
+        from nivos.mcp.protocol import MCPRequest
 
         req = MCPRequest(method="tools/list", id=1)
         resp = server.handle(req)

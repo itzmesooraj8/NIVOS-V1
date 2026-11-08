@@ -6,9 +6,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.types import TelemetryRecord
-from openjarvis.telemetry.store import TelemetryStore
+from nivos.core.events import EventBus, EventType
+from nivos.core.types import TelemetryRecord
+from nivos.telemetry.store import TelemetryStore
 
 
 class TestTelemetryStore:
@@ -208,7 +208,7 @@ class TestTelemetryStore:
         store.close()
 
     def test_record_mining_stats_persists(self, tmp_path: Path) -> None:
-        from openjarvis.mining._stubs import MiningStats
+        from nivos.mining._stubs import MiningStats
 
         store = TelemetryStore(tmp_path / "test.db")
         store.record_mining_stats(

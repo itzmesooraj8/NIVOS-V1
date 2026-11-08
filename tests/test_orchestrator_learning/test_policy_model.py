@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from openjarvis.learning.intelligence.orchestrator.policy_model import (
+from nivos.learning.intelligence.orchestrator.policy_model import (
     OrchestratorPolicyModel,
 )
-from openjarvis.learning.intelligence.orchestrator.types import (
+from nivos.learning.intelligence.orchestrator.types import (
     EpisodeState,
     OrchestratorAction,
     OrchestratorObservation,

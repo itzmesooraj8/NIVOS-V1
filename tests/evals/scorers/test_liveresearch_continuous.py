@@ -13,10 +13,10 @@ from unittest.mock import MagicMock
 import pytest
 from click.testing import CliRunner
 
-from openjarvis.evals.cli import main as cli_main
-from openjarvis.evals.core.runner import EvalRunner, _extract_continuous_score
-from openjarvis.evals.core.types import EvalRecord, RunConfig
-from openjarvis.evals.scorers.liveresearch import (
+from nivos.evals.cli import main as cli_main
+from nivos.evals.core.runner import EvalRunner, _extract_continuous_score
+from nivos.evals.core.types import EvalRecord, RunConfig
+from nivos.evals.scorers.liveresearch import (
     _escape_newlines_inside_strings,
     _parse_judge_response,
     _safe_json_loads,
@@ -76,7 +76,7 @@ def test_continuous_score_fields_present_in_summary(tmp_path):
     out = tmp_path / "out.jsonl"
     cfg = RunConfig(
         benchmark="test",
-        backend="jarvis-direct",
+        backend="nivos-direct",
         model="test-model",
         output_path=str(out),
     )

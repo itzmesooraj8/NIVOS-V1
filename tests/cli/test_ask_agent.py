@@ -1,4 +1,4 @@
-"""Tests for ``jarvis ask --agent`` CLI integration."""
+"""Tests for ``nivos ask --agent`` CLI integration."""
 
 from __future__ import annotations
 
@@ -9,12 +9,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from openjarvis.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
-from openjarvis.cli import cli
-from openjarvis.core.types import Role, StepType, ToolCall, ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
+from nivos.cli import cli
+from nivos.core.types import Role, StepType, ToolCall, ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
-_ask_mod = importlib.import_module("openjarvis.cli.ask")
+_ask_mod = importlib.import_module("nivos.cli.ask")
 
 
 def _mock_engine(content="Hello from engine"):
@@ -34,9 +34,9 @@ def _mock_engine(content="Hello from engine"):
 
 def _register_agents():
     """Re-register agents after registry clear."""
-    from openjarvis.agents.orchestrator import OrchestratorAgent
-    from openjarvis.agents.simple import SimpleAgent
-    from openjarvis.core.registry import AgentRegistry
+    from nivos.agents.orchestrator import OrchestratorAgent
+    from nivos.agents.simple import SimpleAgent
+    from nivos.core.registry import AgentRegistry
 
     for name, cls in [
         ("simple", SimpleAgent),
@@ -48,12 +48,12 @@ def _register_agents():
 
 def _register_tools():
     """Re-register tools after registry clear."""
-    from openjarvis.core.registry import ToolRegistry
-    from openjarvis.tools.calculator import CalculatorTool
-    from openjarvis.tools.file_read import FileReadTool
-    from openjarvis.tools.llm_tool import LLMTool
-    from openjarvis.tools.retrieval import RetrievalTool
-    from openjarvis.tools.think import ThinkTool
+    from nivos.core.registry import ToolRegistry
+    from nivos.tools.calculator import CalculatorTool
+    from nivos.tools.file_read import FileReadTool
+    from nivos.tools.llm_tool import LLMTool
+    from nivos.tools.retrieval import RetrievalTool
+    from nivos.tools.think import ThinkTool
 
     for name, cls in [
         ("calculator", CalculatorTool),
@@ -107,11 +107,11 @@ class _EngineSetup:
 
 @pytest.fixture
 def agent_setup():
-    from openjarvis.core.config import JarvisConfig
-    from openjarvis.core.registry import AgentRegistry, ToolRegistry
+    from nivos.core.config import NivosConfig
+    from nivos.core.registry import AgentRegistry, ToolRegistry
 
     engine = _mock_engine("unused")
-    config = JarvisConfig()
+    config = NivosConfig()
     config.intelligence.default_model = "test-model"
     config.agent.max_turns = 3
     config.traces.enabled = False
@@ -153,9 +153,9 @@ def mock_setup():
         patch.object(_ask_mod, "register_builtin_models"),
         patch.object(_ask_mod, "merge_discovered_models"),
     ):
-        from openjarvis.core.config import JarvisConfig
+        from nivos.core.config import NivosConfig
 
-        config = JarvisConfig()
+        config = NivosConfig()
         config.traces.enabled = False
         mock_cfg.return_value = config
         mock_ge.return_value = ("mock", engine)
@@ -218,8 +218,8 @@ class TestAskAgentOption:
     def test_no_agent_flag_falls_back_to_config_default_agent(self, runner, mock_setup):
         """When --agent is omitted, ``config.agent.default_agent`` is used.
 
-        The default ``JarvisConfig`` sets ``default_agent = "simple"``, so
-        ``jarvis ask "..."`` should route through SimpleAgent rather than
+        The default ``NivosConfig`` sets ``default_agent = "simple"``, so
+        ``nivos ask "..."`` should route through SimpleAgent rather than
         the direct-to-engine path. Without this fallback, persona settings
         (``default_system_prompt`` and SOUL.md/MEMORY.md/USER.md) would be
         silently bypassed.
@@ -239,9 +239,9 @@ class TestAskAgentOption:
     ):
         """When config's ``default_agent`` is blank and --agent is omitted,
         the original direct-to-engine path is preserved."""
-        from openjarvis.core.config import JarvisConfig
+        from nivos.core.config import NivosConfig
 
-        cfg = JarvisConfig()
+        cfg = NivosConfig()
         cfg.traces.enabled = False
         cfg.agent.default_agent = ""
         monkeypatch.setattr(_ask_mod, "load_config", lambda *a, **kw: cfg)
@@ -297,8 +297,8 @@ class TestAskSkillsAndTraces:
         runner,
         tmp_path,
     ):
-        from openjarvis.core.config import JarvisConfig
-        from openjarvis.traces.store import TraceStore
+        from nivos.core.config import NivosConfig
+        from nivos.traces.store import TraceStore
 
         skill_dir = tmp_path / "skills" / "hermes" / "llm-wiki"
         skill_dir.mkdir(parents=True)
@@ -316,7 +316,7 @@ class TestAskSkillsAndTraces:
             encoding="utf-8",
         )
 
-        config = JarvisConfig()
+        config = NivosConfig()
         config.intelligence.default_model = "test-model"
         config.agent.context_from_memory = False
         config.security.enabled = False
@@ -399,47 +399,47 @@ class TestAskSkillsAndTraces:
 
 class TestBuildTools:
     def test_build_calculator(self, mock_setup):
-        from openjarvis.cli.ask import _build_tools
-        from openjarvis.core.config import JarvisConfig
+        from nivos.cli.ask import _build_tools
+        from nivos.core.config import NivosConfig
 
         _register_tools()
-        config = JarvisConfig()
+        config = NivosConfig()
         tools = _build_tools(["calculator"], config, mock_setup, "test-model")
         assert len(tools) == 1
         assert tools[0].tool_id == "calculator"
 
     def test_build_think(self, mock_setup):
-        from openjarvis.cli.ask import _build_tools
-        from openjarvis.core.config import JarvisConfig
+        from nivos.cli.ask import _build_tools
+        from nivos.core.config import NivosConfig
 
         _register_tools()
-        config = JarvisConfig()
+        config = NivosConfig()
         tools = _build_tools(["think"], config, mock_setup, "test-model")
         assert len(tools) == 1
         assert tools[0].tool_id == "think"
 
     def test_build_unknown_tool_skipped(self, mock_setup):
-        from openjarvis.cli.ask import _build_tools
-        from openjarvis.core.config import JarvisConfig
+        from nivos.cli.ask import _build_tools
+        from nivos.core.config import NivosConfig
 
-        config = JarvisConfig()
+        config = NivosConfig()
         tools = _build_tools(["nonexistent"], config, mock_setup, "test-model")
         assert len(tools) == 0
 
     def test_build_empty_names(self, mock_setup):
-        from openjarvis.cli.ask import _build_tools
-        from openjarvis.core.config import JarvisConfig
+        from nivos.cli.ask import _build_tools
+        from nivos.core.config import NivosConfig
 
-        config = JarvisConfig()
+        config = NivosConfig()
         tools = _build_tools(["", " "], config, mock_setup, "test-model")
         assert len(tools) == 0
 
     def test_build_multiple_tools(self, mock_setup):
-        from openjarvis.cli.ask import _build_tools
-        from openjarvis.core.config import JarvisConfig
+        from nivos.cli.ask import _build_tools
+        from nivos.core.config import NivosConfig
 
         _register_tools()
-        config = JarvisConfig()
+        config = NivosConfig()
         tools = _build_tools(["calculator", "think"], config, mock_setup, "test-model")
         assert len(tools) == 2
 
@@ -456,17 +456,17 @@ class TestPersonaFilesReachModel:
         self, runner, monkeypatch, tmp_path
     ):
         """SOUL.md content must appear in the system message sent to the engine."""
-        from openjarvis.core.config import JarvisConfig
+        from nivos.core.config import NivosConfig
 
         # Write a SOUL.md with a unique sentinel string we can grep for
         soul = tmp_path / "SOUL.md"
-        soul.write_text("PERSONA_SENTINEL_zh_jarvis", encoding="utf-8")
+        soul.write_text("PERSONA_SENTINEL_zh_nivos", encoding="utf-8")
         memory = tmp_path / "MEMORY.md"
         memory.write_text("MEMORY_SENTINEL", encoding="utf-8")
         user = tmp_path / "USER.md"
         user.write_text("USER_SENTINEL", encoding="utf-8")
 
-        cfg = JarvisConfig()
+        cfg = NivosConfig()
         cfg.traces.enabled = False
         cfg.memory_files.soul_path = str(soul)
         cfg.memory_files.memory_path = str(memory)
@@ -503,7 +503,7 @@ class TestPersonaFilesReachModel:
         assert system_messages, f"No SYSTEM message in {messages!r}"
         joined = "\n".join(m.content for m in system_messages)
         assert "BASELINE_TEMPLATE" in joined
-        assert "PERSONA_SENTINEL_zh_jarvis" in joined
+        assert "PERSONA_SENTINEL_zh_nivos" in joined
         assert "MEMORY_SENTINEL" in joined
         assert "USER_SENTINEL" in joined
 
@@ -511,12 +511,12 @@ class TestPersonaFilesReachModel:
         self, runner, monkeypatch, tmp_path
     ):
         """Orchestrator explicitly accepts and applies persona wiring."""
-        from openjarvis.core.config import JarvisConfig
+        from nivos.core.config import NivosConfig
 
         soul = tmp_path / "SOUL.md"
         soul.write_text("ORCH_PERSONA_SENTINEL", encoding="utf-8")
 
-        cfg = JarvisConfig()
+        cfg = NivosConfig()
         cfg.memory_files.soul_path = str(soul)
         cfg.agent.context_from_memory = False
 

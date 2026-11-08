@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from openjarvis.core.types import Message
-from openjarvis.server import cloud_router
+from nivos.core.types import Message
+from nivos.server import cloud_router
 
 
 @pytest.mark.parametrize(

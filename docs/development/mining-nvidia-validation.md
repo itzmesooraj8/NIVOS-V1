@@ -161,16 +161,16 @@ uv run nivos mine start
 
 Expected:
 
-- Docker container `openjarvis-pearl-miner` starts.
-- `~/.openjarvis/runtime/mining.json` is written.
+- Docker container `nivos-pearl-miner` starts.
+- `~/.nivos/runtime/mining.json` is written.
 - Sidecar contains `vllm_endpoint`, `gateway_url`, `gateway_metrics_url`, and
   `container_id`.
 
 Inspect:
 
 ```bash
-docker ps --filter name=openjarvis-pearl-miner
-cat ~/.openjarvis/runtime/mining.json
+docker ps --filter name=nivos-pearl-miner
+cat ~/.nivos/runtime/mining.json
 uv run nivos mine logs --tail 200
 uv run nivos mine status
 ```
@@ -216,7 +216,7 @@ Expected:
 - Metrics endpoint returns Prometheus text.
 - If Pearl exposes share counters, `mine status` maps them correctly.
 - If metric names differ, attach `/tmp/pearl-gateway-metrics.txt` to the PR and
-  update `src/openjarvis/mining/_metrics.py`.
+  update `src/nivos/mining/_metrics.py`.
 
 Check `pearld` connectivity using the same RPC configuration used by mining:
 
@@ -246,8 +246,8 @@ smoke test window. Record:
 
 ```bash
 uv run nivos mine stop
-docker ps --filter name=openjarvis-pearl-miner
-test ! -e ~/.openjarvis/runtime/mining.json
+docker ps --filter name=nivos-pearl-miner
+test ! -e ~/.nivos/runtime/mining.json
 ```
 
 Expected:
@@ -279,7 +279,7 @@ For any failure, collect:
 uv run nivos mine doctor
 uv run nivos mine status || true
 uv run nivos mine logs --tail 300 || true
-docker inspect openjarvis-pearl-miner || true
+docker inspect nivos-pearl-miner || true
 curl -fsS http://127.0.0.1:8339/metrics || true
 nvidia-smi
 docker info

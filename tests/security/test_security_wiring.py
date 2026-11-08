@@ -4,19 +4,19 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from openjarvis.agents._stubs import AgentResult, ToolUsingAgent
-from openjarvis.core.config import (
+from nivos.agents._stubs import AgentResult, ToolUsingAgent
+from nivos.core.config import (
     CapabilitiesConfig,
-    JarvisConfig,
+    NivosConfig,
     SecurityConfig,
 )
-from openjarvis.core.events import EventBus
-from openjarvis.core.registry import AgentRegistry
-from openjarvis.core.types import ToolCall
-from openjarvis.security import setup_security
-from openjarvis.security.capabilities import CapabilityPolicy
-from openjarvis.system import JarvisSystem
-from openjarvis.tools.repl import ReplTool
+from nivos.core.events import EventBus
+from nivos.core.registry import AgentRegistry
+from nivos.core.types import ToolCall
+from nivos.security import setup_security
+from nivos.security.capabilities import CapabilityPolicy
+from nivos.system import NivosSystem
+from nivos.tools.repl import ReplTool
 
 
 class _ConcreteAgent(ToolUsingAgent):
@@ -67,7 +67,7 @@ def _make_mock_engine() -> MagicMock:
 
 def _has_rust() -> bool:
     try:
-        import openjarvis_rust  # noqa: F401
+        import nivos_rust  # noqa: F401
 
         return True
     except ImportError:
@@ -76,7 +76,7 @@ def _has_rust() -> bool:
 
 class TestCapabilityPolicyReachesExecutor:
     def test_no_policy_when_caps_disabled(self) -> None:
-        cfg = JarvisConfig()
+        cfg = NivosConfig()
         cfg.security = SecurityConfig(
             enabled=True,
             capabilities=CapabilitiesConfig(enabled=False),
@@ -94,7 +94,7 @@ class TestCapabilityPolicyReachesExecutor:
         assert agent._executor._capability_policy is None
 
     def test_no_policy_when_security_disabled(self) -> None:
-        cfg = JarvisConfig()
+        cfg = NivosConfig()
         cfg.security = SecurityConfig(enabled=False)
         engine = _make_mock_engine()
         sec = setup_security(cfg, engine)
@@ -117,10 +117,10 @@ class TestCapabilityPolicyReachesExecutor:
         policy.deny(key, "code:execute")
         limiter = _RecordingLimiter()
         repl = ReplTool()
-        config = JarvisConfig()
+        config = NivosConfig()
         config.agent.context_from_memory = False
         config.traces.enabled = False
-        system = JarvisSystem(
+        system = NivosSystem(
             config=config,
             bus=EventBus(),
             engine=_make_mock_engine(),
@@ -142,7 +142,7 @@ class TestCapabilityPolicyReachesExecutor:
     def test_cli_ask_propagates_runtime_identity_and_limiter(self, monkeypatch) -> None:
         import importlib
 
-        ask_module = importlib.import_module("openjarvis.cli.ask")
+        ask_module = importlib.import_module("nivos.cli.ask")
 
         key = "restricted-cli-ask-agent"
         AgentRegistry.register_value(key, _CallingAgent)
@@ -151,11 +151,11 @@ class TestCapabilityPolicyReachesExecutor:
         policy.deny(key, "code:execute")
         limiter = _RecordingLimiter()
         repl = ReplTool()
-        config = JarvisConfig()
+        config = NivosConfig()
         config.agent.context_from_memory = False
         monkeypatch.setattr(ask_module, "_build_tools", lambda *args: [repl])
         monkeypatch.setattr(
-            "openjarvis.mcp.loader.load_mcp_tools_from_config",
+            "nivos.mcp.loader.load_mcp_tools_from_config",
             lambda *args, **kwargs: ([], []),
         )
 

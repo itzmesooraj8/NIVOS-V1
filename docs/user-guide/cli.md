@@ -11,7 +11,7 @@ nivos --help      # Show top-level help with all subcommands
 
 ## `nivos init`
 
-Detect local hardware (CPU, GPU, RAM) and generate a configuration file at `~/.openjarvis/config.toml`.
+Detect local hardware (CPU, GPU, RAM) and generate a configuration file at `~/.nivos/config.toml`.
 
 ```bash
 nivos init           # Interactive — refuses to overwrite existing config
@@ -91,7 +91,7 @@ nivos ask --agent simple "Hello"
 nivos ask --agent "" "Explain quantum computing"
 ```
 
-To make direct mode the default, set `default_agent = ""` in the `[agent]` section of `~/.openjarvis/config.toml`.
+To make direct mode the default, set `default_agent = ""` in the `[agent]` section of `~/.nivos/config.toml`.
 
 ### Usage Examples
 
@@ -138,10 +138,10 @@ If you explicitly select an agent, the image is
 ignored and a note is printed — re-run with `--agent ""` to force direct mode.
 
 The Ollama context window can be tuned for large images or long prompts with
-the `JARVIS_NUM_CTX` environment variable (default `16384`):
+the `NIVOS_NUM_CTX` environment variable (default `16384`):
 
 ```bash
-JARVIS_NUM_CTX=8192 nivos ask --screen "What's on my screen?"
+NIVOS_NUM_CTX=8192 nivos ask --screen "What's on my screen?"
 ```
 
 !!! note "Keep vision on-device"
@@ -429,7 +429,7 @@ nivos channel list
 Send a message to a specific channel.
 
 ```bash
-nivos channel send slack "Hello from Jarvis!"
+nivos channel send slack "Hello from Nivos!"
 nivos channel send discord "Build complete"
 ```
 
@@ -513,9 +513,9 @@ When an agent is configured (e.g., `--agent orchestrator`), non-streaming reques
 LLM-guided spec search (the frontier-driven harness-learning subsystem)
 is exposed as a Python library only — there is currently no top-level
 `nivos` subcommand for it. Construct a `SpecSearchOrchestrator`
-directly from `openjarvis.learning.spec_search.orchestrator` and call
+directly from `nivos.learning.spec_search.orchestrator` and call
 `.run(trigger)` with a trigger from
-`openjarvis.learning.spec_search.triggers`. See
+`nivos.learning.spec_search.triggers`. See
 [`docs/user-guide/llm-guided-spec-search.md`](llm-guided-spec-search.md)
 for the architecture and the building blocks
 (`splits.py`, external corpora, `external_adapter`).

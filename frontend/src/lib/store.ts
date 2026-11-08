@@ -34,8 +34,33 @@ export interface AgentEvent {
 
 // ── localStorage persistence ──────────────────────────────────────────
 
-const CONVERSATIONS_KEY = 'openjarvis-conversations';
-const SETTINGS_KEY = 'openjarvis-settings';
+const CONVERSATIONS_KEY = 'nivos-conversations';
+const SETTINGS_KEY = 'nivos-settings';
+
+function migrateLocalStorage(): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  const legacyPrefix = 'openjarvis-';
+  const newPrefix = 'nivos-';
+  const keys = [
+    'settings',
+    'conversations',
+    'engine',
+    'memory-enabled',
+    'memory-backend',
+    'memory-top-k',
+    'memory-min-score',
+    'memory-max-tokens',
+  ];
+  for (const k of keys) {
+    try {
+      const oldVal = localStorage.getItem(`${legacyPrefix}${k}`);
+      if (oldVal !== null && localStorage.getItem(`${newPrefix}${k}`) === null) {
+        localStorage.setItem(`${newPrefix}${k}`, oldVal);
+      }
+    } catch {}
+  }
+}
+migrateLocalStorage();
 
 interface ConversationStore {
   version: 1;
@@ -91,8 +116,8 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 interface Settings {
   theme: ThemeMode;
   apiUrl: string;
-  // Local server API key (OPENJARVIS_API_KEY). Sent as a Bearer token on
-  // /v1 + /api requests so a key-protected `jarvis serve` doesn't 401 the
+  // Local server API key (NIVOS_API_KEY). Sent as a Bearer token on
+  // /v1 + /api requests so a key-protected `nivos serve` doesn't 401 the
   // frontend (#266). Empty = no auth header (keyless local default).
   apiKey: string;
   fontSize: 'small' | 'default' | 'large';
@@ -108,7 +133,7 @@ interface Settings {
 function loadSettings(): Settings {
   try {
     localStorage.removeItem('engine');
-    localStorage.removeItem('openjarvis-engine');
+    localStorage.removeItem('nivos-engine');
     localStorage.removeItem('nivos-engine');
   } catch {}
   const defaults: Settings = {

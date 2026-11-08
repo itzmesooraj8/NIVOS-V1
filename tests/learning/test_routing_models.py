@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from openjarvis.intelligence.model_catalog import register_builtin_models
-from openjarvis.learning._stubs import RoutingContext
-from openjarvis.learning.routing.router import (
+from nivos.intelligence.model_catalog import register_builtin_models
+from nivos.learning._stubs import RoutingContext
+from nivos.learning.routing.router import (
     HeuristicRouter,
     build_routing_context,
 )

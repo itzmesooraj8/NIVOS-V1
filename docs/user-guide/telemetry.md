@@ -33,11 +33,11 @@ Each inference call produces a `TelemetryRecord` with the following fields:
 The `TelemetryStore` is an append-only SQLite database that persists telemetry records. It integrates with the event bus to capture records automatically.
 
 ```python
-from openjarvis.telemetry.store import TelemetryStore
-from openjarvis.core.events import EventBus
+from nivos.telemetry.store import TelemetryStore
+from nivos.core.events import EventBus
 
 bus = EventBus()
-store = TelemetryStore(db_path="~/.openjarvis/telemetry.db")
+store = TelemetryStore(db_path="~/.nivos/telemetry.db")
 store.subscribe_to_bus(bus)
 
 # Records are now captured automatically when TELEMETRY_RECORD events fire.
@@ -65,9 +65,9 @@ All CLI commands and SDK methods use this wrapper, so telemetry is recorded tran
 The `TelemetryAggregator` provides read-only query and aggregation methods over stored telemetry data.
 
 ```python
-from openjarvis.telemetry.aggregator import TelemetryAggregator
+from nivos.telemetry.aggregator import TelemetryAggregator
 
-agg = TelemetryAggregator(db_path="~/.openjarvis/telemetry.db")
+agg = TelemetryAggregator(db_path="~/.nivos/telemetry.db")
 
 # Overall summary
 summary = agg.summary()
@@ -233,10 +233,10 @@ Each step in a trace records a single action the agent took.
 The `TraceCollector` wraps any `BaseAgent` to automatically record a `Trace` for every `run()` call. It subscribes to event bus events during execution and converts them into `TraceStep` objects.
 
 ```python
-from openjarvis.agents.orchestrator import OrchestratorAgent
-from openjarvis.traces.collector import TraceCollector
-from openjarvis.traces.store import TraceStore
-from openjarvis.core.events import EventBus
+from nivos.agents.orchestrator import OrchestratorAgent
+from nivos.traces.collector import TraceCollector
+from nivos.traces.store import TraceStore
+from nivos.core.events import EventBus
 
 bus = EventBus()
 store = TraceStore(db_path="./traces.db")
@@ -265,7 +265,7 @@ print(result.content)
 The `TraceStore` is an SQLite-backed database for persisting complete traces with their steps.
 
 ```python
-from openjarvis.traces.store import TraceStore
+from nivos.traces.store import TraceStore
 
 store = TraceStore(db_path="./traces.db")
 
@@ -309,7 +309,7 @@ store.close()
 The `TraceAnalyzer` provides read-only aggregated statistics over stored traces. These statistics are used by the learning system to update routing policies.
 
 ```python
-from openjarvis.traces.analyzer import TraceAnalyzer
+from nivos.traces.analyzer import TraceAnalyzer
 
 analyzer = TraceAnalyzer(store=trace_store)
 

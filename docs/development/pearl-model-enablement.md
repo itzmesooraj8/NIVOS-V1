@@ -115,7 +115,7 @@ H100/H200 validation artifacts for the published repos.
 Model support metadata lives in:
 
 ```text
-src/openjarvis/mining/_models.py
+src/nivos/mining/_models.py
 ```
 
 `nivos mine models` renders that registry. Planned models are visible to users

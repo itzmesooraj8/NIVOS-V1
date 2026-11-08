@@ -1,0 +1,32 @@
+[package]
+name = "nivos-python"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "nivos_rust"
+crate-type = ["cdylib"]
+
+[dependencies]
+nivos-core = { path = "../nivos-core" }
+nivos-engine = { path = "../nivos-engine" }
+nivos-security = { path = "../nivos-security" }
+nivos-tools = { path = "../nivos-tools" }
+nivos-agents = { path = "../nivos-agents" }
+nivos-traces = { path = "../nivos-traces" }
+nivos-telemetry = { path = "../nivos-telemetry" }
+nivos-learning = { path = "../nivos-learning" }
+nivos-mcp = { path = "../nivos-mcp" }
+nivos-sessions = { path = "../nivos-sessions" }
+nivos-workflow = { path = "../nivos-workflow" }
+nivos-skills = { path = "../nivos-skills" }
+nivos-recipes = { path = "../nivos-recipes" }
+nivos-templates = { path = "../nivos-templates" }
+nivos-a2a = { path = "../nivos-a2a" }
+nivos-scheduler = { path = "../nivos-scheduler" }
+pyo3 = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+once_cell = { workspace = true }
+parking_lot = { workspace = true }

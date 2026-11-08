@@ -21,7 +21,7 @@ sequenceDiagram
 
     User->>CLI: nivos ask "query" / j.ask("query")
     CLI->>CFG: load_config()
-    CFG-->>CLI: JarvisConfig (hardware, engine defaults)
+    CFG-->>CLI: NivosConfig (hardware, engine defaults)
 
     CLI->>CFG: get_engine(config)
     CFG-->>CLI: (engine_key, engine_instance)
@@ -88,11 +88,11 @@ nivos ask --agent "" "What is the capital of France?"
 
 ```python
 # SDK (direct mode is the default)
-j = Jarvis()
+j = Nivos()
 response = j.ask("What is the capital of France?")
 ```
 
-Direct mode bypasses the agent's system prompt and persona handling. In the CLI, set `default_agent = ""` in the `[agent]` section of `~/.openjarvis/config.toml` to make this the default for text queries.
+Direct mode bypasses the agent's system prompt and persona handling. In the CLI, set `default_agent = ""` in the `[agent]` section of `~/.nivos/config.toml` to make this the default for text queries.
 
 ### Agent Mode
 
@@ -118,7 +118,7 @@ response = j.ask("What is 2^10 + 3^5?", agent="orchestrator", tools=["calculator
 The journey begins with loading the system configuration:
 
 ```python
-config = load_config()  # Reads ~/.openjarvis/config.toml
+config = load_config()  # Reads ~/.nivos/config.toml
 ```
 
 This step:
@@ -126,7 +126,7 @@ This step:
 - Detects system hardware (GPU vendor/model, CPU, RAM)
 - Recommends the best inference engine for the detected hardware
 - Overlays any user overrides from the TOML file
-- Returns a `JarvisConfig` dataclass with all settings
+- Returns a `NivosConfig` dataclass with all settings
 
 ### Step 2: Engine Discovery
 
@@ -161,8 +161,8 @@ for ek, model_ids in all_models.items():
 If no model was explicitly specified, the router policy selects one:
 
 ```python
-from openjarvis.learning import ensure_registered
-from openjarvis.learning.router import build_routing_context
+from nivos.learning import ensure_registered
+from nivos.learning.router import build_routing_context
 ensure_registered()  # Ensure learning policies are registered
 
 policy_key = router_policy or config.learning.routing.policy
@@ -256,7 +256,7 @@ class TelemetryRecord:
     metadata: Dict[str, Any]
 ```
 
-The `TelemetryStore` subscribes to `TELEMETRY_RECORD` events on the EventBus and writes records to `~/.openjarvis/telemetry.db`.
+The `TelemetryStore` subscribes to `TELEMETRY_RECORD` events on the EventBus and writes records to `~/.nivos/telemetry.db`.
 
 ### Step 9: Trace Recording
 
@@ -299,12 +299,12 @@ TRACE_COMPLETE      {trace: Trace(...)}
 
 ## SDK Query Flow
 
-The `Jarvis` class in `sdk.py` provides the same query flow through a Python API:
+The `Nivos` class in `sdk.py` provides the same query flow through a Python API:
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis(model="qwen3:8b", engine_key="ollama")
+j = Nivos(model="qwen3:8b", engine_key="ollama")
 
 # Direct mode
 response = j.ask("Hello")

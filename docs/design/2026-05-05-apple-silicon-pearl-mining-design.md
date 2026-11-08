@@ -308,7 +308,7 @@ This is fine. Mac mining is a feature for Apple Silicon owners who want to parti
 #### 6.2.2 Path: MLX (alternate)
 
 - Define `mlx.NoisyLinear` as a subclass of `mlx.nn.Linear` that calls Phase 1's kernels via a custom Metal op binding.
-- Provide a model-loading shim: `from openjarvis.mining import patch_mlx_for_pearl; patch_mlx_for_pearl()` that monkey-patches `mlx.nn.Linear` instances at load time. Less elegant; works.
+- Provide a model-loading shim: `from nivos.mining import patch_mlx_for_pearl; patch_mlx_for_pearl()` that monkey-patches `mlx.nn.Linear` instances at load time. Less elegant; works.
 
 #### 6.2.3 Inference-quality regression tests
 
@@ -317,7 +317,7 @@ The plugin is correctness-critical: a noised model that doesn't fully denoise pr
 - Load a small reference model (e.g., a 1-3B parameter Pearl-blessed model if one exists for testing, otherwise the smallest model the protocol accepts).
 - Run a fixed prompt set through both noised+denoised and standard paths.
 - Assert outputs are bit-exact or within fp16 tolerance.
-- Run OJ's existing eval framework (`src/openjarvis/evals/`) on a small benchmark (e.g., an MMLU subset registered as a Pearl-mining-mode dataset). Assert no degradation > the tolerance budget. Falling back to `lm-eval-harness` is acceptable if OJ's eval surface for Mac is incomplete at the time.
+- Run OJ's existing eval framework (`src/nivos/evals/`) on a small benchmark (e.g., an MMLU subset registered as a Pearl-mining-mode dataset). Assert no degradation > the tolerance budget. Falling back to `lm-eval-harness` is acceptable if OJ's eval surface for Mac is incomplete at the time.
 
 #### 6.2.4 Exit criteria
 
@@ -333,7 +333,7 @@ Where the OJ-side work is small. Inherits the entire `MiningProvider` ABC, regis
 ### 7.1 New files
 
 ```
-src/openjarvis/mining/
+src/nivos/mining/
     llamacpp_pearl_metal.py    # OR mlx_pearl.py — depending on Phase 2 path
                                 # @MinerRegistry.register("llamacpp-pearl-metal")
                                 # implements MiningProvider ABC from Spec A §4.4
@@ -353,7 +353,7 @@ mining-pearl-metal = [
 ### 7.3 Capability detection
 
 ```python
-# src/openjarvis/mining/llamacpp_pearl_metal.py
+# src/nivos/mining/llamacpp_pearl_metal.py
 class LlamaCppPearlMetalProvider(MiningProvider):
     provider_id = "llamacpp-pearl-metal"
 
@@ -474,7 +474,7 @@ Phase 0 answered most of these from the upstream code (annotations below). The r
 6. **(Open — measurement)** Minimum acceptable hashrate floor for `nivos mine init` on Apple Silicon. The `MiningCapabilities.estimated_hashrate` field in Spec A §4.4 exists for this. v1 will populate from a calibration run during `mine init`. The *floor* is a policy decision, not a technical one — defer to user-research / community feedback once v1 ships.
 7. **(Open — coordination)** Upstream contribution / CLA / LICENSE. Pearl is ISC; OJ is Apache-2.0; both are permissive and combine cleanly. **CLA TBD via Phase 0-A discussion**, but for v1 this is moot — OJ contributes no code into Pearl's tree, only consumes their published Python packages.
 8. **(Answered — yes)** Apple Silicon CI on GitHub Actions: `macos-14` / `macos-15` runners are arm64 and can install `py-pearl-mining` via the wheel build verified in §1.5.4. OJ's CI can run mining unit tests. Mining the *real* network in CI is still out of scope.
-9. **(Answered — `"llamacpp"`)** OJ's llama.cpp engine_id is `"llamacpp"` (single token, no hyphen). Confirmed at `src/openjarvis/engine/openai_compat_engines.py:9` and `src/openjarvis/engine/_discovery.py:18`. Update §7.3 capability detection to use this key. *(For v1 in §13, this only matters if we add an "informational" mining-aware hint to the existing llamacpp engine — v1 does not require any plugin into the engine.)*
+9. **(Answered — `"llamacpp"`)** OJ's llama.cpp engine_id is `"llamacpp"` (single token, no hyphen). Confirmed at `src/nivos/engine/openai_compat_engines.py:9` and `src/nivos/engine/_discovery.py:18`. Update §7.3 capability detection to use this key. *(For v1 in §13, this only matters if we add an "informational" mining-aware hint to the existing llamacpp engine — v1 does not require any plugin into the engine.)*
 10. **(Open — measurement, but de-risked)** plonky2 STARK proving latency on Apple Silicon CPU. Spec A §1 already notes proving is seconds-to-minutes of CPU per block (cross-platform, runs unchanged). For v1 the hashrate is so low that block-find latency is dominated by the search, not the proof. Empirical measurement still needed for v2/v3.
 11. **(New — v1 specific)** Does `bitcoin-utils>=0.7.0` (a `pearl-gateway` dependency) have C extensions that need Apple-specific build flags? Likely pure-Python; verify during the v1 install workstream.
 12. **(New — v1 specific)** Will `torch==2.11.0` (the version `miner-base` and `pearl-gateway` pin) install cleanly on macOS arm64? PyTorch generally has arm64 macOS wheels. Verify during v1 install.
@@ -566,11 +566,11 @@ This is the *same* control flow vllm-miner runs — just without coupling the ma
 ### 13.2 Module layout in OJ
 
 ```
-src/openjarvis/mining/
+src/nivos/mining/
     cpu_pearl.py             # @MinerRegistry.register("cpu-pearl") — v1 provider
     _pearl_subprocess.py     # PearlSubprocessLauncher — gateway + miner subprocesses
                              # Reused for future Apple-MPS / Metal providers
-src/openjarvis/cli/
+src/nivos/cli/
     # mine_cmd.py is unchanged; cpu-pearl participates via the provider ABC
 
 tests/mining/test_cpu_pearl.py
@@ -594,7 +594,7 @@ When Pearl publishes these as PyPI wheels, the install is `uv sync --extra minin
 ### 13.4 Capability detection
 
 ```python
-# src/openjarvis/mining/cpu_pearl.py
+# src/nivos/mining/cpu_pearl.py
 class CpuPearlProvider(MiningProvider):
     provider_id = "cpu-pearl"
 

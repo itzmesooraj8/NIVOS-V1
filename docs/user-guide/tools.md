@@ -19,8 +19,8 @@ All tools implement the `BaseTool` abstract base class.
 
 ```python
 from abc import ABC, abstractmethod
-from openjarvis.tools._stubs import ToolSpec
-from openjarvis.core.types import ToolResult
+from nivos.tools._stubs import ToolSpec
+from nivos.core.types import ToolResult
 
 class BaseTool(ABC):
     tool_id: str
@@ -100,7 +100,7 @@ The `ToolResult` dataclass holds the result of a tool execution.
 The `ToolExecutor` is the central dispatch engine for tool calls. It manages a set of tool instances, parses JSON arguments, measures execution latency, and publishes events on the event bus.
 
 ```python
-from openjarvis.tools._stubs import ToolExecutor
+from nivos.tools._stubs import ToolExecutor
 
 executor = ToolExecutor(tools=[calculator, think_tool], bus=event_bus)
 
@@ -108,7 +108,7 @@ executor = ToolExecutor(tools=[calculator, think_tool], bus=event_bus)
 openai_tools = executor.get_openai_tools()
 
 # Execute a tool call
-from openjarvis.core.types import ToolCall
+from nivos.core.types import ToolCall
 tc = ToolCall(id="call_1", name="calculator", arguments='{"expression": "2+2"}')
 result = executor.execute(tc)
 print(result.content)  # "4"
@@ -150,9 +150,9 @@ The `build_tool_descriptions()` function is the **single source of truth** for g
 ### Usage
 
 ```python
-from openjarvis.tools._stubs import build_tool_descriptions
-from openjarvis.tools.calculator import CalculatorTool
-from openjarvis.tools.think import ThinkTool
+from nivos.tools._stubs import build_tool_descriptions
+from nivos.tools.calculator import CalculatorTool
+from nivos.tools.think import ThinkTool
 
 tools = [CalculatorTool(), ThinkTool()]
 desc = build_tool_descriptions(tools)
@@ -237,7 +237,7 @@ Evaluates mathematical expressions safely using Python's `ast` module. No arbitr
 **Example:**
 
 ```python
-from openjarvis.tools.calculator import CalculatorTool
+from nivos.tools.calculator import CalculatorTool
 
 calc = CalculatorTool()
 result = calc.execute(expression="sqrt(144) + 3**2")
@@ -260,7 +260,7 @@ A zero-cost reasoning scratchpad. The input is echoed back as the output, allowi
 **Example:**
 
 ```python
-from openjarvis.tools.think import ThinkTool
+from nivos.tools.think import ThinkTool
 
 think = ThinkTool()
 result = think.execute(thought="Let me break this problem into steps...")
@@ -294,8 +294,8 @@ Searches the memory backend for relevant context and returns formatted results w
 **Example:**
 
 ```python
-from openjarvis.tools.retrieval import RetrievalTool
-from openjarvis.memory.sqlite import SQLiteMemory
+from nivos.tools.retrieval import RetrievalTool
+from nivos.memory.sqlite import SQLiteMemory
 
 backend = SQLiteMemory(db_path="./memory.db")
 retrieval = RetrievalTool(backend=backend)
@@ -326,7 +326,7 @@ Delegates a sub-query to an inference engine. Useful for summarization, sub-ques
 **Example:**
 
 ```python
-from openjarvis.tools.llm_tool import LLMTool
+from nivos.tools.llm_tool import LLMTool
 
 llm = LLMTool(engine=my_engine, model="qwen3:8b")
 result = llm.execute(
@@ -365,7 +365,7 @@ Reads file contents with safety validations. Supports optional directory restric
 **Example:**
 
 ```python
-from openjarvis.tools.file_read import FileReadTool
+from nivos.tools.file_read import FileReadTool
 
 reader = FileReadTool(allowed_dirs=["/home/user/projects"])
 result = reader.execute(path="/home/user/projects/README.md", max_lines=50)
@@ -505,12 +505,12 @@ Schedules a new task for future or recurring execution.
 **Example (via agent tool call):**
 
 ```python
-from openjarvis.scheduler.tools import ScheduleTaskTool
-from openjarvis.scheduler.scheduler import TaskScheduler
-from openjarvis.scheduler.store import SchedulerStore
+from nivos.scheduler.tools import ScheduleTaskTool
+from nivos.scheduler.scheduler import TaskScheduler
+from nivos.scheduler.store import SchedulerStore
 
-store = SchedulerStore(db_path="~/.openjarvis/scheduler.db")
-scheduler = TaskScheduler(store=store, system=jarvis_system)
+store = SchedulerStore(db_path="~/.nivos/scheduler.db")
+scheduler = TaskScheduler(store=store, system=nivos_system)
 scheduler.start()
 
 tool = ScheduleTaskTool()
@@ -582,9 +582,9 @@ Cancels a task permanently (sets status to `"cancelled"` and clears `next_run`).
 Tools are registered via the `@ToolRegistry.register()` decorator, making them discoverable by name at runtime.
 
 ```python
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.tools._stubs import BaseTool, ToolSpec
-from openjarvis.core.types import ToolResult
+from nivos.core.registry import ToolRegistry
+from nivos.tools._stubs import BaseTool, ToolSpec
+from nivos.core.types import ToolResult
 
 
 @ToolRegistry.register("my_tool")
@@ -648,9 +648,9 @@ nivos ask --agent orchestrator --tools calculator,think,retrieval,file_read "...
 Tools are passed as a list of name strings:
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis()
+j = Nivos()
 
 # Use calculator and think tools
 result = j.ask_full(

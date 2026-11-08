@@ -21,7 +21,7 @@ ollama pull qwen3.5:9b    # or any model you prefer
 
 ### 3. Configure the digest
 
-Edit `~/.openjarvis/config.toml`:
+Edit `~/.nivos/config.toml`:
 
 ```toml
 [engine]
@@ -76,13 +76,13 @@ For Weather, GitHub, and News — save credential files directly:
 
 ```bash
 # Weather (OpenWeatherMap — free at https://openweathermap.org/api)
-echo '{"api_key": "YOUR_KEY", "location": "San Francisco,CA,US"}' > ~/.openjarvis/connectors/weather.json
+echo '{"api_key": "YOUR_KEY", "location": "San Francisco,CA,US"}' > ~/.nivos/connectors/weather.json
 
 # GitHub notifications (token from https://github.com/settings/tokens)
-echo '{"token": "ghp_YOUR_TOKEN"}' > ~/.openjarvis/connectors/github.json
+echo '{"token": "ghp_YOUR_TOKEN"}' > ~/.nivos/connectors/github.json
 
 # News RSS (no auth needed — configure your feeds)
-cat > ~/.openjarvis/connectors/news_rss.json << 'EOF'
+cat > ~/.nivos/connectors/news_rss.json << 'EOF'
 {"feeds": [
   {"name": "Arxiv CS.AI", "url": "https://rss.arxiv.org/rss/cs.AI"},
   {"name": "TechCrunch", "url": "https://techcrunch.com/feed/"},
@@ -130,7 +130,7 @@ nivos digest --schedule       # Show current schedule
 
 ## Saying "Good morning"
 
-When chatting with Jarvis (via CLI, desktop, or browser), saying "Good morning" or "morning digest" automatically triggers the digest — no need to use the `digest` command explicitly.
+When chatting with Nivos (via CLI, desktop, or browser), saying "Good morning" or "morning digest" automatically triggers the digest — no need to use the `digest` command explicitly.
 
 ## Configuration Reference
 
@@ -166,13 +166,13 @@ The `sections` list controls what the digest covers, in order of priority:
 
 ### Persona
 
-The `persona` field loads a prompt file from `configs/openjarvis/prompts/personas/{name}.md`. The default `nivos` persona delivers briefings with dry British wit, prioritizes urgent items, and interprets health data as trends rather than raw numbers.
+The `persona` field loads a prompt file from `configs/nivos/prompts/personas/{name}.md`. The default `nivos` persona delivers briefings with dry British wit, prioritizes urgent items, and interprets health data as trends rather than raw numbers.
 
 To create a custom persona, add a new `.md` file in the personas directory.
 
 ### News Feeds
 
-Add any RSS or Atom feed to `~/.openjarvis/connectors/news_rss.json`:
+Add any RSS or Atom feed to `~/.nivos/connectors/news_rss.json`:
 
 ```json
 {"feeds": [

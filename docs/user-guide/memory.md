@@ -54,11 +54,11 @@ Each retrieval returns a list of `RetrievalResult` objects:
 The default backend using SQLite's built-in FTS5 full-text search extension. Zero external dependencies -- uses Python's standard `sqlite3` module.
 
 - **Scoring:** BM25 ranking via FTS5 MATCH queries
-- **Persistence:** SQLite database file (default: `~/.openjarvis/memory.db`)
+- **Persistence:** SQLite database file (default: `~/.nivos/memory.db`)
 - **Dependencies:** None (built into Python)
 
 ```python
-from openjarvis.core.registry import MemoryRegistry
+from nivos.core.registry import MemoryRegistry
 
 backend = MemoryRegistry.create("sqlite", db_path="./memory.db")
 doc_id = backend.store("Hello world", source="test.txt")
@@ -156,8 +156,8 @@ Combines a sparse retriever and a dense retriever using Reciprocal Rank Fusion (
 - **Dependencies:** Depends on sub-backends
 
 ```python
-from openjarvis.tools.storage.bm25 import BM25Memory
-from openjarvis.tools.storage.faiss_backend import FAISSMemory
+from nivos.tools.storage.bm25 import BM25Memory
+from nivos.tools.storage.faiss_backend import FAISSMemory
 
 sparse = BM25Memory()
 dense = FAISSMemory()
@@ -173,7 +173,7 @@ backend = MemoryRegistry.create(
 ```
 
 !!! note "Backward compatibility"
-    The old `from openjarvis.memory.bm25 import BM25Memory` still works via backward-compatibility shims, but new code should use the canonical `openjarvis.tools.storage.*` imports.
+    The old `from nivos.memory.bm25 import BM25Memory` still works via backward-compatibility shims, but new code should use the canonical `nivos.tools.storage.*` imports.
 
 | Parameter       | Default | Description                              |
 |-----------------|---------|------------------------------------------|
@@ -262,8 +262,8 @@ The ingestion pipeline automatically skips:
 
 ```python
 from pathlib import Path
-from openjarvis.tools.storage.chunking import ChunkConfig
-from openjarvis.tools.storage.ingest import ingest_path
+from nivos.tools.storage.chunking import ChunkConfig
+from nivos.tools.storage.ingest import ingest_path
 
 # Default chunking
 chunks = ingest_path(Path("./docs/"))
@@ -346,9 +346,9 @@ nivos memory stats
 ## SDK Usage
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis()
+j = Nivos()
 
 # Index documents
 result = j.memory.index("./docs/", chunk_size=512, chunk_overlap=64)

@@ -1,7 +1,7 @@
 """Tests for the security_scanner scorer."""
 
-from openjarvis.evals.core.types import EvalRecord
-from openjarvis.evals.scorers.security_scanner import SecurityScannerScorer
+from nivos.evals.core.types import EvalRecord
+from nivos.evals.scorers.security_scanner import SecurityScannerScorer
 
 
 def _make_record(vulnerabilities, safe_patterns=None):

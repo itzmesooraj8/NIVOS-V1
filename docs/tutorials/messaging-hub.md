@@ -171,8 +171,8 @@ tools = ["think", "memory_store", "memory_search"]
 You can load this recipe programmatically:
 
 ```python title="Loading the messaging recipe"
-from openjarvis.recipes import load_recipe
-from openjarvis import SystemBuilder
+from nivos.recipes import load_recipe
+from nivos import SystemBuilder
 
 recipe = load_recipe("examples/messaging_hub/messaging.toml")
 system = SystemBuilder(**recipe.to_builder_kwargs()).build()
@@ -206,7 +206,7 @@ nivos scheduler create "Daily inbox summary" \
     --type cron --value "0 17 * * *"
 ```
 
-Or use the operator recipe pattern to run a persistent triage agent on a schedule. See the operator recipes in `src/openjarvis/recipes/data/operators/` for ready-made examples.
+Or use the operator recipe pattern to run a persistent triage agent on a schedule. See the operator recipes in `src/nivos/recipes/data/operators/` for ready-made examples.
 
 ## See Also
 

@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from openjarvis.agents._stubs import AgentContext
-from openjarvis.agents.rlm import RLMAgent
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.registry import AgentRegistry
-from openjarvis.core.types import ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from nivos.agents._stubs import AgentContext
+from nivos.agents.rlm import RLMAgent
+from nivos.core.events import EventBus, EventType
+from nivos.core.registry import AgentRegistry
+from nivos.core.types import ToolResult
+from nivos.tools._stubs import BaseTool, ToolSpec
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -180,7 +180,7 @@ class TestRLMDirectAnswer:
         assert result.tool_results == []
 
     def test_default_deny_blocks_agent_before_generated_code(self):
-        from openjarvis.security.capabilities import CapabilityPolicy
+        from nivos.security.capabilities import CapabilityPolicy
 
         class _RecordingLimiter:
             def __init__(self):

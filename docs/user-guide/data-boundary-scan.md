@@ -176,7 +176,7 @@ users know that browser/Tauri credential storage must be reviewed separately.
 ## Configuration resolution
 
 The scan follows the same explicit configuration override used by the runtime:
-if `OPENJARVIS_CONFIG` is set, that file is audited. Otherwise the scan uses
+if `NIVOS_CONFIG` is set, that file is audited. Otherwise the scan uses
 the default Nivos config path under the resolved Nivos home. If the
 home directory cannot be resolved, the command reports a `config-root-error`
 finding instead of crashing.

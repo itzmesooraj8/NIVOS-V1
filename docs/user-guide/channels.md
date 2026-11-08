@@ -60,7 +60,7 @@ graph LR
 ### Connecting
 
 ```python title="connect.py"
-from openjarvis.channels.telegram import TelegramChannel
+from nivos.channels.telegram import TelegramChannel
 
 channel = TelegramChannel(
     bot_token="YOUR_BOT_TOKEN",  # (1)!
@@ -75,7 +75,7 @@ print(channel.status())  # ChannelStatus.CONNECTED
 ### Sending Messages
 
 ```python title="send_message.py"
-from openjarvis.channels.telegram import TelegramChannel
+from nivos.channels.telegram import TelegramChannel
 
 channel = TelegramChannel()
 channel.connect()
@@ -100,8 +100,8 @@ channel.disconnect()
 Register handler callbacks before calling `connect()`. Each handler receives a `ChannelMessage` and can optionally return a reply string.
 
 ```python title="receive_messages.py"
-from openjarvis.channels._stubs import ChannelMessage
-from openjarvis.channels.discord_channel import DiscordChannel
+from nivos.channels._stubs import ChannelMessage
+from nivos.channels.discord_channel import DiscordChannel
 
 channel = DiscordChannel()
 
@@ -125,7 +125,7 @@ channel.connect()                    # (2)!
 ### Listing Available Channels
 
 ```python title="list_channels.py"
-from openjarvis.channels.slack import SlackChannel
+from nivos.channels.slack import SlackChannel
 
 channel = SlackChannel()
 channel.connect()
@@ -164,8 +164,8 @@ Every incoming message is delivered to handlers as a `ChannelMessage` dataclass.
 Pass an `EventBus` to publish channel events to the rest of the system:
 
 ```python title="channel_events.py"
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.channels.telegram import TelegramChannel
+from nivos.core.events import EventBus, EventType
+from nivos.channels.telegram import TelegramChannel
 
 bus = EventBus()
 
@@ -275,9 +275,9 @@ Possible values: `connected`, `disconnected`, `connecting`, `error`, `not_config
 
 ## Configuration
 
-Channel settings live in the `[channel]` section of `~/.openjarvis/config.toml`. Each platform has its own nested sub-section.
+Channel settings live in the `[channel]` section of `~/.nivos/config.toml`. Each platform has its own nested sub-section.
 
-```toml title="~/.openjarvis/config.toml"
+```toml title="~/.nivos/config.toml"
 [channel]
 enabled = true
 default_channel = ""
@@ -312,9 +312,9 @@ This example connects a Telegram channel, registers a handler that echoes messag
 
 ```python title="full_example.py"
 import time
-from openjarvis.channels._stubs import ChannelMessage
-from openjarvis.channels.telegram import TelegramChannel
-from openjarvis.core.events import EventBus
+from nivos.channels._stubs import ChannelMessage
+from nivos.channels.telegram import TelegramChannel
+from nivos.core.events import EventBus
 
 bus = EventBus()
 channel = TelegramChannel(
@@ -416,7 +416,7 @@ To get a dedicated number, upgrade to a paid SendBlue plan.
 ### Programmatic Setup
 
 ```python title="sendblue_setup.py"
-from openjarvis.channels.sendblue import SendBlueChannel
+from nivos.channels.sendblue import SendBlueChannel
 
 channel = SendBlueChannel(
     api_key_id="YOUR_API_KEY_ID",         # or SENDBLUE_API_KEY_ID env var
@@ -450,7 +450,7 @@ The server exposes `POST /webhooks/sendblue` which:
 
 ### Configuration
 
-```toml title="~/.openjarvis/config.toml"
+```toml title="~/.nivos/config.toml"
 [channel.sendblue]
 api_key_id = "YOUR_API_KEY_ID"
 api_secret_key = "YOUR_API_SECRET_KEY"
@@ -469,7 +469,7 @@ export SENDBLUE_FROM_NUMBER="+16452468235"
 nivos channel status --channel-type sendblue
 
 # Send a message
-nivos channel send sendblue "+15551234567" "Hello from Jarvis!"
+nivos channel send sendblue "+15551234567" "Hello from Nivos!"
 ```
 
 ### Server Restart Behavior
@@ -530,7 +530,7 @@ If `ready` is `false`, the Messaging tab shows a "Disconnected" badge with a "Re
 `WhatsAppBaileysChannel` is registered as `"whatsapp_baileys"` in `ChannelRegistry` and provides **bidirectional WhatsApp messaging** using the Baileys protocol. It spawns a Node.js bridge subprocess that handles QR-code authentication, incoming message forwarding, and outbound message delivery.
 
 !!! warning "Node.js 22+ required"
-    The Baileys bridge is a compiled Node.js application bundled inside the package. It is auto-installed to `~/.openjarvis/whatsapp_baileys_bridge/` on first `connect()` call. If `node` is not found on `PATH`, `connect()` logs an error and sets the channel to `ChannelStatus.ERROR`.
+    The Baileys bridge is a compiled Node.js application bundled inside the package. It is auto-installed to `~/.nivos/whatsapp_baileys_bridge/` on first `connect()` call. If `node` is not found on `PATH`, `connect()` logs an error and sets the channel to `ChannelStatus.ERROR`.
 
 !!! note "WhatsApp account required"
     WhatsApp does not offer an official API for personal accounts. Baileys operates on the WhatsApp Web protocol. You must scan a QR code with your WhatsApp mobile app to authenticate on first use.
@@ -538,10 +538,10 @@ If `ready` is `false`, the Messaging tab shows a "Disconnected" badge with a "Re
 ### Connecting
 
 ```python title="whatsapp_connect.py"
-from openjarvis.channels.whatsapp_baileys import WhatsAppBaileysChannel
+from nivos.channels.whatsapp_baileys import WhatsAppBaileysChannel
 
 channel = WhatsAppBaileysChannel(
-    assistant_name="Jarvis",           # (1)!
+    assistant_name="Nivos",           # (1)!
     assistant_has_own_number=False,    # (2)!
 )
 channel.connect()  # spawns the Node.js bridge subprocess
@@ -550,13 +550,13 @@ channel.connect()  # spawns the Node.js bridge subprocess
 1. Display name used in conversation context.
 2. Set `True` if the assistant has a dedicated WhatsApp number and should not filter its own messages.
 
-On first connection, the bridge will print a QR code to the terminal. Scan it with the WhatsApp app on your phone to authenticate. Authentication state is saved to `~/.openjarvis/whatsapp_baileys_bridge/auth/` and reused on subsequent connections.
+On first connection, the bridge will print a QR code to the terminal. Scan it with the WhatsApp app on your phone to authenticate. Authentication state is saved to `~/.nivos/whatsapp_baileys_bridge/auth/` and reused on subsequent connections.
 
 ### Receiving Messages
 
 ```python title="whatsapp_receive.py"
-from openjarvis.channels._stubs import ChannelMessage
-from openjarvis.channels.whatsapp_baileys import WhatsAppBaileysChannel
+from nivos.channels._stubs import ChannelMessage
+from nivos.channels.whatsapp_baileys import WhatsAppBaileysChannel
 
 channel = WhatsAppBaileysChannel()
 
@@ -600,8 +600,8 @@ channel.disconnect()
 
 | Parameter                  | Type       | Default     | Description                                            |
 |----------------------------|------------|-------------|--------------------------------------------------------|
-| `auth_dir`                 | `str`      | `~/.openjarvis/whatsapp_baileys_bridge/auth` | Baileys auth state directory |
-| `assistant_name`           | `str`      | `"Jarvis"`  | Display name for the assistant                         |
+| `auth_dir`                 | `str`      | `~/.nivos/whatsapp_baileys_bridge/auth` | Baileys auth state directory |
+| `assistant_name`           | `str`      | `"Nivos"`  | Display name for the assistant                         |
 | `assistant_has_own_number` | `bool`     | `False`     | Whether the assistant has a dedicated WhatsApp number  |
 | `bus`                      | `EventBus` | `None`      | Event bus for publishing channel events                |
 
@@ -629,10 +629,10 @@ When a `bus` is provided, `WhatsAppBaileysChannel` publishes the same events as 
 
 WhatsApp Baileys channel settings live in the `[channel.whatsapp_baileys]` subsection:
 
-```toml title="~/.openjarvis/config.toml"
+```toml title="~/.nivos/config.toml"
 [channel.whatsapp_baileys]
-auth_dir = "/home/user/.openjarvis/whatsapp_baileys_bridge/auth"
-assistant_name = "Jarvis"
+auth_dir = "/home/user/.nivos/whatsapp_baileys_bridge/auth"
+assistant_name = "Nivos"
 assistant_has_own_number = false
 ```
 
@@ -641,6 +641,6 @@ assistant_has_own_number = false
 ## See Also
 
 - [Architecture: Channels](../architecture/channels.md) -- listener loop internals and channel design
-- [API Reference: Channels](../api-reference/openjarvis/channels/index.md) -- full class and type signatures
+- [API Reference: Channels](../api-reference/nivos/channels/index.md) -- full class and type signatures
 - [Getting Started: Configuration](../getting-started/configuration.md) -- full config reference
 - [User Guide: Agents](agents.md) -- agent system documentation

@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-from openjarvis.core.types import Message, Role
-from openjarvis.engine.cloud import CloudEngine
+from nivos.core.types import Message, Role
+from nivos.engine.cloud import CloudEngine
 
 
 @pytest.mark.asyncio

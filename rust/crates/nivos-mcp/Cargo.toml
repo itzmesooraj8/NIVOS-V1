@@ -1,0 +1,13 @@
+[package]
+name = "nivos-mcp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+nivos-core = { path = "../nivos-core" }
+nivos-tools = { path = "../nivos-tools" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }

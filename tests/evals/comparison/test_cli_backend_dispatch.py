@@ -8,15 +8,15 @@ from unittest.mock import patch
 import click
 import pytest
 
-from openjarvis.evals.cli import BACKENDS, _build_backend
+from nivos.evals.cli import BACKENDS, _build_backend
 
 
 class TestBuildBackendDispatch:
     def test_backends_dict_includes_external(self) -> None:
         assert "hermes" in BACKENDS
         assert "openclaw" in BACKENDS
-        assert "jarvis-agent" in BACKENDS
-        assert "jarvis-direct" in BACKENDS
+        assert "nivos-agent" in BACKENDS
+        assert "nivos-direct" in BACKENDS
 
     def test_unknown_backend_raises(self) -> None:
         with pytest.raises(click.UsageError, match="unknown backend"):
@@ -50,7 +50,7 @@ class TestBuildBackendDispatch:
             )
 
     def test_hermes_returns_hermes_backend(self) -> None:
-        from openjarvis.evals.comparison.third_party import (
+        from nivos.evals.comparison.third_party import (
             ThirdPartyConfig,
             ThirdPartyEntry,
         )
@@ -67,12 +67,12 @@ class TestBuildBackendDispatch:
         )
         with (
             patch(
-                "openjarvis.evals.backends.external.hermes_agent.load_third_party_config",
+                "nivos.evals.backends.external.hermes_agent.load_third_party_config",
                 return_value=cfg,
             ),
-            patch("openjarvis.evals.backends.external.hermes_agent.verify_commit_pin"),
+            patch("nivos.evals.backends.external.hermes_agent.verify_commit_pin"),
         ):
-            from openjarvis.evals.backends.external import HermesBackend
+            from nivos.evals.backends.external import HermesBackend
 
             backend = _build_backend(
                 backend_name="hermes",

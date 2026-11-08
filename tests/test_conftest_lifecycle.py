@@ -28,13 +28,13 @@ real_mkdtemp = tempfile.mkdtemp
 
 def recording_mkdtemp(*args, **kwargs):
     path = real_mkdtemp(*args, **kwargs)
-    if kwargs.get("prefix") == "openjarvis-test-home-":
+    if kwargs.get("prefix") == "nivos-test-home-":
         created.append(path)
     return path
 
 tempfile.mkdtemp = recording_mkdtemp
-os.environ["OPENJARVIS_HOME"] = "/tmp/openjarvis-original-home-sentinel"
-os.environ["OPENJARVIS_CONFIG"] = "/tmp/openjarvis-original-config-sentinel"
+os.environ["NIVOS_HOME"] = "/tmp/nivos-original-home-sentinel"
+os.environ["NIVOS_CONFIG"] = "/tmp/nivos-original-config-sentinel"
 
 bad_test = pathlib.Path("tests") / f"test_bad_collection_{os.getpid()}.py"
 try:
@@ -50,8 +50,8 @@ try:
 finally:
     bad_test.unlink(missing_ok=True)
 
-assert os.environ["OPENJARVIS_HOME"] == "/tmp/openjarvis-original-home-sentinel"
-assert os.environ["OPENJARVIS_CONFIG"] == "/tmp/openjarvis-original-config-sentinel"
+assert os.environ["NIVOS_HOME"] == "/tmp/nivos-original-home-sentinel"
+assert os.environ["NIVOS_CONFIG"] == "/tmp/nivos-original-config-sentinel"
 assert len(created) == 1, created
 assert not pathlib.Path(created[0]).exists(), created[0]
 """

@@ -7,17 +7,17 @@ from unittest import mock
 
 import pytest
 
-from openjarvis.core.registry import EngineRegistry
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._base import EngineConnectionError
-from openjarvis.engine.cloud import (
+from nivos.core.registry import EngineRegistry
+from nivos.core.types import Message, Role
+from nivos.engine._base import EngineConnectionError
+from nivos.engine.cloud import (
     _MINIMAX_MODELS,
     PRICING,
     CloudEngine,
     _is_minimax_model,
     estimate_cost,
 )
-from openjarvis.intelligence.model_catalog import BUILTIN_MODELS
+from nivos.intelligence.model_catalog import BUILTIN_MODELS
 from tests.engine.conftest import CLOUD_KEY_ENV_VARS
 
 

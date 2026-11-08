@@ -17,11 +17,11 @@ def test_delayed_sync_finishes_before_database_paths_are_restored(
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from openjarvis.connectors import embeddings, sync_engine
-    from openjarvis.connectors.pipeline import IngestionPipeline
-    from openjarvis.connectors.store import KnowledgeStore
-    from openjarvis.core import config
-    from openjarvis.server import connectors_router
+    from nivos.connectors import embeddings, sync_engine
+    from nivos.connectors.pipeline import IngestionPipeline
+    from nivos.connectors.store import KnowledgeStore
+    from nivos.core import config
+    from nivos.server import connectors_router
     from tests.server.conftest import _finish_connector_syncs, _isolate_connector_dbs
 
     baseline = tmp_path / "restored-home"

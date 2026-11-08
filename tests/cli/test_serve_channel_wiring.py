@@ -1,6 +1,6 @@
-"""Tests for JarvisSystem.wire_channel() — channel → agent routing.
+"""Tests for NivosSystem.wire_channel() — channel → agent routing.
 
-These tests exercise wire_channel() on JarvisSystem directly. The serve.py
+These tests exercise wire_channel() on NivosSystem directly. The serve.py
 entrypoint now delegates all channel-wiring logic there.
 """
 
@@ -8,11 +8,11 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from openjarvis.channels._stubs import ChannelMessage
-from openjarvis.core.config import JarvisConfig
-from openjarvis.core.events import EventBus
-from openjarvis.sessions.session import SessionStore
-from openjarvis.system import JarvisSystem
+from nivos.channels._stubs import ChannelMessage
+from nivos.core.config import NivosConfig
+from nivos.core.events import EventBus
+from nivos.sessions.session import SessionStore
+from nivos.system import NivosSystem
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -34,13 +34,13 @@ def _make_channel_message(
     )
 
 
-def _make_system(engine=None, agent_name="", tmp_path=None) -> JarvisSystem:
-    """Build a minimal JarvisSystem with mock engine for testing wire_channel."""
-    config = JarvisConfig()
+def _make_system(engine=None, agent_name="", tmp_path=None) -> NivosSystem:
+    """Build a minimal NivosSystem with mock engine for testing wire_channel."""
+    config = NivosConfig()
     if tmp_path is not None:
         config.sessions.db_path = str(tmp_path / "sessions.db")
     mock_engine = engine or MagicMock()
-    return JarvisSystem(
+    return NivosSystem(
         config=config,
         bus=EventBus(record_history=False),
         engine=mock_engine,
@@ -57,7 +57,7 @@ def _fire(channel_mock, cm: ChannelMessage) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Tests via JarvisSystem.wire_channel()
+# Tests via NivosSystem.wire_channel()
 # ---------------------------------------------------------------------------
 
 
@@ -287,11 +287,11 @@ class TestWireChannelErrorHandling:
 
 
 class TestChannelToolLoading:
-    """JarvisSystem receives tools when agent accepts them."""
+    """NivosSystem receives tools when agent accepts them."""
 
     def test_tool_using_agent_receives_tools(self, tmp_path):
-        """JarvisSystem built with a tool list passes tools to the agent via ask()."""
-        from openjarvis.tools._stubs import BaseTool, ToolSpec
+        """NivosSystem built with a tool list passes tools to the agent via ask()."""
+        from nivos.tools._stubs import BaseTool, ToolSpec
 
         # Minimal fake tool
         class _FakeTool(BaseTool):
@@ -301,10 +301,10 @@ class TestChannelToolLoading:
                 pass
 
         fake_tool = _FakeTool()
-        config = JarvisConfig()
+        config = NivosConfig()
         config.sessions.db_path = str(tmp_path / "sessions.db")
 
-        system = JarvisSystem(
+        system = NivosSystem(
             config=config,
             bus=EventBus(record_history=False),
             engine=MagicMock(),
@@ -318,12 +318,12 @@ class TestChannelToolLoading:
         assert system.tools[0].spec.name == "fake"
 
     def test_non_tool_agent_receives_empty_tools(self, tmp_path):
-        """JarvisSystem with no tools list results in empty tools — simple agent
+        """NivosSystem with no tools list results in empty tools — simple agent
         unaffected."""
-        config = JarvisConfig()
+        config = NivosConfig()
         config.sessions.db_path = str(tmp_path / "sessions.db")
 
-        system = JarvisSystem(
+        system = NivosSystem(
             config=config,
             bus=EventBus(record_history=False),
             engine=MagicMock(),

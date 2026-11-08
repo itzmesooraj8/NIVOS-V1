@@ -3,7 +3,7 @@
 The task scheduler lets you run agent queries automatically on a schedule -- once at a future time, on a recurring interval, or via a cron expression. Scheduled tasks are persisted in SQLite so they survive process restarts, and execution is handled by a background daemon thread that polls for due tasks every 60 seconds.
 
 !!! note "Optional component"
-    The scheduler is a standalone module (`openjarvis.scheduler`). It is not wired into the default `Jarvis` / `JarvisSystem` startup. You enable it explicitly via `SystemBuilder` or by starting the CLI daemon with `nivos scheduler start`.
+    The scheduler is a standalone module (`nivos.scheduler`). It is not wired into the default `Nivos` / `NivosSystem` startup. You enable it explicitly via `SystemBuilder` or by starting the CLI daemon with `nivos scheduler start`.
 
 ---
 
@@ -115,19 +115,19 @@ Run 2: started=2026-02-24T08:00:00Z finished=2026-02-24T08:00:05Z success=True
 ## Python API
 
 ```python title="scheduler_example.py"
-from openjarvis.scheduler.store import SchedulerStore
-from openjarvis.scheduler.scheduler import TaskScheduler
+from nivos.scheduler.store import SchedulerStore
+from nivos.scheduler.scheduler import TaskScheduler
 
 # Set up storage
-store = SchedulerStore(db_path="~/.openjarvis/scheduler.db")  # (1)!
+store = SchedulerStore(db_path="~/.nivos/scheduler.db")  # (1)!
 
-# Wire in a JarvisSystem for task execution
-from openjarvis import Jarvis
-jarvis = Jarvis()
+# Wire in a NivosSystem for task execution
+from nivos import Nivos
+nivos = Nivos()
 
 scheduler = TaskScheduler(
     store=store,
-    system=jarvis,         # (2)!
+    system=nivos,         # (2)!
     poll_interval=60,      # (3)!
 )
 
@@ -155,13 +155,13 @@ scheduler.start()   # (4)!
 # ... application runs ...
 
 scheduler.stop()
-jarvis.close()
+nivos.close()
 ```
 
 1. SQLite database storing all task state and run logs.
 2. The scheduler calls `system.ask(task.prompt, agent=task.agent, tools=...)` when a task is due. Pass `system=None` for a dry-run mode that logs what it would execute without calling the agent.
 3. Seconds between polling cycles. Lower values increase responsiveness at the cost of more SQLite reads.
-4. Starts a daemon thread named `"jarvis-scheduler"`. Daemon threads exit automatically when the main process exits.
+4. Starts a daemon thread named `"nivos-scheduler"`. Daemon threads exit automatically when the main process exits.
 
 ---
 
@@ -197,9 +197,9 @@ nivos ask --agent orchestrator \
 ```
 
 ```python
-from openjarvis import Jarvis
+from nivos import Nivos
 
-j = Jarvis()
+j = Nivos()
 response = j.ask(
     "Schedule a weekly digest of research papers every Monday at 9am",
     agent="orchestrator",
@@ -214,12 +214,12 @@ See [Scheduler Tools](tools.md#scheduler-tools) for full parameter reference.
 
 ## Configuration
 
-Scheduler settings live in the `[scheduler]` section of `~/.openjarvis/config.toml`.
+Scheduler settings live in the `[scheduler]` section of `~/.nivos/config.toml`.
 
-```toml title="~/.openjarvis/config.toml"
+```toml title="~/.nivos/config.toml"
 [scheduler]
 enabled = false
-db_path = "~/.openjarvis/scheduler.db"
+db_path = "~/.nivos/scheduler.db"
 poll_interval = 60
 default_agent = "simple"
 ```
@@ -227,7 +227,7 @@ default_agent = "simple"
 | Key              | Type   | Default                          | Description                                |
 |------------------|--------|----------------------------------|--------------------------------------------|
 | `enabled`        | `bool` | `false`                          | Start the scheduler daemon automatically   |
-| `db_path`        | `str`  | `~/.openjarvis/scheduler.db`     | SQLite database path                       |
+| `db_path`        | `str`  | `~/.nivos/scheduler.db`     | SQLite database path                       |
 | `poll_interval`  | `int`  | `60`                             | Seconds between polling cycles             |
 | `default_agent`  | `str`  | `"simple"`                       | Default agent for tasks that omit `agent`  |
 

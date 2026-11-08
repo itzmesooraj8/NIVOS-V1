@@ -211,7 +211,7 @@ export const SOURCE_CATALOG: ConnectorMeta[] = [
       },
       {
         label: '(Optional) Set the app icon: in the left sidebar click "Basic Information" → scroll to "Display Information" → upload the Nivos logo',
-        url: 'https://github.com/nivos/nivos/blob/main/assets/openjarvis-slack-icon.jpg',
+        url: 'https://github.com/nivos/nivos/blob/main/assets/nivos-slack-icon.jpg',
         urlLabel: 'Download icon',
       },
     ],

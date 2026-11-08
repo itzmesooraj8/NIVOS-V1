@@ -54,7 +54,7 @@ cp ~/code/ace/.env.example ~/code/ace/.env
 # Edit ~/code/ace/.env to set API_KEY for your chosen provider.
 
 # 4. Verify the import resolves from Nivos's venv
-python -c "from openjarvis.learning.agents.ace_optimizer import HAS_ACE; print(HAS_ACE)"
+python -c "from nivos.learning.agents.ace_optimizer import HAS_ACE; print(HAS_ACE)"
 # True
 ```
 
@@ -85,8 +85,8 @@ max_num_rounds = 3
 playbook_token_budget = 80000
 max_tokens = 4096
 
-task_name = "openjarvis"
-save_dir = ""               # default: ~/.openjarvis/learning/ace/<task>/
+task_name = "nivos"
+save_dir = ""               # default: ~/.nivos/learning/ace/<task>/
 
 min_traces = 20
 ```
@@ -113,7 +113,7 @@ Nivos traces are adapted into ACE's `train_samples` /
 Traces with empty `query` or `result` are dropped before splitting.
 
 The `DataProcessor` ACE expects is built from `_TraceDataProcessor`
-in `src/openjarvis/learning/agents/ace_optimizer.py` — it does a
+in `src/nivos/learning/agents/ace_optimizer.py` — it does a
 case-insensitive substring match for `answer_is_correct` and averages
 that for aggregate accuracy. If you're optimizing for a domain where
 substring matching is the wrong correctness signal (math problems,

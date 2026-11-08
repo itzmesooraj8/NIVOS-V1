@@ -1,6 +1,6 @@
 """Tests for the browser_assistant dataset."""
 
-from openjarvis.evals.datasets.browser_assistant import (
+from nivos.evals.datasets.browser_assistant import (
     BrowserAssistantDataset,
 )
 

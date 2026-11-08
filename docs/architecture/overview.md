@@ -31,7 +31,7 @@ Each engine is configured via its own sub-section in `config.toml` (e.g., `[engi
 
 The Agentic Logic primitive implements **pluggable agents** that handle queries with varying levels of sophistication. The agent hierarchy is organized around `BaseAgent` (ABC with concrete helpers) and `ToolUsingAgent` (intermediate base for agents that accept tools, with `accepts_tools = True`). Nine agent types are available: `SimpleAgent` (single-turn, no tools), `OrchestratorAgent` (multi-turn tool-calling loop with function_calling and structured modes), `NativeReActAgent` (Thought-Action-Observation loop), `NativeOpenHandsAgent` (CodeAct-style code execution), `RLMAgent` (recursive LM with persistent REPL), `OpenHandsAgent` (wraps real `openhands-sdk`), `ClaudeCodeAgent` (Claude Agent SDK via Node.js subprocess), `OperativeAgent` (persistent scheduled agent with state management), and `MonitorOperativeAgent` (long-horizon agent with configurable strategy axes).
 
-The sandbox module (`openjarvis.sandbox`) adds a `SandboxedAgent` wrapper that runs any `BaseAgent` inside a Docker or Podman container with mount-security enforcement, and a `ContainerRunner` that manages the container lifecycle.
+The sandbox module (`nivos.sandbox`) adds a `SandboxedAgent` wrapper that runs any `BaseAgent` inside a Docker or Podman container with mount-security enforcement, and a `ContainerRunner` that manages the container lifecycle.
 
 Agent behavior is configured through `[agent]` in `config.toml`, including the default agent, turn limits, tool list, optional system prompt, and the `context_from_memory` flag (previously `context_injection`) that controls automatic memory context injection. Sandbox configuration lives in `[sandbox]`. All agents implement the `BaseAgent` ABC with a `run()` method, and are registered via `@AgentRegistry.register("name")`.
 
@@ -54,7 +54,7 @@ The learning system is configured through nested sub-sections in `config.toml`: 
 All extensible components in Nivos use a **decorator-based registry** for runtime discovery. The pattern is implemented in `RegistryBase[T]`, a generic base class that provides isolated storage per typed subclass.
 
 ```python
-from openjarvis.core.registry import EngineRegistry
+from nivos.core.registry import EngineRegistry
 
 @EngineRegistry.register("ollama")
 class OllamaEngine(InferenceEngine):
@@ -97,11 +97,11 @@ Each registry provides:
 ## Source Directory Layout
 
 ```
-src/openjarvis/
+src/nivos/
     core/               Core infrastructure shared by all primitives
         registry.py         RegistryBase[T] and typed subclass registries
         types.py            Message, ModelSpec, Trace, TelemetryRecord, etc.
-        config.py           JarvisConfig, hardware detection, TOML loading
+        config.py           NivosConfig, hardware detection, TOML loading
         events.py           EventBus pub/sub system (EventType, Event)
 
     intelligence/       Intelligence primitive -- model definition & catalog
@@ -203,7 +203,7 @@ src/openjarvis/
         ask.py              nivos ask -- query the assistant
         serve.py            nivos serve -- start API server
 
-    sdk.py              Jarvis class -- high-level Python SDK
+    sdk.py              Nivos class -- high-level Python SDK
     mcp/                MCP (Model Context Protocol) layer
 ```
 

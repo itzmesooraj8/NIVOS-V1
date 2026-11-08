@@ -1,4 +1,4 @@
-use openjarvis_cross_device_travel::travel::{run_demo, Scenario};
+use nivos_cross_device_travel::travel::{run_demo, Scenario};
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
