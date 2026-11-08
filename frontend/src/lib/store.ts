@@ -106,6 +106,11 @@ interface Settings {
 }
 
 function loadSettings(): Settings {
+  try {
+    localStorage.removeItem('engine');
+    localStorage.removeItem('openjarvis-engine');
+    localStorage.removeItem('nivos-engine');
+  } catch {}
   const defaults: Settings = {
     theme: 'system',
     apiUrl: '',
@@ -122,7 +127,10 @@ function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return defaults;
-    return { ...defaults, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    delete parsed.engine;
+    delete parsed.selectedEngine;
+    return { ...defaults, ...parsed };
   } catch {
     return defaults;
   }

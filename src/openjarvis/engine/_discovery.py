@@ -136,6 +136,12 @@ def discover_engines(config: JarvisConfig) -> List[Tuple[str, InferenceEngine]]:
 
     def _probe(key: str) -> Tuple[str, InferenceEngine] | None:
         try:
+            # Do not auto-add cloud engines such as NIM unless their API key is set
+            if key == "nim":
+                import os
+
+                if not os.environ.get("NIM_API_KEY") and not getattr(config.engine, "nim_api_key", None):
+                    return None
             engine = _make_engine(key, config)
             if engine.health():
                 return (key, engine)

@@ -32,6 +32,7 @@ class NIMEngine(InferenceEngine):
     """
 
     engine_id = "nim"
+    is_cloud = True
     _default_host = "https://integrate.api.nvidia.com"
     _api_prefix = "/v1"
 
@@ -79,10 +80,22 @@ class NIMEngine(InferenceEngine):
         }
         if "tools" in payload and "tool_choice" not in payload:
             payload["tool_choice"] = "auto"
+        if self._host == self._default_host and not self._api_key:
+            raise EngineConnectionError("NIM_API_KEY is not set — add it in Settings")
         try:
             url = f"{self._api_prefix}/chat/completions"
             resp = self._client.post(url, json=payload, headers=self._get_headers())
             resp.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 404:
+                raise EngineConnectionError(
+                    f"Model {model!r} not found on NIM at {self._host} (404 Not Found)"
+                ) from exc
+            if exc.response.status_code in (401, 403):
+                raise EngineConnectionError(
+                    f"NIM authentication failed ({exc.response.status_code}). Check your NIM_API_KEY in Settings."
+                ) from exc
+            raise
         except (httpx.ConnectError, httpx.TimeoutException) as exc:
             raise EngineConnectionError(
                 f"NIM engine not reachable at {self._host}"
@@ -254,7 +267,17 @@ class NIMEngine(InferenceEngine):
         data = resp.json()
         return [m["id"] for m in data.get("data", [])]
 
+    def can_serve(self, model: str) -> bool:
+        if self._host == self._default_host and not self._api_key:
+            return False
+        try:
+            return model in self.list_models()
+        except Exception:
+            return False
+
     def health(self) -> bool:
+        if self._host == self._default_host and not self._api_key:
+            return False
         try:
             resp = self._client.get(
                 f"{self._api_prefix}/health/ready",

@@ -319,9 +319,17 @@ class _OpenAICompatibleEngine(AsyncHTTPEngineMixin, InferenceEngine):
         return [m["id"] for m in data.get("data", [])]
 
     def health(self) -> bool:
+        import os
+        # Do not self-probe loopback port 8000 (default Nivos server) without explicit env
+        if self.engine_id == "uzu" and self._host in ("http://localhost:8000", "http://127.0.0.1:8000"):
+            if not os.environ.get("UZU_HOST"):
+                return False
         try:
             resp = self._client.get(f"{self._api_prefix}/models", timeout=2.0)
-            return resp.status_code == 200
+            if resp.status_code == 200:
+                content_type = resp.headers.get("content-type", "")
+                return "application/json" in content_type
+            return False
         except Exception as exc:
             logger.debug(
                 "%s health check failed at %s: %s",

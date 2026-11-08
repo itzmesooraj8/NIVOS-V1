@@ -32,9 +32,14 @@ class MultiEngine(InferenceEngine):
     def _refresh_map(self) -> None:
         self._model_map.clear()
         self._model_key_map.clear()
-        for key, engine in self._engines:
+        # Process ollama first so Ollama models are strictly assigned to ollama
+        engines_sorted = sorted(self._engines, key=lambda pair: 0 if pair[0] == "ollama" else 1)
+        for key, engine in engines_sorted:
             try:
                 for model_id in engine.list_models():
+                    # Ollama models always go to Ollama
+                    if model_id in self._model_map and self._model_key_map.get(model_id) == "ollama":
+                        continue
                     self._model_map[model_id] = engine
                     self._model_key_map[model_id] = key
             except Exception as exc:
@@ -44,29 +49,62 @@ class MultiEngine(InferenceEngine):
 
     def _engine_for(self, model: str) -> InferenceEngine:
         """Find the engine that owns a model, refreshing the map once if needed."""
+        # 1. Ollama models always go to Ollama: check Ollama first if present
+        for key, eng in self._engines:
+            if key == "ollama":
+                if self._model_key_map.get(model) == "ollama":
+                    return eng
+                # Auto-detect new pulls without restart
+                try:
+                    if model in eng.list_models():
+                        self._model_map[model] = eng
+                        self._model_key_map[model] = "ollama"
+                        return eng
+                except Exception:
+                    pass
+
+        # 2. Check if model is already mapped to an engine that listed it
         engine = self._model_map.get(model)
         if engine is not None:
             return engine
-        # Refresh and retry (a new model may have been pulled)
+
+        # 3. Refresh and retry
         self._refresh_map()
         engine = self._model_map.get(model)
         if engine is not None:
             return engine
-        # If model looks like a cloud model, route to the cloud engine
-        # rather than falling back to the local engine (which would 404).
-        if any(model.startswith(p) for p in self._CLOUD_PREFIXES):
+
+        # 4. Check again for Ollama newly pulled models
+        for key, eng in self._engines:
+            if key == "ollama":
+                try:
+                    if model in eng.list_models():
+                        self._model_map[model] = eng
+                        self._model_key_map[model] = "ollama"
+                        return eng
+                except Exception:
+                    pass
+
+        # 5. Cloud models:
+        try:
+            from openjarvis.server.cloud_router import is_cloud_model
+            is_cloud = is_cloud_model(model)
+        except Exception:
+            is_cloud = False
+
+        if is_cloud or any(model.startswith(p) for p in self._CLOUD_PREFIXES):
             for key, eng in self._engines:
                 if key == "cloud":
+                    if hasattr(eng, "can_serve") and not eng.can_serve(model):
+                        raise ValueError(f"Add your key in Settings to use cloud model {model!r}.")
                     logger.info("Routing cloud model %r to cloud engine", model)
                     return eng
-        # Non-cloud models: do NOT silently fall back to cloud. A transient
-        # vLLM outage during a long agentic run would otherwise route every
-        # call to cloud, producing confusing "invalid model ID" errors
-        # across all tasks.
+            raise ValueError(f"Add your key in Settings to use cloud model {model!r}.")
+
         raise ValueError(
             f"Model {model!r} not found in any engine "
             f"(known: {', '.join(sorted(self._model_map.keys())) or '<none>'}). "
-            f"Check that the expected backend (e.g. vLLM server) is reachable."
+            f"A model is served only by the engine that lists it."
         )
 
     def generate(

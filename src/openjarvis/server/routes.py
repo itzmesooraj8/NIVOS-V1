@@ -338,27 +338,48 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
     # ``engine.generate()``) both make blocking upstream calls; run them in a
     # worker thread so a slow/wedged non-streaming request can't stall the
     # event loop and every other concurrent request with it.
-    if use_server_agent:
-        response = await asyncio.to_thread(
-            _handle_agent,
-            agent,
-            model,
-            request_body,
-            complexity_info,
-            trace_store=getattr(request.app.state, "trace_store", None),
-            bus=getattr(request.app.state, "bus", None),
-        )
-    else:
-        bus = getattr(request.app.state, "bus", None)
-        response = await asyncio.to_thread(
-            _handle_direct,
-            engine,
-            model,
-            request_body,
-            bus=bus,
-            complexity_info=complexity_info,
-            app_config=config,
-        )
+    try:
+        if use_server_agent:
+            response = await asyncio.to_thread(
+                _handle_agent,
+                agent,
+                model,
+                request_body,
+                complexity_info,
+                trace_store=getattr(request.app.state, "trace_store", None),
+                bus=getattr(request.app.state, "bus", None),
+            )
+        else:
+            bus = getattr(request.app.state, "bus", None)
+            response = await asyncio.to_thread(
+                _handle_direct,
+                engine,
+                model,
+                request_body,
+                bus=bus,
+                complexity_info=complexity_info,
+                app_config=config,
+            )
+    except ValueError as exc:
+        msg = str(exc)
+        if "Add your key in Settings" in msg:
+            raise HTTPException(status_code=400, detail="Add your key in Settings") from exc
+        raise HTTPException(status_code=400, detail=msg) from exc
+    except Exception as exc:
+        from openjarvis.engine._base import EngineConnectionError
+        import httpx as _httpx
+
+        if isinstance(exc, EngineConnectionError):
+            msg = str(exc)
+            if "Add your key in Settings" in msg or "not set" in msg:
+                raise HTTPException(status_code=400, detail="Add your key in Settings") from exc
+            raise HTTPException(status_code=502, detail=msg) from exc
+        if isinstance(exc, _httpx.HTTPStatusError):
+            raise HTTPException(
+                status_code=exc.response.status_code,
+                detail=f"Engine error: {exc.response.text}",
+            ) from exc
+        raise
 
     # Hand the completed exchange to the background memory service.
     _remember_exchange(
@@ -1166,14 +1187,8 @@ async def list_models(request: Request) -> ModelListResponse:
         if not is_cloud_model(m) or _engine_key_for_model(engine, m) == "litellm"
     ]
 
-    # Always ensure installed local Ollama models are included in the picker
-    ollama_tags = await _fetch_ollama_tags()
-    ollama_names = [m.get("name") for m in ollama_tags if m.get("name")]
-    if not ollama_names:
-        ollama_names = await list_local_models()
-    for name in ollama_names:
-        if name and name not in model_ids:
-            model_ids.append(name)
+    if not model_ids:
+        model_ids = await list_local_models()
 
     # Keep embed-only models out of the chat model picker. They still work for
     # memory/retrieval via the embedder path; putting them in /v1/models made

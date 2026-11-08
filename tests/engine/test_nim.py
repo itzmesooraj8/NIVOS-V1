@@ -133,3 +133,16 @@ def test_health_falls_back_to_models(respx_mock) -> None:
     assert engine.health() is True
     assert models.called
     engine.close()
+
+
+def test_default_host_without_api_key_is_not_healthy(monkeypatch) -> None:
+    monkeypatch.delenv("NIM_API_KEY", raising=False)
+    monkeypatch.delenv("NIM_HOST", raising=False)
+    engine = NIMEngine()
+
+    assert engine.health() is False
+    assert engine.can_serve("any-model") is False
+    with pytest.raises(EngineConnectionError, match="NIM_API_KEY is not set"):
+        engine.generate(_message(), model="qwen3.5:9b")
+    engine.close()
+
