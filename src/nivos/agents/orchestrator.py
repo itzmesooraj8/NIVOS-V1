@@ -357,8 +357,34 @@ class OrchestratorAgent(ToolUsingAgent):
             system_prompt=self._system_prompt,
         )
 
-        # Get OpenAI-format tool definitions
-        openai_tools = self._executor.get_openai_tools() if self._tools else []
+        # Get OpenAI-format tool definitions filtered by relevance to avoid prompt bloat
+        openai_tools: list[dict[str, Any]] = []
+        if self._tools:
+            all_openai_tools = self._executor.get_openai_tools()
+            try:
+                from nivos.server.tier_router import filter_relevant_tools
+
+                available_names = [
+                    t.get("function", {}).get("name", "")
+                    for t in all_openai_tools
+                    if "function" in t
+                ]
+                has_prefetched = (
+                    "pre-fetched" in input.lower()
+                    or "current weather" in input.lower()
+                )
+                relevant_names = filter_relevant_tools(
+                    input,
+                    available_tools=available_names,
+                    has_prefetched_data=has_prefetched,
+                )
+                openai_tools = [
+                    t
+                    for t in all_openai_tools
+                    if t.get("function", {}).get("name") in relevant_names
+                ]
+            except Exception:
+                openai_tools = all_openai_tools
 
         all_tool_results: list[ToolResult] = []
         turns = 0

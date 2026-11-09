@@ -153,7 +153,7 @@ export function Sidebar() {
                 {deepResearch
                   ? 'Deep Research'
                   : selectedModel === 'auto'
-                  ? 'Auto (Router)'
+                  ? 'Auto'
                   : selectedModel || serverInfo?.model || 'Select model'}
               </span>
               {modelLoading && (

@@ -73,14 +73,12 @@ def _is_control_token_only_args(raw_args: Any) -> bool:
 def _default_num_ctx() -> int:
     """Default context window (tokens). Override with ``NIVOS_NUM_CTX``.
 
-    Raised above Ollama's 4k default so an image (which costs many tokens)
-    plus a real conversation fit. 16k is comfortable for small models on a
-    typical consumer GPU.
+    Default set to 4096 for optimal CPU memory footprint and prompt processing speed.
     """
     try:
-        return int(os.environ.get("NIVOS_NUM_CTX", "16384"))
+        return int(os.environ.get("NIVOS_NUM_CTX", "4096"))
     except ValueError:
-        return 16384
+        return 4096
 
 
 def _ollama_request_options(

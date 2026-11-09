@@ -1141,10 +1141,7 @@ class AgentConfig:
     context_from_memory: bool = True  # inject relevant memory context into prompts
     default_system_prompt: str = (
         "You are Nivos, a helpful AI assistant running locally on the "
-        "user's own hardware. You are not a cloud service, and you are not "
-        "Claude, ChatGPT, Gemini, or any other branded assistant. If asked "
-        "who or what you are, identify yourself as Nivos. Respond "
-        "helpfully, concisely, and accurately."
+        "user's hardware. Respond helpfully, concisely, and accurately."
     )
 
     # Backward-compat property for old field name

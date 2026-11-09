@@ -34,6 +34,7 @@ class SystemPromptBuilder:
         skill_catalog_xml: Optional[str] = None,
         skill_few_shot: Optional[List[str]] = None,
         skill_few_shot_examples: Optional[List[str]] = None,
+        enabled_tools: Optional[List[str]] = None,
     ) -> None:
         self._agent_template = agent_template
         _mf = memory_files_config or MemoryFilesConfig()
@@ -43,6 +44,7 @@ class SystemPromptBuilder:
         self._session_context = session_context
         self._previous_state = previous_state
         self._skill_catalog_xml = skill_catalog_xml
+        self._enabled_tools = enabled_tools
         # Allow either name; skill_few_shot_examples is the Plan 2A canonical name.
         if skill_few_shot_examples is not None:
             self._skill_few_shot = list(skill_few_shot_examples)
@@ -122,6 +124,30 @@ class SystemPromptBuilder:
         """
         return "\n\n".join(self._persona_sections())
 
+    def _resolve_enabled_tools_line(self) -> str:
+        """Resolve the real enabled tools line for capability grounding."""
+        if self._enabled_tools is not None:
+            tools = [t.strip() for t in self._enabled_tools if t and t.strip()]
+        else:
+            try:
+                from nivos.core.config import load_config
+
+                cfg = load_config()
+                raw = (
+                    getattr(getattr(cfg, "tools", None), "enabled", "")
+                    or getattr(getattr(cfg, "agent", None), "tools", "")
+                )
+                if isinstance(raw, list):
+                    tools = [t.strip() for t in raw if isinstance(t, str) and t.strip()]
+                elif isinstance(raw, str) and raw.strip():
+                    tools = [t.strip() for t in raw.split(",") if t.strip()]
+                else:
+                    tools = ["web_search", "calculator", "think"]
+            except Exception:
+                tools = ["web_search", "calculator", "think"]
+        tools_str = ", ".join(tools) if tools else "none"
+        return f"Enabled tools: {tools_str}. You have no other tools or capabilities."
+
     def _build_frozen_prefix(self) -> str:
         return "\n\n".join(section.content for section in self._get_frozen_sections())
 
@@ -144,6 +170,16 @@ class SystemPromptBuilder:
                     name="agent_template",
                     content=self._agent_template,
                     source="agent_template",
+                    cache_segment="frozen_prefix",
+                )
+            )
+        enabled_tools_line = self._resolve_enabled_tools_line()
+        if enabled_tools_line:
+            sections.append(
+                PromptSection(
+                    name="enabled_tools",
+                    content=enabled_tools_line,
+                    source="tools.enabled",
                     cache_segment="frozen_prefix",
                 )
             )

@@ -36,6 +36,25 @@ export interface AgentEvent {
 
 const CONVERSATIONS_KEY = 'nivos-conversations';
 const SETTINGS_KEY = 'nivos-settings';
+const SELECTED_MODEL_KEY = 'nivos-selected-model';
+
+function loadSelectedModel(): string {
+  try {
+    return localStorage.getItem(SELECTED_MODEL_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function saveSelectedModel(model: string): void {
+  try {
+    if (model) {
+      localStorage.setItem(SELECTED_MODEL_KEY, model);
+    } else {
+      localStorage.removeItem(SELECTED_MODEL_KEY);
+    }
+  } catch {}
+}
 
 function migrateLocalStorage(): void {
   if (typeof window === 'undefined' || !window.localStorage) return;
@@ -44,6 +63,7 @@ function migrateLocalStorage(): void {
   const keys = [
     'settings',
     'conversations',
+    'selected-model',
     'engine',
     'memory-enabled',
     'memory-backend',
@@ -297,7 +317,7 @@ export const useAppStore = create<AppState>((set, get) => {
 
     models: [],
     modelsLoading: true,
-    selectedModel: '',
+    selectedModel: loadSelectedModel(),
     serverInfo: null,
     savings: null,
 
@@ -485,6 +505,11 @@ export const useAppStore = create<AppState>((set, get) => {
 
     setModels: (models: ModelInfo[]) =>
       set((state) => {
+        // If 'auto' is selected, preserve it: it dynamically routes between tiers
+        if (state.selectedModel === 'auto') {
+          return { models };
+        }
+
         // Ollama returns embed-only models (e.g. nomic-embed-text) in the
         // same list as chat models. Auto-picking models[0] selected the
         // embedder and every chat failed with HTTP 400 "does not support
@@ -504,11 +529,14 @@ export const useAppStore = create<AppState>((set, get) => {
           !!state.selectedModel && isEmbedOnlyModel(state.selectedModel);
         const currentMissing =
           !!state.selectedModel &&
+          state.selectedModel !== 'auto' &&
           !models.some((m) => m.id === state.selectedModel);
 
         if (!state.selectedModel || currentIsBad || currentMissing) {
-          // Prefer a real chat model. If none exist, clear a bad/missing
-          // selection rather than keeping an embed-only id that 400s on chat.
+          const saved = loadSelectedModel();
+          if (saved === 'auto') {
+            return { models, selectedModel: 'auto' };
+          }
           return {
             models,
             selectedModel: preferred,
@@ -517,7 +545,10 @@ export const useAppStore = create<AppState>((set, get) => {
         return { models };
       }),
     setModelsLoading: (loading: boolean) => set({ modelsLoading: loading }),
-    setSelectedModel: (model: string) => set({ selectedModel: model }),
+    setSelectedModel: (model: string) => {
+      saveSelectedModel(model);
+      set({ selectedModel: model });
+    },
     setServerInfo: (info: ServerInfo | null) => set({ serverInfo: info }),
     setSavings: (data: SavingsData | null) => set({ savings: data }),
     incrementSavings: (usage: TokenUsage) => {

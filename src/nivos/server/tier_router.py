@@ -33,6 +33,152 @@ _SIMPLE_MATH_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Tool relevance patterns for prompt diet
+_WEB_SEARCH_PATTERN = re.compile(
+    r"\b(search|google|web|online|lookup|look\s+up|browse|news|headlines?|latest|current\s+events|who\s+won|stock\s+price|scores?)\b",
+    re.IGNORECASE,
+)
+
+_WEATHER_PATTERN = re.compile(
+    r"\b(weather|temperature|forecast|rain|snow|humidity|wind|windy|storm|sunny|cloudy)\b",
+    re.IGNORECASE,
+)
+
+_FILE_READ_PATTERN = re.compile(
+    r"\b(read|open|cat|view|inspect|examine|show|display|check|load)\b.*\b(file|document|code|notes?|log|contents?)\b|"
+    r"\.(?:txt|py|md|json|csv|log|toml|yaml|yml|ts|tsx|js|jsx|html|css|ini|cfg)\b|"
+    r"\b(read_file|read\s+file)\b",
+    re.IGNORECASE,
+)
+
+_FILE_WRITE_PATTERN = re.compile(
+    r"\b(write|save|create|append|edit|update|overwrite|dump)\b.*\b(file|document|note)\b|"
+    r"\b(write_file|save_file|save\s+to\s+file|create\s+file)\b",
+    re.IGNORECASE,
+)
+
+_SHELL_PATTERN = re.compile(
+    r"\b(bash|sh|terminal|shell|command|exec|execute|run|pip\s+|npm\s+|git\s+|curl\s+|docker\s+|powershell|cmd\.exe)\b|"
+    r"```(?:bash|sh|shell|powershell|cmd)",
+    re.IGNORECASE,
+)
+
+_CALCULATOR_PATTERN = re.compile(
+    r"\b(calculate|calc|math|arithmetic|formula|equation)\b|"
+    r"(?:sqrt|sin|cos|tan|log|pow)\s*\(|"
+    r"\b\d+(?:\.\d+)?\s*[\+\-\*\/\^]\s*\d+",
+    re.IGNORECASE,
+)
+
+_SCHEDULER_PATTERN = re.compile(
+    r"\b(schedule|remind|reminder|cron|timer|alarm|periodic|scheduled\s+task|cancel\s+task|list\s+tasks?|pause\s+task|resume\s+task)\b",
+    re.IGNORECASE,
+)
+
+
+def filter_relevant_tools(
+    query: str,
+    available_tools: Optional[List[str]] = None,
+    has_prefetched_data: bool = False,
+) -> List[str]:
+    """Filter tools down to only those relevant to the query to avoid prompt bloating.
+
+    Returns an empty list for plain conversation / reasoning, avoiding ~1,500 prompt
+    tokens of tool schema overhead on CPU.
+    """
+    clean_query = query.strip() if query else ""
+    if not clean_query:
+        return []
+
+    needed: List[str] = []
+
+    # Web search: only when explicitly searching and not already pre-fetched
+    if not has_prefetched_data and _WEB_SEARCH_PATTERN.search(clean_query):
+        needed.append("web_search")
+
+    # Weather: only when weather keywords present and not already pre-fetched
+    if not has_prefetched_data and _WEATHER_PATTERN.search(clean_query):
+        needed.append("get_weather")
+
+    # File read
+    if _FILE_READ_PATTERN.search(clean_query):
+        needed.append("file_read")
+
+    # File write
+    if _FILE_WRITE_PATTERN.search(clean_query):
+        needed.append("file_write")
+
+    # Shell
+    if _SHELL_PATTERN.search(clean_query):
+        needed.append("sandboxed_shell")
+
+    # Calculator
+    if _CALCULATOR_PATTERN.search(clean_query):
+        needed.append("calculator")
+
+    # Scheduler
+    if _SCHEDULER_PATTERN.search(clean_query):
+        needed.extend(["schedule_task", "list_scheduled_tasks", "cancel_scheduled_task"])
+
+    if available_tools is not None:
+        avail_set = set(available_tools)
+        return [t for t in needed if t in avail_set]
+
+    return needed
+
+
+def estimate_token_count(text: str) -> int:
+    """Fast approximation of token count for text (~3.5 chars per token)."""
+    if not text:
+        return 0
+    return max(1, int(len(text) / 3.5))
+
+
+def compute_prompt_token_breakdown(
+    *,
+    system_prompt: str = "",
+    tools: Optional[List[Any]] = None,
+    memory_text: str = "",
+    clock_text: str = "",
+    history_messages: Optional[List[Any]] = None,
+    user_query: str = "",
+) -> Dict[str, Any]:
+    """Compute token breakdown across all components of the prompt."""
+    sys_tok = estimate_token_count(system_prompt)
+
+    tools_tok = 0
+    tools_count = 0
+    if tools:
+        tools_count = len(tools)
+        try:
+            tools_json = json.dumps(tools)
+        except Exception:
+            tools_json = str(tools)
+        tools_tok = estimate_token_count(tools_json)
+
+    mem_tok = estimate_token_count(memory_text)
+    clock_tok = estimate_token_count(clock_text)
+
+    hist_tok = 0
+    if history_messages:
+        for m in history_messages:
+            content = getattr(m, "content", "") or ""
+            hist_tok += estimate_token_count(content)
+
+    query_tok = estimate_token_count(user_query)
+    total = sys_tok + tools_tok + mem_tok + clock_tok + hist_tok + query_tok
+
+    return {
+        "system_prompt": sys_tok,
+        "tools": tools_tok,
+        "tools_count": tools_count,
+        "memory": mem_tok,
+        "clock": clock_tok,
+        "history": hist_tok,
+        "user_query": query_tok,
+        "total": total,
+    }
+
 
 class TierRouter:
     """Routes queries to appropriate model tiers based on complexity and resource budget."""
@@ -87,9 +233,9 @@ def warmup_fast_model(
     model_name: str = "qwen3.5:2b",
     host: str = "http://localhost:11434",
     keep_alive: str = "30m",
-    num_ctx: int = 8192,
+    num_ctx: int = 4096,
 ) -> bool:
-    """Pre-load a model into memory with an 8k context window and keep_alive."""
+    """Pre-load a model into memory with a 4k context window and keep_alive."""
     try:
         url = f"{host.rstrip('/')}/api/generate"
         payload = json.dumps({
@@ -114,7 +260,7 @@ def warmup_dual_models(
     main_model: str = "qwen3.5:4b",
     host: str = "http://localhost:11434",
     keep_alive: str = "30m",
-    num_ctx: int = 8192,
+    num_ctx: int = 4096,
 ) -> None:
     """Warm up both the fast and main models into memory so switching is instant."""
     warmup_fast_model(fast_model, host=host, keep_alive=keep_alive, num_ctx=num_ctx)
@@ -172,7 +318,10 @@ def enforce_resident_memory_budget(
 
 __all__ = [
     "TierRouter",
+    "compute_prompt_token_breakdown",
     "enforce_resident_memory_budget",
+    "estimate_token_count",
+    "filter_relevant_tools",
     "warmup_dual_models",
     "warmup_fast_model",
 ]

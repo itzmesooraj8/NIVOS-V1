@@ -169,9 +169,16 @@ def test_ensure_identity_prompt_injects_realtime_context():
     assert len(result) == 2
     system_msg = result[0]
     assert system_msg.role == Role.SYSTEM
-    assert "Current Date and Time:" in system_msg.content
-    assert "Timezone: Asia/Kolkata" in system_msg.content
-    assert "User Location: Palakkad, Kerala, India" in system_msg.content
+    # System message must remain completely frozen (no timestamp) to preserve Ollama's KV cache
+    assert "Enabled tools:" in system_msg.content
+    assert "Current Date and Time:" not in system_msg.content
+
+    # The dynamic authoritative clock is injected right before the latest user message
+    user_msg = result[1]
+    assert user_msg.role == Role.USER
+    assert "Current Date and Time:" in user_msg.content
+    assert "Timezone: Asia/Kolkata" in user_msg.content
+    assert "User Location: Palakkad, Kerala, India" in user_msg.content
 
 
 def test_settings_context_and_routing_api():
@@ -366,5 +373,91 @@ def test_enforce_resident_memory_budget_preserves_fast_and_main():
             assert "qwen3.5:9b" in unloaded_models
             assert "qwen3.5:2b" not in unloaded_models
             assert "qwen3.5:4b" not in unloaded_models
+
+
+def test_filter_relevant_tools_relevance():
+    """Verify tool relevance filtering eliminates tool bloat for plain messages."""
+    from nivos.server.tier_router import filter_relevant_tools
+
+    all_tools = [
+        "web_search",
+        "file_read",
+        "file_write",
+        "sandboxed_shell",
+        "calculator",
+        "get_weather",
+        "schedule_task",
+        "list_scheduled_tasks",
+        "cancel_scheduled_task",
+    ]
+
+    # Plain questions -> 0 tools
+    assert filter_relevant_tools("hi", available_tools=all_tools) == []
+    assert filter_relevant_tools("how are you today?", available_tools=all_tools) == []
+    assert filter_relevant_tools("explain polymorphism in python", available_tools=all_tools) == []
+    assert filter_relevant_tools("what is photosynthesis?", available_tools=all_tools) == []
+    assert filter_relevant_tools("what tools do you have?", available_tools=all_tools) == []
+
+    # File read/write
+    assert "file_read" in filter_relevant_tools("read README.md", available_tools=all_tools)
+    assert "file_write" in filter_relevant_tools("save this to file notes.txt", available_tools=all_tools)
+
+    # Shell
+    assert "sandboxed_shell" in filter_relevant_tools("run git status in terminal", available_tools=all_tools)
+
+    # Calculator
+    assert "calculator" in filter_relevant_tools("calculate 123 * 456", available_tools=all_tools)
+
+    # Search & Weather
+    assert "web_search" in filter_relevant_tools("search the web for python news", available_tools=all_tools)
+    assert "get_weather" in filter_relevant_tools("what is the weather in London?", available_tools=all_tools)
+    # When already prefetched, search and weather tools are omitted
+    assert "web_search" not in filter_relevant_tools(
+        "search the web for python news",
+        available_tools=all_tools,
+        has_prefetched_data=True,
+    )
+    assert "get_weather" not in filter_relevant_tools(
+        "what is the weather in London?",
+        available_tools=all_tools,
+        has_prefetched_data=True,
+    )
+
+
+def test_compute_prompt_token_breakdown():
+    """Verify token breakdown computation gives under 700 tokens for plain queries."""
+    from nivos.server.tier_router import compute_prompt_token_breakdown
+
+    bd = compute_prompt_token_breakdown(
+        system_prompt="You are Nivos, a helpful AI assistant running locally on the user's hardware. Respond helpfully, concisely, and accurately.\nEnabled tools: web_search, file_read, calculator. You have no other tools or capabilities.",
+        tools=[],  # 0 tools sent for plain message
+        memory_text="",
+        clock_text="Monday, November 09, 2026, 12:45 PM IST",
+        history_messages=[],
+        user_query="What is photosynthesis?",
+    )
+    assert bd["tools"] == 0
+    assert bd["tools_count"] == 0
+    assert bd["total"] < 250  # Significantly below 700 tokens!
+
+
+def test_ollama_num_ctx_default_is_4096():
+    """Verify Ollama engine defaults context window to 4096 for optimal CPU performance."""
+    from nivos.engine.ollama import _default_num_ctx
+
+    assert _default_num_ctx() == 4096
+
+
+def test_system_prompt_builder_includes_enabled_tools():
+    """Verify SystemPromptBuilder includes the real enabled tools line in frozen prefix."""
+    from nivos.prompt.builder import SystemPromptBuilder
+
+    builder = SystemPromptBuilder(
+        agent_template="You are Nivos.",
+        enabled_tools=["file_read", "file_write", "calculator"],
+    )
+    prompt = builder.build()
+    assert "Enabled tools: file_read, file_write, calculator. You have no other tools or capabilities." in prompt
+
 
 

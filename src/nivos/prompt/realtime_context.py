@@ -175,10 +175,21 @@ def build_realtime_prompt_context(
     return "\n".join(lines)
 
 
+def strip_realtime_context(text: str) -> str:
+    """Strip injected real-time clock context from text if present."""
+    if not text or "## Real-Time Context" not in text:
+        return text
+    marker = "Always use the authoritative timestamp above for the present moment."
+    if marker in text:
+        return text.split(marker)[-1].strip()
+    return text
+
+
 __all__ = [
     "build_realtime_prompt_context",
     "format_direct_datetime_response",
     "get_current_time_str",
     "is_direct_datetime_query",
     "is_location_relevant",
+    "strip_realtime_context",
 ]

@@ -61,4 +61,34 @@ describe('setModels', () => {
 
     expect(useAppStore.getState().selectedModel).toBe('qwen3.5:4b');
   });
+
+  it('preserves auto selection and does not overwrite with qwen3.5:9b', async () => {
+    const { useAppStore } = await import('./store');
+    useAppStore.getState().setSelectedModel('auto');
+
+    useAppStore.getState().setModels([
+      model('qwen3.5:9b'),
+      model('qwen3.5:4b'),
+      model('qwen3.5:2b'),
+    ]);
+
+    expect(useAppStore.getState().selectedModel).toBe('auto');
+  });
+
+  it('restores auto selection from localStorage across reloads', async () => {
+    (globalThis as unknown as { localStorage: MemoryStorage }).localStorage.setItem(
+      'nivos-selected-model',
+      'auto',
+    );
+    const { useAppStore } = await import('./store');
+
+    expect(useAppStore.getState().selectedModel).toBe('auto');
+
+    useAppStore.getState().setModels([
+      model('qwen3.5:9b'),
+      model('qwen3.5:4b'),
+    ]);
+
+    expect(useAppStore.getState().selectedModel).toBe('auto');
+  });
 });

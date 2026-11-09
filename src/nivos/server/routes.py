@@ -127,7 +127,13 @@ def _ensure_identity_prompt(messages: list[Message], app_config) -> list[Message
         system_parts.append(prompt)
     system_parts.extend(message.text for message in system_messages if message.text)
 
-    # Inject real-time date, time, timezone, and location context when server identity grounding is active
+    non_system_messages = [
+        message for message in messages if message.role != Role.SYSTEM
+    ]
+
+    # Inject real-time authoritative clock context into the latest user turn (dynamic boundary).
+    # Keeping the leading system message 100% frozen allows Ollama to reuse its KV prompt cache
+    # across turns without re-evaluating historical tokens on CPU.
     if not caller_supplied_system and not identity_already_applied:
         try:
             cfg = app_config
@@ -141,23 +147,32 @@ def _ensure_identity_prompt(messages: list[Message], app_config) -> list[Message
                 loc = getattr(loc_cfg, "location", "Palakkad, Kerala, India") if loc_cfg else "Palakkad, Kerala, India"
                 tz = getattr(loc_cfg, "timezone", "Asia/Kolkata") if loc_cfg else "Asia/Kolkata"
 
-                user_query = ""
-                for m in reversed(messages):
-                    if m.role == Role.USER and m.content:
-                        user_query = m.content
+                last_user_idx = None
+                for i in range(len(non_system_messages) - 1, -1, -1):
+                    if non_system_messages[i].role == Role.USER and non_system_messages[i].content:
+                        last_user_idx = i
                         break
 
-                from nivos.prompt.realtime_context import build_realtime_prompt_context
+                if last_user_idx is not None:
+                    last_user_msg = non_system_messages[last_user_idx]
+                    if not last_user_msg.metadata.get("has_realtime_clock"):
+                        from nivos.prompt.realtime_context import build_realtime_prompt_context
 
-                rt_context = build_realtime_prompt_context(user_query, location=loc, timezone_name=tz)
-                if rt_context:
-                    system_parts.append(rt_context)
+                        rt_context = build_realtime_prompt_context(
+                            last_user_msg.content or "",
+                            location=loc,
+                            timezone_name=tz,
+                        )
+                        if rt_context:
+                            user_meta = dict(last_user_msg.metadata)
+                            user_meta["has_realtime_clock"] = True
+                            non_system_messages[last_user_idx] = replace(
+                                last_user_msg,
+                                content=f"{rt_context}\n\n{last_user_msg.content}",
+                                metadata=user_meta,
+                            )
         except Exception:
-            logging.getLogger("nivos.server").debug("Real-time context injection failed", exc_info=True)
-
-    non_system_messages = [
-        message for message in messages if message.role != Role.SYSTEM
-    ]
+            logging.getLogger("nivos.server").debug("Real-time clock injection failed", exc_info=True)
 
     if not system_parts:
         return non_system_messages
@@ -496,6 +511,50 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
     elif complexity_info is not None:
         complexity_info.routing_reason = routing_reason
 
+    # Prompt diet breakdown calculation and logging
+    try:
+        from nivos.server.tier_router import (
+            compute_prompt_token_breakdown,
+            filter_relevant_tools,
+        )
+
+        active_tools = request_body.tools or []
+        if not active_tools and use_server_agent and getattr(agent, "_tools", None):
+            agent_tool_names = [getattr(t.spec, "name", "") for t in agent._tools]
+            rel_names = filter_relevant_tools(
+                user_query,
+                available_tools=agent_tool_names,
+                has_prefetched_data=bool(prefetched_context),
+            )
+            active_tools = [
+                getattr(t, "to_openai_function", lambda: t.spec.to_dict())()
+                for t in agent._tools
+                if getattr(t.spec, "name", "") in rel_names
+            ]
+
+        bd = compute_prompt_token_breakdown(
+            system_prompt=getattr(config.agent, "default_system_prompt", "") or "",
+            tools=active_tools,
+            memory_text="",
+            clock_text=prefetched_context or "",
+            history_messages=request_body.messages[:-1] if len(request_body.messages) > 1 else [],
+            user_query=user_query,
+        )
+        logging.getLogger("nivos.server").info(
+            "[Prompt Diet Breakdown] model=%s | system=%d tok | tools=%d tok (%d tools) | memory=%d tok | clock=%d tok | history=%d tok | user=%d tok -> TOTAL PROMPT: %d tokens",
+            model,
+            bd["system_prompt"],
+            bd["tools"],
+            bd["tools_count"],
+            bd["memory"],
+            bd["clock"],
+            bd["history"],
+            bd["user_query"],
+            bd["total"],
+        )
+    except Exception:
+        pass
+
     if request_body.stream:
         # When the client passes `tools`, stream the model's raw
         # OpenAI-compat function-calling decision directly from the engine
@@ -629,9 +688,11 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
         raise
 
     # Hand the completed exchange to the background memory service.
+    from nivos.prompt.realtime_context import strip_realtime_context
+
     _remember_exchange(
         getattr(request.app.state, "memory_service", None),
-        query_text_for_complexity,
+        strip_realtime_context(query_text_for_complexity),
         response,
         bus=getattr(request.app.state, "bus", None),
         source="server.chat",
@@ -963,10 +1024,12 @@ async def _handle_agent_stream(
     ``_handle_stream_tools`` so their raw tool-call deltas are preserved.
     """
     chunk_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
+    from nivos.prompt.realtime_context import strip_realtime_context
+
     query_text = ""
     for message in reversed(req.messages):
         if message.role == "user" and message.content:
-            query_text = message.content
+            query_text = strip_realtime_context(message.content)
             break
 
     async def generate():
@@ -1082,10 +1145,12 @@ async def _handle_stream_tools(
     telemetry_engine = (
         "cloud" if use_cloud else (_engine_key_for_model(engine, model) or "ollama")
     )
+    from nivos.prompt.realtime_context import strip_realtime_context
+
     query_text = ""
     for _m in reversed(req.messages):
         if _m.role == "user" and _m.content:
-            query_text = _m.content
+            query_text = strip_realtime_context(_m.content)
             break
 
     async def generate():
@@ -1212,10 +1277,12 @@ async def _handle_stream(
     chunk_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
 
     # Last user message — recorded as the trace query.
+    from nivos.prompt.realtime_context import strip_realtime_context
+
     query_text = ""
     for _m in reversed(req.messages):
         if _m.role == "user" and _m.content:
-            query_text = _m.content
+            query_text = strip_realtime_context(_m.content)
             break
 
     # Route directly to the right backend — bypasses engine routing entirely
