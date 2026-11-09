@@ -22,7 +22,7 @@ Branch: `feat/big-build`
 | **Phase 5** | Slack direct messages (Socket mode, DM-only, user ID allowlist, read-only tools) | done |
 | **Phase 6** | Voice (Kokoro TTS, CPU speech, settings voice picker, read aloud toggle) | done |
 | **Phase 7** | Nivos logo, icons, desktop shortcut (`nivos install-shortcut`) | done |
-| **Phase 8** | Self-improvement agent (C:\Nivos\self-dev worktree, strict rules, branch `self/<topic>`) | pending |
+| **Phase 8** | Self-improvement agent (C:\Nivos\self-dev worktree, strict rules, branch `self/<topic>`) | done |
 
 ---
 
@@ -73,7 +73,8 @@ Branch: `feat/big-build`
 - [x] `nivos install-shortcut` command creating user Desktop & Start menu shortcuts.
 
 ### Phase 8: Self-Improvement Agent
-- [ ] Dedicated git worktree (`C:\Nivos\self-dev`) on `self/<topic>` branches.
-- [ ] Protected path invariant enforced in code and pre-commit hook.
-- [ ] Review UI in Settings with diff summary and pytest results.
-- [ ] Approval command display for manual operator merge.
+- [x] Dedicated git worktree (`C:\Nivos\self-dev`) on `self/<topic>` branches.
+- [x] Protected path invariant enforced in code and git pre-commit hook (SAFETY_RULES.md, security, sandbox, shell, open_app, claim_guard, vault_routes, memory, me.md, .env).
+- [x] Review UI in Settings with diff summary, Test Runner button, Discard button, and manual merge instructions.
+- [x] Lesson proposals saved strictly to `Nivos-Inbox/` with new-notes-only invariant and frontmatter.
+- [x] Central policy gate: local chat origin only, requires operator approval, blocked on Slack / schedules / untrusted input.

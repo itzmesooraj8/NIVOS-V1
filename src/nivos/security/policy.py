@@ -179,6 +179,17 @@ def is_tool_allowed(
             if not safe:
                 return False, reason
 
+    # Local chat validation for self-improvement target files
+    if tool_name_clean == "self_improve" and params:
+        files = params.get("files_to_modify", [])
+        if files:
+            from nivos.self_dev.policy import is_path_protected
+
+            for f in files:
+                prot, reason = is_path_protected(f)
+                if prot:
+                    return False, f"Self-improvement blocked from touching protected file '{f}': {reason}"
+
     # Local chat dangerous tools require approval
     if tool_name_clean in DANGEROUS_TOOLS:
         # Policy requires approval; the tool executor or interactive prompt must confirm

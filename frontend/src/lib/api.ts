@@ -1666,3 +1666,86 @@ export async function stopSlackDaemon(): Promise<{ success: boolean; daemon_runn
   if (!res.ok) throw new Error(`Failed to stop Slack: ${res.status}`);
   return res.json();
 }
+
+export interface SelfDevStatus {
+  active: boolean;
+  worktree_path: string;
+  branch: string;
+  diff_summary: string;
+  merge_command: string;
+}
+
+export interface SelfDevReview {
+  topic: string;
+  branch: string;
+  worktree: string;
+  timestamp: string;
+  test_results: {
+    success: boolean;
+    exit_code: number;
+    summary: string;
+  };
+  diff_summary: string;
+  merge_command: string;
+}
+
+export async function fetchSelfDevStatus(): Promise<SelfDevStatus> {
+  const res = await apiFetch('/v1/self-dev/status');
+  if (!res.ok) throw new Error(`Failed to fetch self-dev status: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchSelfDevReviews(): Promise<{ current: SelfDevStatus; history: SelfDevReview[] }> {
+  const res = await apiFetch('/v1/self-dev/reviews');
+  if (!res.ok) throw new Error(`Failed to fetch self-dev reviews: ${res.status}`);
+  return res.json();
+}
+
+export async function startSelfDev(payload: { topic: string; description?: string; files_to_modify?: string[] }): Promise<{ success: boolean; branch: string; worktree_path: string; message: string }> {
+  const res = await apiFetch('/v1/self-dev/start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to start self-dev: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function verifySelfDev(payload: { topic: string; test_target?: string }): Promise<{ success: boolean; branch: string; test_results: any; diff_summary: string; merge_command: string }> {
+  const res = await apiFetch('/v1/self-dev/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to verify self-dev: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function proposeSelfDevLesson(payload: { topic: string; title: string; content: string }): Promise<{ success: boolean; file: string; message: string }> {
+  const res = await apiFetch('/v1/self-dev/propose-lesson', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to propose lesson: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function discardSelfDev(topic?: string): Promise<{ success: boolean; message: string }> {
+  const res = await apiFetch('/v1/self-dev/discard', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ topic }),
+  });
+  if (!res.ok) throw new Error(`Failed to discard self-dev: ${res.status}`);
+  return res.json();
+}

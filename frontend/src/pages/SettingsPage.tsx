@@ -82,6 +82,7 @@ import {
 } from '../lib/api';
 import type { RoutingSettings, ContextSettings } from '../types';
 import { isAutoUpdateDisabled, setAutoUpdateDisabled } from '../components/Desktop/UpdateChecker';
+import { SelfDevReviewSection } from '../components/SelfDevReviewSection';
 
 const CLOUD_KEY_STATUS_CHANGED = 'nivos-cloud-key-status-changed';
 
@@ -2156,6 +2157,9 @@ export function SettingsPage() {
 
           {/* Slack Direct Messages */}
           <SlackSettingsSection />
+
+          {/* Self-Improvement Review */}
+          <SelfDevReviewSection />
 
           {/* Model defaults */}
           <Section title="Model Defaults">
