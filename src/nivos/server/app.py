@@ -457,8 +457,10 @@ def create_app(
     app.include_router(research_router)
     from nivos.server.vault_routes import router as vault_router
     from nivos.server.app_routes import router as app_launcher_router
+    from nivos.server.sandbox_routes import router as sandbox_router
     app.include_router(vault_router)
     app.include_router(app_launcher_router)
+    app.include_router(sandbox_router)
     include_all_routes(app)
 
     # Restore SendBlue channel bindings from database on startup

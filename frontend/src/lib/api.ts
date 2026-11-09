@@ -1552,3 +1552,43 @@ export async function updateAllowedApp(
   if (!res.ok) throw new Error(`Failed to update allowed app: ${res.status}`);
   return res.json();
 }
+
+// ---------------------------------------------------------------------------
+// Docker Sandbox & Shell Execution
+// ---------------------------------------------------------------------------
+
+export interface SandboxStatus {
+  docker_available: boolean;
+  docker_running: boolean;
+  container_running: boolean;
+  sandbox_backend: 'docker' | 'host';
+  auto_approve_session: boolean;
+  image: string;
+  memory_limit: string;
+  guidance: string;
+}
+
+export async function fetchSandboxStatus(): Promise<SandboxStatus> {
+  const res = await apiFetch('/v1/sandbox/status');
+  if (!res.ok) throw new Error(`Failed to fetch sandbox status: ${res.status}`);
+  return res.json();
+}
+
+export async function resetSandbox(): Promise<{ success: boolean; message: string }> {
+  const res = await apiFetch('/v1/sandbox/reset', { method: 'POST' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to reset sandbox: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function updateSandboxAutoApprove(enabled: boolean): Promise<{ auto_approve_session: boolean }> {
+  const res = await apiFetch('/v1/sandbox/auto-approve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enabled }),
+  });
+  if (!res.ok) throw new Error(`Failed to update sandbox auto-approve: ${res.status}`);
+  return res.json();
+}

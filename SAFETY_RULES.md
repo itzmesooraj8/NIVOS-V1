@@ -18,16 +18,26 @@ These rules are strictly enforced for all automated, agentic, and developer oper
    - `me.md` and `Nivos-Memory/me.md` are strictly read-only for the agent and can never be written, edited, or deleted under any circumstances.
    - Vault writes are restricted strictly to `Nivos-Inbox/` for creating NEW notes only (no overwrite, no delete, no path traversal).
 
-4. **Secrets & Network Restraint**:
+4. **Docker Sandbox & Host Execution Invariants**:
+   - When Docker is active, shell tools execute in an isolated Ubuntu container:
+     - 2 GB memory limit, CPU limit, all capabilities dropped (`--cap-drop=ALL`).
+     - Non-root user (1000:1000), no privileged mode, bridge network (never `--network host`), no Docker socket.
+     - Mounts ONLY `workspace/`. Never mount vault, config directory, keys, or tokens; never pass secrets in environment variables.
+     - pip, npm, and apt installs permitted strictly inside container.
+     - Container stops automatically after 300s of idle inactivity.
+   - Per-session auto-approve toggle for sandbox execution NEVER applies to host commands.
+   - If Docker is offline, execution falls back to host workspace shell (`workspace/` only, `git/pip/npm` only) and ALWAYS requires explicit user confirmation.
+
+5. **Secrets & Network Restraint**:
    - Never log, display, or leak API keys, tokens, or credentials.
    - No new outbound network connections except where explicitly specified by an approved phase.
 
-5. **Testing & Verification**:
+6. **Testing & Verification**:
    - Run verification tests after every phase or feature:
      - Frontend: `npm test` and `npm run build` in `frontend/`.
      - Backend: `uv run nivos doctor` and relevant pytest suites.
    - Ensure clean builds and no regressions before committing changes.
 
-6. **License & Integrity**:
+7. **License & Integrity**:
    - Never edit or tamper with `LICENSE` (Apache 2.0).
    - Maintain documentation integrity and preserve existing code comments.

@@ -18,7 +18,7 @@ Branch: `feat/big-build`
 | **Phase 1** | Tool reliability, Claim Guard, neutral clock, central safety policy | done |
 | **Phase 2** | Obsidian memory (C:\Nivos\NIVOS-vault, SQLite keyword + bge-m3 background, review screen) | done |
 | **Phase 3** | `open_app` tool (Start menu shortcuts, URL schemes, block dangerous binaries) | done |
-| **Phase 4** | Docker sandbox for shell tool (Ubuntu container, workspace mount, idle stop) | pending |
+| **Phase 4** | Docker sandbox for shell tool (Ubuntu container, workspace mount, idle stop) | done |
 | **Phase 5** | Slack direct messages (Socket mode, DM-only, user ID allowlist, read-only tools) | pending |
 | **Phase 6** | Voice (Kokoro TTS, CPU speech, settings voice picker, read aloud toggle) | pending |
 | **Phase 7** | Nivos logo, icons, desktop shortcut (`nivos install-shortcut`) | pending |
@@ -51,10 +51,10 @@ Branch: `feat/big-build`
 - [x] Activity logging and injection prevention tests.
 
 ### Phase 4: Docker Sandbox
-- [ ] Containerized shell execution for `workspace/` mount only.
-- [ ] Fallback guidance if Docker unavailable.
-- [ ] Capabilities dropped, unprivileged, memory capped at 2 GB, idle shutdown.
-- [ ] Per-session auto-approve toggle for sandbox (never host).
+- [x] Containerized shell execution for `workspace/` mount only.
+- [x] Fallback guidance if Docker unavailable.
+- [x] Capabilities dropped, unprivileged, memory capped at 2 GB, idle shutdown.
+- [x] Per-session auto-approve toggle for sandbox (never host).
 
 ### Phase 5: Slack Direct Messages
 - [ ] Socket Mode integration with local token storage.

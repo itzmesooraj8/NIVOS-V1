@@ -58,6 +58,10 @@ import {
   syncVault,
   fetchAllowedApps,
   updateAllowedApp,
+  fetchSandboxStatus,
+  resetSandbox,
+  updateSandboxAutoApprove,
+  type SandboxStatus,
   type InferenceSource,
   type MemoryStats,
   type McpServerConfig,
@@ -1042,6 +1046,146 @@ function AllowedAppsSection() {
   );
 }
 
+function SandboxSettingsSection() {
+  const [status, setStatus] = useState<SandboxStatus | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const loadStatus = useCallback(async () => {
+    try {
+      const res = await fetchSandboxStatus();
+      setStatus(res);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    loadStatus();
+  }, [loadStatus]);
+
+  const handleToggleAutoApprove = async () => {
+    if (!status) return;
+    try {
+      setLoading(true);
+      const res = await updateSandboxAutoApprove(!status.auto_approve_session);
+      setStatus((prev) => (prev ? { ...prev, auto_approve_session: res.auto_approve_session } : null));
+      setMsg(res.auto_approve_session ? 'Auto-approve inside sandbox enabled for this session.' : 'Auto-approve disabled.');
+      setTimeout(() => setMsg(''), 3000);
+    } catch (e: any) {
+      setMsg(`Failed: ${e.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = async () => {
+    try {
+      setResetting(true);
+      const res = await resetSandbox();
+      setMsg(res.message);
+      await loadStatus();
+      setTimeout(() => setMsg(''), 3000);
+    } catch (e: any) {
+      setMsg(`Reset failed: ${e.message}`);
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  return (
+    <Section title="Docker Sandbox & Shell Execution">
+      {msg && (
+        <div className="text-xs p-2 rounded mb-2 text-emerald-400" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+          {msg}
+        </div>
+      )}
+
+      <div
+        className="flex items-center justify-between p-3 rounded-lg mb-3"
+        style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}
+      >
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
+            Sandbox Execution Mode
+          </span>
+          <span className="text-[11px] text-[var(--color-text-secondary)]">
+            {status?.docker_available
+              ? 'Docker container (Ubuntu, non-root, 2 GB RAM limit, strictly workspace/ mounted)'
+              : 'Host workspace fallback (limited to workspace/)'}
+          </span>
+        </div>
+        <span
+          className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+          style={{
+            background: status?.docker_available ? 'rgba(16, 185, 129, 0.15)' : 'rgba(234, 179, 8, 0.15)',
+            color: status?.docker_available ? 'var(--color-success)' : '#eab308',
+          }}
+        >
+          {status?.docker_available ? (status.container_running ? 'Docker Active' : 'Docker Ready') : 'Host Fallback'}
+        </span>
+      </div>
+
+      {!status?.docker_available && status?.guidance && (
+        <div
+          className="text-xs p-3 rounded-lg mb-3 leading-relaxed whitespace-pre-wrap font-mono"
+          style={{
+            background: 'rgba(234, 179, 8, 0.08)',
+            border: '1px solid rgba(234, 179, 8, 0.2)',
+            color: 'var(--color-text)',
+          }}
+        >
+          {status.guidance}
+        </div>
+      )}
+
+      <SettingRow
+        label="Auto-approve inside sandbox"
+        description="Allow commands to run inside the Docker container without confirmation. Never applies to host commands (resets on restart)."
+      >
+        <button
+          type="button"
+          disabled={loading || !status?.docker_available}
+          onClick={handleToggleAutoApprove}
+          className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer disabled:opacity-40"
+          style={{
+            background: status?.auto_approve_session ? 'var(--color-accent)' : 'var(--color-bg-tertiary)',
+            border: '1px solid var(--color-border)',
+          }}
+        >
+          <span
+            className="inline-block h-3.5 w-3.5 rounded-full transition-transform"
+            style={{
+              background: 'white',
+              transform: status?.auto_approve_session ? 'translateX(18px)' : 'translateX(2px)',
+            }}
+          />
+        </button>
+      </SettingRow>
+
+      <SettingRow
+        label="Reset sandbox"
+        description="Stop and force-remove the Docker sandbox container to reset its environment."
+      >
+        <button
+          type="button"
+          disabled={resetting || !status?.docker_available}
+          onClick={handleReset}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors disabled:opacity-50"
+          style={{
+            background: 'var(--color-bg-secondary)',
+            color: 'var(--color-text)',
+            border: '1px solid var(--color-border)',
+          }}
+        >
+          {resetting ? 'Resetting...' : 'Reset Sandbox'}
+        </button>
+      </SettingRow>
+    </Section>
+  );
+}
+
 function ModelRoutingSection() {
   const [routing, setRouting] = useState<RoutingSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1724,6 +1868,9 @@ export function SettingsPage() {
 
           {/* Allowed Applications */}
           <AllowedAppsSection />
+
+          {/* Docker Sandbox */}
+          <SandboxSettingsSection />
 
           {/* Model defaults */}
           <Section title="Model Defaults">
