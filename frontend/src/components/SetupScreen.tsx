@@ -10,6 +10,7 @@ import {
 import { useAppStore } from '../lib/store';
 import { isEmbedOnlyModel } from '../lib/model-capabilities';
 import { InferenceRecoveryButton, InferenceSourceSetup } from './InferenceSourceSetup';
+import { NivosLogo } from './NivosLogo';
 
 const STEPS = [
   { key: 'ollama_ready', label: 'Inference Engine', icon: Cpu, detail: 'Starting Ollama...' },
@@ -167,12 +168,7 @@ export function SetupScreen({ onReady }: { onReady: () => void }) {
       <div className="w-full max-w-md px-6">
         {/* Logo */}
         <div className="text-center mb-10">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: 'var(--color-accent-subtle)', color: 'var(--color-accent)' }}
-          >
-            <Cpu size={32} />
-          </div>
+          <NivosLogo size={56} className="mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-1" style={{ color: 'var(--color-text)' }}>
             Nivos
           </h1>

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { ConversationList } from './ConversationList';
 import { useAppStore } from '../../lib/store';
+import { NivosLogo } from '../NivosLogo';
 
 export function Sidebar() {
   const navigate = useNavigate();
@@ -95,15 +96,22 @@ export function Sidebar() {
         <div className="flex flex-col h-full w-[260px]">
           {/* Header */}
           <div className="flex items-center justify-between px-3 pt-3 pb-2">
-            <button
-              onClick={toggleSidebar}
-              className="p-2 rounded-lg transition-colors cursor-pointer"
-              style={{ color: 'var(--color-text-secondary)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg-tertiary)')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-            >
-              <PanelLeftClose size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleSidebar}
+                className="p-1.5 rounded-lg transition-colors cursor-pointer"
+                style={{ color: 'var(--color-text-secondary)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg-tertiary)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                title="Collapse sidebar"
+              >
+                <PanelLeftClose size={18} />
+              </button>
+              <div className="flex items-center gap-1.5 font-semibold text-sm tracking-tight select-none" style={{ color: 'var(--color-text)' }}>
+                <NivosLogo size={20} />
+                <span>Nivos</span>
+              </div>
+            </div>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => updateSettings({ theme: nextTheme })}

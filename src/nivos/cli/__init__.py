@@ -133,6 +133,7 @@ if not _DATA_BOUNDARY_BOOTSTRAP:
     from nivos.cli.tool_cmd import tool
     from nivos.cli.vault_cmd import vault
     from nivos.cli.workflow_cmd import workflow
+    from nivos.cli.install_shortcut_cmd import install_shortcut
 
     cli.add_command(init, "init")
     cli.add_command(ask, "ask")
@@ -172,6 +173,7 @@ if not _DATA_BOUNDARY_BOOTSTRAP:
     cli.add_command(config, "config")
     cli.add_command(connect, "connect")
     cli.add_command(digest, "digest")
+    cli.add_command(install_shortcut, "install-shortcut")
 
     # Deep Research setup pulls the ingestion pipeline (embeddings/numpy). Guard
     # it so an import-time dependency failure cannot take down the whole CLI.
