@@ -23,12 +23,18 @@ import {
   Plus,
   X,
   Terminal,
+  Volume2,
+  Square,
 } from 'lucide-react';
 import { useAppStore, type ThemeMode } from '../lib/store';
 import {
   checkHealth,
   fetchSpeechHealth,
   fetchTtsHealth,
+  type TtsHealth,
+  fetchTtsConfig,
+  updateTtsConfig,
+  synthesizeSpeech,
   getMemoryStats,
   getInferenceSource,
   setInferenceSource,
@@ -1575,7 +1581,11 @@ export function SettingsPage() {
   const serverInfo = useAppStore((s) => s.serverInfo);
   const [healthy, setHealthy] = useState<boolean | null>(null);
   const [speechBackendAvailable, setSpeechBackendAvailable] = useState<boolean | null>(null);
-  const [ttsBackend, setTtsBackend] = useState<{ available: boolean; backend?: string; voice_id?: string } | null>(null);
+  const [ttsBackend, setTtsBackend] = useState<TtsHealth | null>(null);
+  const [selectedVoice, setSelectedVoice] = useState<string>('bm_george');
+  const [testingVoice, setTestingVoice] = useState(false);
+  const [testVoiceError, setTestVoiceError] = useState<string | null>(null);
+  const testAudioRef = useRef<HTMLAudioElement | null>(null);
   const [saved, setSaved] = useState(false);
 
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(() => !isAutoUpdateDisabled());
@@ -1687,9 +1697,63 @@ export function SettingsPage() {
       .then((h) => setSpeechBackendAvailable(h.available))
       .catch(() => setSpeechBackendAvailable(false));
     fetchTtsHealth()
-      .then((h) => setTtsBackend(h))
+      .then((h) => {
+        setTtsBackend(h);
+        if (h.voice_id) setSelectedVoice(h.voice_id);
+      })
       .catch(() => setTtsBackend({ available: false }));
-  }, []);
+    fetchTtsConfig()
+      .then((c) => {
+        if (c.voice_id) setSelectedVoice(c.voice_id);
+        if (c.read_aloud !== undefined) {
+          updateSettings({ voiceAutoplay: c.read_aloud });
+        }
+      })
+      .catch(() => {});
+  }, [updateSettings]);
+
+  const handleVoiceChange = async (voiceId: string) => {
+    setSelectedVoice(voiceId);
+    try {
+      await updateTtsConfig({ voice_id: voiceId });
+      showSaved();
+    } catch (err: any) {
+      toast.error(`Failed to update voice: ${err.message}`);
+    }
+  };
+
+  const handleTestVoice = async () => {
+    if (testingVoice && testAudioRef.current) {
+      testAudioRef.current.pause();
+      testAudioRef.current = null;
+      setTestingVoice(false);
+      return;
+    }
+    setTestingVoice(true);
+    setTestVoiceError(null);
+    try {
+      const sampleText = "Hello! I am Nivos, your personal AI assistant running locally.";
+      const blob = await synthesizeSpeech(sampleText, { voiceId: selectedVoice });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      testAudioRef.current = audio;
+      audio.onended = () => {
+        setTestingVoice(false);
+        testAudioRef.current = null;
+        URL.revokeObjectURL(url);
+      };
+      audio.onerror = () => {
+        setTestingVoice(false);
+        setTestVoiceError("Playback of test audio failed.");
+        testAudioRef.current = null;
+        URL.revokeObjectURL(url);
+      };
+      await audio.play();
+    } catch (err: any) {
+      setTestingVoice(false);
+      setTestVoiceError(err.message || "Failed to synthesize sample audio.");
+    }
+  };
 
   const showSaved = () => {
     setSaved(true);
@@ -2138,7 +2202,79 @@ export function SettingsPage() {
                 />
               </button>
             </SettingRow>
-            <SettingRow label="Text-to-Speech" description="Show a read-aloud button on assistant replies">
+            <SettingRow label="Voice" description="Select voice model for spoken replies (Kokoro neural TTS)">
+              <div className="flex flex-col gap-2 w-full max-w-sm">
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedVoice}
+                    onChange={(e) => handleVoiceChange(e.target.value)}
+                    className="flex-1 px-2.5 py-1.5 text-xs rounded border cursor-pointer"
+                    style={{
+                      background: 'var(--color-bg-secondary)',
+                      borderColor: 'var(--color-border)',
+                      color: 'var(--color-text-primary)',
+                    }}
+                  >
+                    <option value="bm_george">George (British Male - Default)</option>
+                    <option value="bm_lewis">Lewis (British Male)</option>
+                    <option value="bf_emma">Emma (British Female)</option>
+                    <option value="bf_isabella">Isabella (British Female)</option>
+                    <option value="af_heart">Heart (American Female)</option>
+                    <option value="af_bella">Bella (American Female)</option>
+                    <option value="af_nicole">Nicole (American Female)</option>
+                    <option value="af_sarah">Sarah (American Female)</option>
+                    <option value="af_sky">Sky (American Female)</option>
+                    <option value="am_adam">Adam (American Male)</option>
+                    <option value="am_michael">Michael (American Male)</option>
+                    <option value="zf_xiaoxiao">Xiaoxiao (Mandarin Female)</option>
+                    <option value="zm_yunjian">Yunjian (Mandarin Male)</option>
+                    <option value="jf_alpha">Alpha (Japanese Female)</option>
+                    <option value="jm_kumo">Kumo (Japanese Male)</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleTestVoice}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-colors cursor-pointer"
+                    style={{
+                      background: testingVoice ? 'var(--color-error)' : 'var(--color-accent)',
+                      color: '#ffffff',
+                    }}
+                    title={testingVoice ? 'Stop test playback' : 'Play voice test'}
+                  >
+                    {testingVoice ? <Square size={12} /> : <Volume2 size={12} />}
+                    {testingVoice ? 'Stop' : 'Test'}
+                  </button>
+                </div>
+                {testVoiceError && (
+                  <p className="text-xs" style={{ color: 'var(--color-error)' }}>
+                    {testVoiceError}
+                  </p>
+                )}
+              </div>
+            </SettingRow>
+            <SettingRow label="Read replies aloud" description="Automatically read assistant replies aloud as they finish">
+              <button
+                onClick={() => {
+                  const next = !settings.voiceAutoplay;
+                  updateSettings({ voiceAutoplay: next });
+                  updateTtsConfig({ read_aloud: next }).catch(() => {});
+                  showSaved();
+                }}
+                className="relative w-11 h-6 rounded-full transition-colors cursor-pointer"
+                style={{
+                  background: settings.voiceAutoplay ? 'var(--color-accent)' : 'var(--color-bg-tertiary)',
+                }}
+              >
+                <span
+                  className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform bg-white"
+                  style={{
+                    transform: settings.voiceAutoplay ? 'translateX(20px)' : 'translateX(0)',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  }}
+                />
+              </button>
+            </SettingRow>
+            <SettingRow label="Speaker button on replies" description="Show a read-aloud speaker button on assistant replies">
               <button
                 onClick={() => { updateSettings({ voiceOutputEnabled: !settings.voiceOutputEnabled }); showSaved(); }}
                 className="relative w-11 h-6 rounded-full transition-colors cursor-pointer"
@@ -2155,27 +2291,7 @@ export function SettingsPage() {
                 />
               </button>
             </SettingRow>
-            <SettingRow label="Speak replies automatically" description="Read every assistant reply aloud as soon as it finishes">
-              <button
-                onClick={() => { updateSettings({ voiceAutoplay: !settings.voiceAutoplay }); showSaved(); }}
-                disabled={!settings.voiceOutputEnabled}
-                className="relative w-11 h-6 rounded-full transition-colors cursor-pointer"
-                style={{
-                  background: settings.voiceAutoplay && settings.voiceOutputEnabled ? 'var(--color-accent)' : 'var(--color-bg-tertiary)',
-                  opacity: settings.voiceOutputEnabled ? 1 : 0.4,
-                  cursor: settings.voiceOutputEnabled ? 'pointer' : 'default',
-                }}
-              >
-                <span
-                  className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform bg-white"
-                  style={{
-                    transform: settings.voiceAutoplay && settings.voiceOutputEnabled ? 'translateX(20px)' : 'translateX(0)',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                  }}
-                />
-              </button>
-            </SettingRow>
-            <SettingRow label="Voice" description="Backend and voice used for spoken replies">
+            <SettingRow label="TTS Backend status" description="Kokoro neural speech running locally on CPU">
               <div className="flex items-center gap-2">
                 <span
                   className="w-2 h-2 rounded-full"
@@ -2185,8 +2301,8 @@ export function SettingsPage() {
                 />
                 <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                   {ttsBackend === null ? 'Checking...'
-                    : ttsBackend.available ? `${ttsBackend.backend}${ttsBackend.voice_id ? ` / ${ttsBackend.voice_id}` : ''}`
-                    : 'Not configured'}
+                    : ttsBackend.available ? `Kokoro TTS (${selectedVoice}) ready`
+                    : (ttsBackend.reason || 'Kokoro backend not initialized')}
                 </span>
               </div>
             </SettingRow>

@@ -20,7 +20,7 @@ Branch: `feat/big-build`
 | **Phase 3** | `open_app` tool (Start menu shortcuts, URL schemes, block dangerous binaries) | done |
 | **Phase 4** | Docker sandbox for shell tool (Ubuntu container, workspace mount, idle stop) | done |
 | **Phase 5** | Slack direct messages (Socket mode, DM-only, user ID allowlist, read-only tools) | done |
-| **Phase 6** | Voice (Kokoro TTS, CPU speech, settings voice picker, read aloud toggle) | pending |
+| **Phase 6** | Voice (Kokoro TTS, CPU speech, settings voice picker, read aloud toggle) | done |
 | **Phase 7** | Nivos logo, icons, desktop shortcut (`nivos install-shortcut`) | pending |
 | **Phase 8** | Self-improvement agent (C:\Nivos\self-dev worktree, strict rules, branch `self/<topic>`) | pending |
 
@@ -63,9 +63,9 @@ Branch: `feat/big-build`
 - [x] Strict read-only tools restriction; Slack text marked untrusted content.
 
 ### Phase 6: Voice (Kokoro TTS)
-- [ ] `kokoro` TTS backend config and low-priority CPU generation.
-- [ ] UI voice selector, Test button, and "Read replies aloud" toggle.
-- [ ] Graceful fallback, download progress, and Windows audio handling.
+- [x] `kokoro` TTS backend config and low-priority CPU generation.
+- [x] UI voice selector, Test button, and "Read replies aloud" toggle.
+- [x] Graceful fallback, download progress, and Windows audio handling.
 
 ### Phase 7: Nivos Logo, Icons & Shortcut
 - [ ] Original dark rounded square with cyan "N" monogram SVG.

@@ -1206,7 +1206,10 @@ async def synthesize_speech(request: Request, body: SpeechSynthesizeRequest):
         )
     except Exception as exc:
         logger.exception("Speech synthesis failed")
-        raise HTTPException(status_code=500, detail="Speech synthesis failed") from exc
+        raise HTTPException(
+            status_code=500,
+            detail=f"Speech synthesis failed: {exc}" if str(exc) else "Speech synthesis failed",
+        ) from exc
 
     return Response(
         content=result.audio,
@@ -1226,12 +1229,73 @@ async def tts_health(request: Request):
         return {"available": False, "reason": "No text-to-speech backend available"}
 
     voice_id, speed = _tts_voice_and_speed(request, backend)
+    voices = []
+    if hasattr(backend, "available_voices"):
+        try:
+            voices = backend.available_voices()
+        except Exception:
+            pass
     return {
         "available": True,
         "backend": getattr(backend, "backend_id", ""),
         "voice_id": voice_id,
         "speed": speed,
+        "voices": voices,
     }
+
+
+class TTSConfigRequest(BaseModel):
+    tts_backend: Optional[str] = None
+    voice_id: Optional[str] = None
+    voice_speed: Optional[float] = None
+    read_aloud: Optional[bool] = None
+
+
+@speech_router.get("/tts/config")
+async def get_tts_config(request: Request):
+    """Return current TTS configuration from config."""
+    from nivos.core.config import load_config
+
+    cfg = getattr(request.app.state, "config", None)
+    if cfg is None:
+        cfg = load_config()
+
+    speech = getattr(cfg, "speech", None)
+    return {
+        "tts_backend": getattr(speech, "tts_backend", "kokoro") if speech else "kokoro",
+        "voice_id": getattr(speech, "voice_id", "bm_george") if speech else "bm_george",
+        "voice_speed": getattr(speech, "voice_speed", 1.0) if speech else 1.0,
+        "read_aloud": getattr(speech, "read_aloud", False) if speech else False,
+    }
+
+
+@speech_router.post("/tts/config")
+async def update_tts_config(request: Request, body: TTSConfigRequest):
+    """Update and persist TTS configuration in config.toml."""
+    from nivos.server.routes import _persist_config_section
+
+    updates: dict[str, Any] = {}
+    if body.tts_backend is not None:
+        updates["tts_backend"] = body.tts_backend
+    if body.voice_id is not None:
+        updates["voice_id"] = body.voice_id
+    if body.voice_speed is not None:
+        updates["voice_speed"] = body.voice_speed
+    if body.read_aloud is not None:
+        updates["read_aloud"] = body.read_aloud
+
+    if updates:
+        try:
+            _persist_config_section("speech", updates)
+        except Exception as exc:
+            logger.warning("Failed to persist speech config to config.toml: %s", exc)
+
+        cfg = getattr(request.app.state, "config", None)
+        if cfg and hasattr(cfg, "speech"):
+            for k, v in updates.items():
+                setattr(cfg.speech, k, v)
+
+    return await get_tts_config(request)
 
 
 # ---- Feedback routes ----

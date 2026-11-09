@@ -257,7 +257,8 @@ def test_synthesize_surfaces_backend_failure(mock_tts_backend):
     response = client.post("/v1/speech/synthesize", json={"text": "Hallo"})
 
     assert response.status_code == 500
-    assert response.json()["detail"] == "Speech synthesis failed"
+    assert "Speech synthesis failed" in response.json()["detail"]
+    assert "voice model missing" in response.json()["detail"]
 
 
 def test_synthesize_offloads_backend_work(mock_tts_backend):
@@ -384,3 +385,34 @@ def test_voice_id_not_reused_across_backends(mock_tts_backend):
 
     # Backend is mock_tts, not the configured kokoro, so bm_george must not leak.
     assert mock_tts_backend.synthesize.call_args.kwargs["voice_id"] != "bm_george"
+
+
+def test_tts_health_includes_voices(mock_tts_backend):
+    mock_tts_backend.available_voices.return_value = ["voice_a", "voice_b"]
+    client = _tts_app(mock_tts_backend)
+    res = client.get("/v1/speech/tts/health")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["available"] is True
+    assert data["voices"] == ["voice_a", "voice_b"]
+
+
+def test_tts_config_get_and_post(mock_tts_backend):
+    client = _tts_app(mock_tts_backend)
+    with patch("nivos.server.routes._persist_config_section") as mock_persist:
+        res = client.get("/v1/speech/tts/config")
+        assert res.status_code == 200
+        data = res.json()
+        assert "tts_backend" in data
+        assert "voice_id" in data
+        assert "read_aloud" in data
+
+        post_res = client.post(
+            "/v1/speech/tts/config",
+            json={"voice_id": "af_heart", "read_aloud": True},
+        )
+        assert post_res.status_code == 200
+        mock_persist.assert_called_once_with(
+            "speech", {"voice_id": "af_heart", "read_aloud": True}
+        )
+

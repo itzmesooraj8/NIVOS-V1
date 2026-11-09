@@ -9,10 +9,10 @@ interface Props {
 
 /** Reads one assistant message aloud through the server's TTS backend. */
 export function SpeakMessageButton({ messageId, content }: Props) {
-  const voiceOutputEnabled = useAppStore((s) => s.settings.voiceOutputEnabled);
+  const voiceOutputEnabled = useAppStore((s) => s.settings.voiceOutputEnabled ?? true);
   const { speak, stop, speakingId, available, state, error, errorId } = useTts();
 
-  if (!voiceOutputEnabled || !available) return null;
+  if (!voiceOutputEnabled || available === false) return null;
 
   // Playback is global, so this button reflects the shared utterance only when
   // that utterance is this message.

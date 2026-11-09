@@ -161,8 +161,9 @@ class KokoroTTSBackend(TTSBackend):
                 kokoro, "_nivos_spacy_error", None
             ):
                 raise RuntimeError(
-                    "English Kokoro voices require a working spaCy installation: "
-                    f"{kokoro._nivos_spacy_error}"
+                    "English Kokoro voices require a working spaCy installation, "
+                    f"which was blocked or unavailable on Windows: {kokoro._nivos_spacy_error}. "
+                    "Check Windows Smart App Control / antivirus or choose a non-English voice."
                 )
             try:
                 # KModel is language-blind and is by far the heaviest part of
@@ -227,11 +228,30 @@ class KokoroTTSBackend(TTSBackend):
 
         model_kwargs = {"model": self._model_path} if self._model_path else {}
         try:
+            logger.info("Initializing Kokoro TTS model on device %s (downloads weights on first use)...", device)
             self._model = KModel(**model_kwargs).to(device).eval()
         except RuntimeError as exc:
+            err_str = str(exc)
+            if any(term in err_str.lower() for term in ("blocked", "permission denied", "dll", "access is denied", "0x80070005")):
+                raise RuntimeError(
+                    f"Windows Smart App Control or security software blocked a component required for Kokoro TTS: {exc}. "
+                    "Ensure Windows Smart App Control allows Python extensions or run in Developer Mode."
+                ) from exc
             raise RuntimeError(
                 f"Failed to initialize Kokoro on device {device!r}: {exc}"
             ) from exc
+        except Exception as exc:
+            err_str = str(exc)
+            if any(term in err_str.lower() for term in ("blocked", "permission denied", "dll", "access is denied", "smart app control")):
+                raise RuntimeError(
+                    f"Windows Smart App Control or security software blocked a component required for Kokoro TTS: {exc}."
+                ) from exc
+            if any(term in err_str.lower() for term in ("huggingface", "connection", "timeout", "offline")):
+                raise RuntimeError(
+                    f"Failed to download Kokoro TTS model weights: {exc}. "
+                    "Check network connection or configure an offline model path in config.toml."
+                ) from exc
+            raise RuntimeError(f"Failed to initialize Kokoro on device {device!r}: {exc}") from exc
         return self._model
 
     @staticmethod

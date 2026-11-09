@@ -528,7 +528,31 @@ export interface TtsHealth {
   backend?: string;
   voice_id?: string;
   speed?: number;
+  voices?: string[];
   reason?: string;
+}
+
+export interface TtsConfig {
+  tts_backend: string;
+  voice_id: string;
+  voice_speed: number;
+  read_aloud: boolean;
+}
+
+export async function fetchTtsConfig(): Promise<TtsConfig> {
+  const res = await apiFetch(`/v1/speech/tts/config`);
+  if (!res.ok) throw new Error(`Failed to fetch TTS config: ${res.status}`);
+  return res.json();
+}
+
+export async function updateTtsConfig(data: Partial<TtsConfig>): Promise<TtsConfig> {
+  const res = await apiFetch(`/v1/speech/tts/config`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`Failed to update TTS config: ${res.status}`);
+  return res.json();
 }
 
 export async function synthesizeSpeech(

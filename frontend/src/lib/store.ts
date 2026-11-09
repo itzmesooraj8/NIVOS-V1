@@ -166,7 +166,7 @@ function loadSettings(): Settings {
     temperature: 0.7,
     maxTokens: 4096,
     speechEnabled: false,
-    voiceOutputEnabled: false,
+    voiceOutputEnabled: true,
     voiceAutoplay: false,
   };
   try {

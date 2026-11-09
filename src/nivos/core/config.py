@@ -1669,6 +1669,7 @@ class SpeechConfig:
     tts_backend: str = "kokoro"  # "kokoro", "openai_tts", "cartesia", "elevenlabs"
     voice_id: str = "bm_george"
     voice_speed: float = 1.0
+    read_aloud: bool = False
 
 
 @dataclass(slots=True)
