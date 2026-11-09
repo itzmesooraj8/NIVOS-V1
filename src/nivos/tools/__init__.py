@@ -171,6 +171,7 @@ except ImportError:
 try:
     import nivos.tools.knowledge_search  # noqa: F401
     import nivos.tools.vault_tools  # noqa: F401
+    import nivos.tools.open_app  # noqa: F401
 except ImportError:
     pass
 

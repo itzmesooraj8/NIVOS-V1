@@ -56,6 +56,8 @@ import {
   approveVaultProposal,
   rejectVaultProposal,
   syncVault,
+  fetchAllowedApps,
+  updateAllowedApp,
   type InferenceSource,
   type MemoryStats,
   type McpServerConfig,
@@ -930,6 +932,116 @@ function MemoryReviewSection() {
   );
 }
 
+function AllowedAppsSection() {
+  const [apps, setApps] = useState<string[]>([]);
+  const [newApp, setNewApp] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const loadApps = useCallback(async () => {
+    try {
+      const res = await fetchAllowedApps();
+      setApps(res.allowed_apps || []);
+    } catch {
+      // Ignored
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadApps();
+  }, [loadApps]);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = newApp.trim().toLowerCase();
+    if (!clean) return;
+    setLoading(true);
+    try {
+      const res = await updateAllowedApp(clean, 'add');
+      setApps(res.allowed_apps || []);
+      setNewApp('');
+      toast.success(`Added '${clean}' to pre-approved applications`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to add allowed app');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemove = async (app: string) => {
+    try {
+      const res = await updateAllowedApp(app, 'remove');
+      setApps(res.allowed_apps || []);
+      toast.success(`Removed '${app}' from pre-approved applications`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to remove allowed app');
+    }
+  };
+
+  return (
+    <Section title="Allowed Applications">
+      <div className="py-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+        Applications in this list can be opened without prompting for approval each time. Dangerous programs (cmd, powershell, regedit, installers) are always blocked.
+      </div>
+
+      <form onSubmit={handleAdd} className="flex items-center gap-2 my-2">
+        <input
+          type="text"
+          value={newApp}
+          onChange={(e) => setNewApp(e.target.value)}
+          placeholder="e.g. notepad, spotify, obsidian"
+          className="text-xs px-2.5 py-1.5 rounded-lg outline-none w-64"
+          style={{
+            background: 'var(--color-bg-secondary)',
+            color: 'var(--color-text)',
+            border: '1px solid var(--color-border)',
+          }}
+        />
+        <button
+          type="submit"
+          disabled={loading || !newApp.trim()}
+          className="text-xs px-3 py-1.5 rounded-lg font-medium cursor-pointer disabled:opacity-50"
+          style={{
+            background: 'var(--color-accent)',
+            color: '#fff',
+          }}
+        >
+          Add
+        </button>
+      </form>
+
+      <div className="flex flex-wrap gap-1.5 mt-2">
+        {apps.length === 0 ? (
+          <div className="text-xs text-[var(--color-text-tertiary)] py-1">
+            No pre-approved applications. The first launch of each app will ask Once / Always / Deny.
+          </div>
+        ) : (
+          apps.map((a) => (
+            <span
+              key={a}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono"
+              style={{
+                background: 'var(--color-bg-secondary)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text)',
+              }}
+            >
+              {a}
+              <button
+                type="button"
+                onClick={() => handleRemove(a)}
+                className="hover:text-red-400 cursor-pointer ml-0.5"
+                title="Remove from allowed apps"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          ))
+        )}
+      </div>
+    </Section>
+  );
+}
+
 function ModelRoutingSection() {
   const [routing, setRouting] = useState<RoutingSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1609,6 +1721,9 @@ export function SettingsPage() {
 
           {/* Memory Review */}
           <MemoryReviewSection />
+
+          {/* Allowed Applications */}
+          <AllowedAppsSection />
 
           {/* Model defaults */}
           <Section title="Model Defaults">

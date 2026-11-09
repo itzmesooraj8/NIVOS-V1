@@ -1488,6 +1488,7 @@ class SecurityConfig:
     )
     capabilities: CapabilitiesConfig = field(default_factory=CapabilitiesConfig)
     allow_obsidian_to_cloud: bool = False
+    allowed_apps: List[str] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------

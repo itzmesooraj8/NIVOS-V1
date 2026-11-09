@@ -395,3 +395,4 @@ class SaveToInboxTool(BaseTool):
 
 
 __all__ = ["SearchVaultTool", "SaveToInboxTool"]
+

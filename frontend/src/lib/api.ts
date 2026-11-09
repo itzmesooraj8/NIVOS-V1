@@ -1529,3 +1529,26 @@ export async function syncVault(): Promise<{ success: boolean; items_synced: num
   if (!res.ok) throw new Error(`Failed to sync vault: ${res.status}`);
   return res.json();
 }
+
+// ---------------------------------------------------------------------------
+// Allowed Apps (open_app tool)
+// ---------------------------------------------------------------------------
+
+export async function fetchAllowedApps(): Promise<{ allowed_apps: string[] }> {
+  const res = await apiFetch('/v1/apps/allowed');
+  if (!res.ok) throw new Error(`Failed to fetch allowed apps: ${res.status}`);
+  return res.json();
+}
+
+export async function updateAllowedApp(
+  app: string,
+  action: 'add' | 'remove',
+): Promise<{ allowed_apps: string[] }> {
+  const res = await apiFetch('/v1/apps/allowed', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ app, action }),
+  });
+  if (!res.ok) throw new Error(`Failed to update allowed app: ${res.status}`);
+  return res.json();
+}

@@ -116,3 +116,4 @@ def test_allowed_write_locations():
     """Verify that writes inside workspace/ and Nivos-Inbox/ are permitted."""
     assert is_path_safe_for_write("workspace/sub/output.txt")[0] is True
     assert is_path_safe_for_write("C:/Nivos/NIVOS-vault/Nivos-Inbox/note.md")[0] is True
+

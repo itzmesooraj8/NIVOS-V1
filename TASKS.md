@@ -17,7 +17,7 @@ Branch: `feat/big-build`
 |---|---|---|
 | **Phase 1** | Tool reliability, Claim Guard, neutral clock, central safety policy | done |
 | **Phase 2** | Obsidian memory (C:\Nivos\NIVOS-vault, SQLite keyword + bge-m3 background, review screen) | done |
-| **Phase 3** | `open_app` tool (Start menu shortcuts, URL schemes, block dangerous binaries) | pending |
+| **Phase 3** | `open_app` tool (Start menu shortcuts, URL schemes, block dangerous binaries) | done |
 | **Phase 4** | Docker sandbox for shell tool (Ubuntu container, workspace mount, idle stop) | pending |
 | **Phase 5** | Slack direct messages (Socket mode, DM-only, user ID allowlist, read-only tools) | pending |
 | **Phase 6** | Voice (Kokoro TTS, CPU speech, settings voice picker, read aloud toggle) | pending |
@@ -45,10 +45,10 @@ Branch: `feat/big-build`
 - [x] `me.md` protection and privacy filter (no vault data to cloud unless permitted).
 
 ### Phase 3: `open_app` Tool
-- [ ] Windows Start menu shortcut scanner & URL schemes (`ms-settings:`, `spotify:`).
-- [ ] Security blocks for `cmd`, `powershell`, `wscript`, `regedit`, installers, and admin privileges.
-- [ ] First-launch approval prompt (Once / Always for this app / Deny).
-- [ ] Activity logging and injection prevention tests.
+- [x] Windows Start menu shortcut scanner & URL schemes (`ms-settings:`, `spotify:`).
+- [x] Security blocks for `cmd`, `powershell`, `wscript`, `regedit`, installers, and admin privileges.
+- [x] First-launch approval prompt (Once / Always for this app / Deny).
+- [x] Activity logging and injection prevention tests.
 
 ### Phase 4: Docker Sandbox
 - [ ] Containerized shell execution for `workspace/` mount only.

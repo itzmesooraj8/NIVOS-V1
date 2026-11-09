@@ -242,3 +242,4 @@ async def sync_vault(request: Request) -> Dict[str, Any]:
     except Exception as exc:
         logger.error("Vault sync failed: %s", exc)
         raise HTTPException(status_code=500, detail=f"Vault sync failed: {exc}")
+

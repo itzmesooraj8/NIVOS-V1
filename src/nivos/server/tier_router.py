@@ -88,6 +88,11 @@ _VAULT_INBOX_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+_OPEN_APP_PATTERN = re.compile(
+    r"\b(open\s+(?:the\s+)?app|launch\s+(?:the\s+)?app|open\s+app|launch\s+app|open\s+(?:spotify|notepad|calculator|calc|settings|ms-settings|obsidian))\b",
+    re.IGNORECASE,
+)
+
 
 def has_tool_intent(query: str) -> bool:
     """Check if a query indicates intent to use tools (files, shell, search, weather, etc.)."""
@@ -104,6 +109,7 @@ def has_tool_intent(query: str) -> bool:
         or _CALCULATOR_PATTERN.search(clean)
         or _VAULT_SEARCH_PATTERN.search(clean)
         or _VAULT_INBOX_PATTERN.search(clean)
+        or _OPEN_APP_PATTERN.search(clean)
     )
 
 
@@ -158,6 +164,10 @@ def filter_relevant_tools(
     # Vault inbox
     if _VAULT_INBOX_PATTERN.search(clean_query):
         needed.append("save_to_inbox")
+
+    # Open app
+    if _OPEN_APP_PATTERN.search(clean_query):
+        needed.append("open_app")
 
     if available_tools is not None:
         avail_set = set(available_tools)
