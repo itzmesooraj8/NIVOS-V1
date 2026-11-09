@@ -22,39 +22,49 @@ _LOCATION_KEYWORDS = re.compile(
     re.IGNORECASE,
 )
 
-# Exact patterns for pure time questions
+# Trigger keywords for queries where time context is relevant
+_TIME_RELEVANCE_KEYWORDS = re.compile(
+    r"\b(time|date|day|today|tomorrow|yesterday|tonight|clock|hour|hours|minute|minutes|"
+    r"now|current|schedule|weather|calendar|morning|afternoon|evening|night)\b",
+    re.IGNORECASE,
+)
+
+# Broadened patterns for pure time questions (including typos like wat, tiem, etc.)
 _TIME_PATTERNS = [
-    r"^(?:what(?:'s|\s+is|\s+are)?\s+)?(?:the\s+)?(?:current\s+)?time(?:\s+now|\s+right\s+now|\s+please)?$",
-    r"^what\s+time\s+is\s+it(?:\s+now|\s+right\s+now|\s+today|\s+currently)?$",
-    r"^tell\s+me\s+(?:the\s+)?(?:current\s+)?time(?:\s+now)?$",
-    r"^current\s+time(?:\s+now)?$",
-    r"^time\s+(?:now|please|check)$",
+    r"^(?:(?:what|wat|waht|wht)(?:'s|\s+is|\s+are)?\s+)?(?:the\s+|this\s+)?(?:current\s+)?(?:time|tiem)(?:\s+(?:now|right\s+now|today|please|currently))?$",
+    r"^(?:what|wat|waht|wht)\s+(?:time|tiem)\s+is\s+it(?:\s+(?:now|right\s+now|today|currently))?$",
+    r"^(?:tell\s+me|show\s+me|give\s+me)\s+(?:the\s+|this\s+)?(?:current\s+)?(?:time|tiem)(?:\s+now)?$",
+    r"^(?:current\s+)?(?:time|tiem)(?:\s+(?:now|check|please))?$",
+    r"^(?:what\s+is\s+)?time\s+now$",
 ]
 
-# Exact patterns for pure date questions
+# Broadened patterns for pure date questions
 _DATE_PATTERNS = [
-    r"^(?:what(?:'s|\s+is)?\s+)?(?:the\s+)?(?:current\s+)?date(?:\s+today|\s+now)?$",
-    r"^(?:what(?:'s|\s+is)?\s+)?today(?:'s)?\s+date$",
-    r"^what\s+date\s+is\s+(?:it|today)(?:\s+now)?$",
-    r"^tell\s+me\s+(?:today(?:'s)?\s+|the\s+)?date$",
-    r"^current\s+date$",
-    r"^today(?:'s)?\s+date$",
+    r"^(?:(?:what|wat|waht|wht)(?:'s|\s+is)?\s+)?(?:the\s+|this\s+)?(?:current\s+)?(?:date|dat)(?:\s+(?:today|now))?$",
+    r"^(?:(?:what|wat|waht|wht)(?:'s|\s+is)?\s+)?today(?:'s)?\s+(?:date|dat)$",
+    r"^(?:what|wat|waht|wht)\s+(?:date|dat)\s+is\s+(?:it|today)(?:\s+now)?$",
+    r"^(?:tell\s+me|show\s+me)\s+(?:today(?:'s)?\s+|the\s+)?(?:date|dat)$",
+    r"^(?:current\s+)?(?:date|dat)(?:\s+today|\s+now)?$",
+    r"^today(?:'s)?\s+(?:date|dat)$",
+    r"^todays\s+date$",
+    r"^date\s+today$",
 ]
 
-# Exact patterns for pure day-of-week questions
+# Broadened patterns for pure day-of-week questions
 _DAY_PATTERNS = [
-    r"^what\s+day\s+is\s+(?:it|today)(?:\s+now)?$",
-    r"^(?:what(?:'s|\s+is)?\s+)?(?:the\s+)?day\s+today$",
-    r"^what\s+day\s+of\s+(?:the\s+)?week\s+is\s+(?:it|today)$",
-    r"^which\s+day\s+is\s+(?:it|today)$",
+    r"^(?:what|wat|waht|wht)\s+day\s+is\s+(?:it|today)(?:\s+now)?$",
+    r"^(?:(?:what|wat|waht|wht)(?:'s|\s+is)?\s+)?(?:the\s+)?day\s+today$",
+    r"^(?:what|wat|waht|wht)\s+day\s+of\s+(?:the\s+)?week\s+is\s+(?:it|today)$",
+    r"^(?:which|wich)\s+day\s+is\s+(?:it|today)$",
     r"^today(?:'s)?\s+day$",
+    r"^what\s+day$",
 ]
 
 # Combined date and time patterns
 _DATETIME_PATTERNS = [
-    r"^(?:what(?:'s|\s+is)?\s+)?(?:the\s+)?(?:current\s+)?(?:date\s+and\s+time|time\s+and\s+date)(?:\s+now|\s+today)?$",
-    r"^what\s+day\s+and\s+time\s+is\s+it(?:\s+now)?$",
-    r"^current\s+(?:date\s+and\s+time|time\s+and\s+date)$",
+    r"^(?:(?:what|wat|waht|wht)(?:'s|\s+is)?\s+)?(?:the\s+|this\s+)?(?:current\s+)?(?:date\s+and\s+time|time\s+and\s+date)(?:\s+(?:now|today))?$",
+    r"^(?:what|wat|waht|wht)\s+day\s+and\s+time\s+is\s+it(?:\s+now)?$",
+    r"^(?:current\s+)?(?:date\s+and\s+time|time\s+and\s+date)(?:\s+now)?$",
 ]
 
 _ALL_DATETIME_PATTERNS = _TIME_PATTERNS + _DATE_PATTERNS + _DAY_PATTERNS + _DATETIME_PATTERNS
@@ -138,51 +148,52 @@ def is_location_relevant(query: str) -> bool:
     return bool(_LOCATION_KEYWORDS.search(query))
 
 
+def is_time_relevant(query: str) -> bool:
+    """Determine if current time context is relevant to the query."""
+    if not query:
+        return False
+    return bool(_TIME_RELEVANCE_KEYWORDS.search(query))
+
+
 def build_realtime_prompt_context(
     query: str = "",
     *,
     location: str = "Palakkad, Kerala, India",
     timezone_name: str = "Asia/Kolkata",
     force_location: bool = False,
+    force_time: bool = False,
 ) -> str:
-    """Assemble an authoritative real-time context block to inject into the system prompt.
+    """Assemble a neutral, non-directive real-time clock context [now: ...].
 
-    Date, time, and timezone are always injected. Location is only injected when
-    relevant to the query or explicitly forced (e.g. for weather lookups).
-    Instructs the model that this timestamp is authoritative and to ignore
-    historical timestamps in prior messages.
+    Injects timestamp only when query is time-relevant (or explicitly forced).
+    Contains ZERO directive text to prevent leakage into assistant responses.
     """
+    if not (force_time or force_location or is_time_relevant(query) or is_location_relevant(query)):
+        return ""
+
     time_str = get_current_time_str(timezone_name)
-    lines = [
-        "## Real-Time Context (Authoritative Clock)",
-        f"- Current Date and Time: {time_str}",
-        f"- Timezone: {timezone_name}",
-    ]
+    parts = [f"now: {time_str}"]
+
     if force_location or is_location_relevant(query):
         loc = (location or "Palakkad, Kerala, India").strip()
         if loc:
-            lines.append(f"- User Location: {loc}")
+            parts.append(f"location: {loc}")
 
-    lines.extend([
-        "",
-        "CRITICAL TIME INSTRUCTION:",
-        "The timestamp above is the single authoritative current date and time. "
-        "Disregard and ignore any timestamps, dates, or time statements appearing in earlier "
-        "messages or prior conversation turns; they are historical records from the past and are now obsolete. "
-        "Always use the authoritative timestamp above for the present moment.",
-    ])
-
-    return "\n".join(lines)
+    return f"[{' | '.join(parts)}]"
 
 
 def strip_realtime_context(text: str) -> str:
     """Strip injected real-time clock context from text if present."""
-    if not text or "## Real-Time Context" not in text:
-        return text
-    marker = "Always use the authoritative timestamp above for the present moment."
-    if marker in text:
-        return text.split(marker)[-1].strip()
-    return text
+    if not text:
+        return ""
+    # Strip neutral format [now: ...]
+    cleaned = re.sub(r"^\[now:[^\]]+\]\s*", "", text).strip()
+    # Strip legacy format if present
+    if "## Real-Time Context" in cleaned:
+        marker = "Always use the authoritative timestamp above for the present moment."
+        if marker in cleaned:
+            cleaned = cleaned.split(marker)[-1].strip()
+    return cleaned
 
 
 __all__ = [
@@ -191,5 +202,6 @@ __all__ = [
     "get_current_time_str",
     "is_direct_datetime_query",
     "is_location_relevant",
+    "is_time_relevant",
     "strip_realtime_context",
 ]

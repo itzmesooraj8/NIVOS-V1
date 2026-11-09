@@ -857,6 +857,11 @@ def _handle_direct(
     content = result.get("content", "")
     usage = result.get("usage", {})
 
+    # Apply Claim Guard to direct engine outputs
+    from nivos.server.claim_guard import verify_and_guard_claims
+
+    content = verify_and_guard_claims(content, [])
+
     choice_msg = ChoiceMessage(role="assistant", content=content)
     # Include tool calls if present
     tool_calls = result.get("tool_calls")
@@ -968,6 +973,33 @@ def _handle_agent(
         finally:
             agent._model = original_model
 
+    # Apply Claim Guard and Tool Receipts
+    from nivos.server.claim_guard import verify_and_guard_claims, GUARD_REPLACEMENT
+
+    guarded_content = verify_and_guard_claims(result.content, result.tool_results)
+
+    # Append real tool receipts to chat response
+    if guarded_content != GUARD_REPLACEMENT and result.tool_results:
+        receipts = []
+        for tr in result.tool_results:
+            meta = getattr(tr, "metadata", None) or {}
+            path = meta.get("path") or meta.get("working_dir") or meta.get("file_path") or ""
+            bytes_count = meta.get("size_bytes") or meta.get("bytes")
+            if bytes_count is None:
+                c = getattr(tr, "content", "")
+                if c:
+                    bytes_count = len(str(c).encode("utf-8"))
+            status = "success" if getattr(tr, "success", True) else "failure"
+            parts = [f"tool={getattr(tr, 'tool_name', 'tool')}"]
+            if path:
+                parts.append(f"path={path}")
+            if bytes_count is not None:
+                parts.append(f"bytes={bytes_count}")
+            parts.append(f"status={status}")
+            receipts.append(f"[Receipt: {', '.join(parts)}]")
+        if receipts:
+            guarded_content = f"{guarded_content}\n\n" + "\n".join(receipts)
+
     usage = UsageInfo(
         prompt_tokens=result.metadata.get("prompt_tokens", 0),
         completion_tokens=result.metadata.get("completion_tokens", 0),
@@ -991,7 +1023,7 @@ def _handle_agent(
             Choice(
                 message=ChoiceMessage(
                     role="assistant",
-                    content=result.content,
+                    content=guarded_content,
                     audio=audio_meta,
                 ),
                 finish_reason="stop",

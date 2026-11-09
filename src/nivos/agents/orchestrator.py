@@ -96,6 +96,10 @@ class OrchestratorAgent(ToolUsingAgent):
         context: Optional[AgentContext] = None,
         **kwargs: Any,
     ) -> AgentResult:
+        from nivos.security.policy import RequestOrigin
+
+        self._current_origin = kwargs.get("origin") or getattr(context, "origin", RequestOrigin.LOCAL_CHAT)
+        self._current_untrusted = kwargs.get("is_untrusted_content") or getattr(context, "is_untrusted_content", False)
         if self._mode == "structured":
             return self._run_structured(input, context, **kwargs)
         return self._run_function_calling(input, context, **kwargs)
@@ -116,15 +120,12 @@ class OrchestratorAgent(ToolUsingAgent):
         )
 
     def _check_tool_allowed(self, tc: ToolCall) -> Optional[ToolResult]:
-        """Call before_tool_call hook if set.
+        """Check central security policy and before_tool_call hook if set.
 
         Returns None to allow execution, or a denial ToolResult to inject
         instead of running the tool. Invalid arguments and hook failures deny
         execution so a governance integration cannot fail open.
         """
-        if self._before_tool_call is None:
-            return None
-
         try:
             tool_args = json.loads(tc.arguments) if tc.arguments else {}
         except (json.JSONDecodeError, TypeError):
@@ -132,14 +133,32 @@ class OrchestratorAgent(ToolUsingAgent):
         if not isinstance(tool_args, dict):
             return self._governance_denial(tc.name, "tool arguments are not an object")
 
-        try:
-            allowed = self._before_tool_call(tc.name, tool_args)
-        except Exception:
-            logger.exception("before_tool_call hook failed for tool %s", tc.name)
-            return self._governance_denial(tc.name, "governance check failed")
-        if allowed:
-            return None
-        return self._governance_denial(tc.name, "policy denied the call")
+        # 1. Central origin and untrusted-content security policy
+        from nivos.security.policy import is_tool_allowed, RequestOrigin
+
+        req_origin = getattr(self, "_current_origin", RequestOrigin.LOCAL_CHAT)
+        untrusted = getattr(self, "_current_untrusted", False)
+
+        allowed, reason = is_tool_allowed(
+            tc.name,
+            origin=req_origin,
+            is_untrusted_content=untrusted,
+            params=tool_args,
+        )
+        if not allowed:
+            return self._governance_denial(tc.name, reason)
+
+        # 2. Custom before_tool_call hook if set
+        if self._before_tool_call is not None:
+            try:
+                hook_allowed = self._before_tool_call(tc.name, tool_args)
+            except Exception:
+                logger.exception("before_tool_call hook failed for tool %s", tc.name)
+                return self._governance_denial(tc.name, "governance check failed")
+            if not hook_allowed:
+                return self._governance_denial(tc.name, "policy denied the call")
+
+        return None
 
     # ------------------------------------------------------------------
     # Structured mode (THOUGHT/TOOL/INPUT/FINAL_ANSWER)

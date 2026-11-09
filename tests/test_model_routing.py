@@ -18,17 +18,25 @@ from nivos.server.search_policy import (
 )
 
 
-def test_realtime_context_time_always_present():
-    """Verify current time and timezone are always injected."""
+def test_realtime_context_injected_only_when_relevant():
+    """Verify neutral clock [now: ...] is injected only when time is relevant."""
+    # Non-time query -> empty string (prompt diet)
     ctx = build_realtime_prompt_context(
         query="what is the capital of France?",
         location="Palakkad, Kerala, India",
         timezone_name="Asia/Kolkata",
     )
-    assert "Current Date and Time:" in ctx
-    assert "Timezone: Asia/Kolkata" in ctx
-    # Location should NOT be present for non-location query
-    assert "User Location:" not in ctx
+    assert ctx == ""
+
+    # Time-relevant query -> neutral [now: ...]
+    ctx_time = build_realtime_prompt_context(
+        query="what should I wear today?",
+        location="Palakkad, Kerala, India",
+        timezone_name="Asia/Kolkata",
+    )
+    assert ctx_time.startswith("[now:")
+    assert "Asia/Kolkata" in ctx_time or "IST" in ctx_time
+    assert "CRITICAL TIME INSTRUCTION" not in ctx_time
 
 
 def test_realtime_context_location_injected_for_weather():
@@ -38,8 +46,9 @@ def test_realtime_context_location_injected_for_weather():
         location="Palakkad, Kerala, India",
         timezone_name="Asia/Kolkata",
     )
-    assert "Current Date and Time:" in ctx
-    assert "User Location: Palakkad, Kerala, India" in ctx
+    assert ctx.startswith("[now:")
+    assert "location: Palakkad, Kerala, India" in ctx
+    assert "CRITICAL TIME INSTRUCTION" not in ctx
 
 
 def test_realtime_context_location_relevance_detection():
@@ -173,12 +182,12 @@ def test_ensure_identity_prompt_injects_realtime_context():
     assert "Enabled tools:" in system_msg.content
     assert "Current Date and Time:" not in system_msg.content
 
-    # The dynamic authoritative clock is injected right before the latest user message
+    # The dynamic neutral clock is injected right before the latest user message
     user_msg = result[1]
     assert user_msg.role == Role.USER
-    assert "Current Date and Time:" in user_msg.content
-    assert "Timezone: Asia/Kolkata" in user_msg.content
-    assert "User Location: Palakkad, Kerala, India" in user_msg.content
+    assert "[now:" in user_msg.content
+    assert "location: Palakkad, Kerala, India" in user_msg.content
+    assert "CRITICAL TIME INSTRUCTION" not in user_msg.content
 
 
 def test_settings_context_and_routing_api():
@@ -326,8 +335,8 @@ def test_format_weather_report():
     assert "- Source: https://www.accuweather.com" in card
 
 
-def test_authoritative_clock_disregards_earlier_history():
-    """Verify system prompt context includes authoritative clock and ignores obsolete earlier timestamps."""
+def test_authoritative_clock_neutral_format():
+    """Verify system prompt context includes neutral clock [now: ...] without leaking directive text."""
     from nivos.prompt.realtime_context import build_realtime_prompt_context
 
     ctx = build_realtime_prompt_context(
@@ -335,9 +344,9 @@ def test_authoritative_clock_disregards_earlier_history():
         location="Palakkad, Kerala, India",
         timezone_name="Asia/Kolkata",
     )
-    assert "Authoritative Clock" in ctx
-    assert "CRITICAL TIME INSTRUCTION:" in ctx
-    assert "Disregard and ignore any timestamps, dates, or time statements appearing in earlier messages" in ctx
+    assert ctx.startswith("[now:")
+    assert "CRITICAL TIME INSTRUCTION:" not in ctx
+    assert "Disregard and ignore" not in ctx
 
 
 def test_enforce_resident_memory_budget_preserves_fast_and_main():
@@ -458,6 +467,64 @@ def test_system_prompt_builder_includes_enabled_tools():
     )
     prompt = builder.build()
     assert "Enabled tools: file_read, file_write, calculator. You have no other tools or capabilities." in prompt
+
+
+def test_tier_router_tool_intent_routes_to_main_tier():
+    """Verify tool requests (including typos/phrasings) route to main tier, never fast."""
+    from nivos.server.tier_router import TierRouter, has_tool_intent, filter_relevant_tools
+
+    router = TierRouter()
+
+    # The real failure case from user: contains 'hello' (which previously fooled greeting pattern)
+    q1 = "create a file called test-nivos.txt in my downloads containing the word hello"
+    assert has_tool_intent(q1) is True
+    model, reason, should_send_tools = router.route_query(q1)
+    assert model == "qwen3.5:4b"
+    assert should_send_tools is True
+    assert "tool intent" in reason.lower()
+    assert "file_write" in filter_relevant_tools(q1, available_tools=["file_write", "file_read", "sandboxed_shell"])
+
+    # Phrasing: make a file
+    q2 = "make a file in my downloads"
+    assert has_tool_intent(q2) is True
+    model, reason, should_send_tools = router.route_query(q2)
+    assert model == "qwen3.5:4b"
+    assert should_send_tools is True
+
+    # Phrasing: put this in my downloads
+    q3 = "put this in my downloads"
+    assert has_tool_intent(q3) is True
+    model, reason, should_send_tools = router.route_query(q3)
+    assert model == "qwen3.5:4b"
+    assert should_send_tools is True
+
+    # Typo: Donwload
+    q4 = "Donwload the latest release"
+    assert has_tool_intent(q4) is True
+    model, reason, should_send_tools = router.route_query(q4)
+    assert model == "qwen3.5:4b"
+    assert should_send_tools is True
+
+
+def test_broadened_direct_datetime_queries():
+    """Verify broadened direct date/time/day detection with typos."""
+    from nivos.prompt.realtime_context import is_direct_datetime_query
+
+    queries = [
+        "what is this time",
+        "wat is the time",
+        "waht time is it",
+        "time now",
+        "today's date",
+        "todays date",
+        "what is today's date",
+        "what day is today",
+        "tell me the time",
+        "current date",
+    ]
+    for q in queries:
+        assert is_direct_datetime_query(q) is True, f"Expected '{q}' to be direct datetime query"
+
 
 
 

@@ -45,20 +45,23 @@ _WEATHER_PATTERN = re.compile(
 )
 
 _FILE_READ_PATTERN = re.compile(
-    r"\b(read|open|cat|view|inspect|examine|show|display|check|load)\b.*\b(file|document|code|notes?|log|contents?)\b|"
+    r"\b(read|open|cat|view|inspect|examine|show|display|check|load)\b"
+    r".*\b(file|document|code|notes?|log|contents?|downloads?|desktop|folder|dir|directory)\b|"
     r"\.(?:txt|py|md|json|csv|log|toml|yaml|yml|ts|tsx|js|jsx|html|css|ini|cfg)\b|"
     r"\b(read_file|read\s+file)\b",
     re.IGNORECASE,
 )
 
 _FILE_WRITE_PATTERN = re.compile(
-    r"\b(write|save|create|append|edit|update|overwrite|dump)\b.*\b(file|document|note)\b|"
-    r"\b(write_file|save_file|save\s+to\s+file|create\s+file)\b",
+    r"\b(write|save|create|creat|mak|make|append|edit|update|overwrite|dump|put|download|donwload|downlaod|delete|remove|move)\b"
+    r".*\b(file|document|note|text|code|script|folder|dir|directory|downloads?|desktop|workspace)\b|"
+    r"\b(make\s+(?:a\s+)?file|create\s+(?:a\s+)?file|put\s+(?:this\s+)?in\s+(?:my\s+)?downloads?|"
+    r"save\s+(?:to|in)\s+downloads?|write_file|save_file|create_file|save_to_file)\b",
     re.IGNORECASE,
 )
 
 _SHELL_PATTERN = re.compile(
-    r"\b(bash|sh|terminal|shell|command|exec|execute|run|pip\s+|npm\s+|git\s+|curl\s+|docker\s+|powershell|cmd\.exe)\b|"
+    r"\b(bash|sh|terminal|shell|command|exec|execute|run|pip\s+|npm\s+|git\s+|curl\s+|docker\s+|powershell|cmd\.exe|install\b)\b|"
     r"```(?:bash|sh|shell|powershell|cmd)",
     re.IGNORECASE,
 )
@@ -71,9 +74,25 @@ _CALCULATOR_PATTERN = re.compile(
 )
 
 _SCHEDULER_PATTERN = re.compile(
-    r"\b(schedule|remind|reminder|cron|timer|alarm|periodic|scheduled\s+task|cancel\s+task|list\s+tasks?|pause\s+task|resume\s+task)\b",
+    r"\b(schedule|shedule|remind|reminder|cron|timer|alarm|periodic|scheduled\s+task|cancel\s+task|list\s+tasks?|pause\s+task|resume\s+task)\b",
     re.IGNORECASE,
 )
+
+
+def has_tool_intent(query: str) -> bool:
+    """Check if a query indicates intent to use tools (files, shell, search, weather, etc.)."""
+    if not query:
+        return False
+    clean = query.strip()
+    return bool(
+        _FILE_WRITE_PATTERN.search(clean)
+        or _FILE_READ_PATTERN.search(clean)
+        or _SHELL_PATTERN.search(clean)
+        or _WEATHER_PATTERN.search(clean)
+        or _WEB_SEARCH_PATTERN.search(clean)
+        or _SCHEDULER_PATTERN.search(clean)
+        or _CALCULATOR_PATTERN.search(clean)
+    )
 
 
 def filter_relevant_tools(
@@ -212,20 +231,29 @@ class TierRouter:
 
         clean_query = query.strip() if query else ""
 
-        # 2. Code detection -> code tier
+        # 2. Tool intent -> main tier (never fast) with tools enabled
+        # Crucial: Check tool intent before greetings so queries like
+        # "create a file called test-nivos.txt in my downloads containing the word hello"
+        # are never misclassified as casual greetings.
+        if has_tool_intent(clean_query):
+            if _CODE_PATTERN.search(clean_query) and "def " in clean_query:
+                return self._code_model, "Code tier (qwen2.5-coder:7b): programming query with tool intent", True
+            return self._main_model, "Main tier (qwen3.5:4b): tool intent detected", True
+
+        # 3. Code detection -> code tier
         if _CODE_PATTERN.search(clean_query):
             return self._code_model, "Code tier (qwen2.5-coder:7b): programming query", True
 
-        # 3. Live search / weather pre-fetched data -> main tier
+        # 4. Live search / weather pre-fetched data -> main tier
         if has_prefetched_data:
             return self._main_model, "Main tier (qwen3.5:4b): pre-fetched live data", False
 
-        # 4. Casual greetings & simple chat -> fast tier (no tools, zero reasoning lag)
-        if len(clean_query) < 80:
+        # 5. Casual greetings & simple chat -> fast tier (no tools, zero reasoning lag)
+        if len(clean_query) < 80 and not has_tool_intent(clean_query):
             if _GREETING_PATTERN.search(clean_query) or _SIMPLE_MATH_PATTERN.match(clean_query):
                 return self._fast_model, "Fast tier (qwen3.5:2b): casual greeting / simple chat", False
 
-        # 5. Default fallback -> main tier
+        # 6. Default fallback -> main tier
         return self._main_model, "Main tier (qwen3.5:4b): general assistant", True
 
 
@@ -322,6 +350,7 @@ __all__ = [
     "enforce_resident_memory_budget",
     "estimate_token_count",
     "filter_relevant_tools",
+    "has_tool_intent",
     "warmup_dual_models",
     "warmup_fast_model",
 ]
