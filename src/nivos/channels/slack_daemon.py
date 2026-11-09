@@ -42,19 +42,22 @@ def _to_slack_fmt(text: str) -> str:
 def run_slack_daemon(
     bot_token: str,
     app_token: str,
+    allowed_user_id: str = "",
     model: str = "qwen3.5:9b",
 ) -> None:
-    """Run the Slack daemon (blocking). Handles DMs with DeepResearch."""
+    """Run the Slack daemon (blocking). Handles DMs strictly for allow-listed user."""
     import threading
+    import time
 
     from slack_bolt import App
     from slack_bolt.adapter.socket_mode import SocketModeHandler
 
     from nivos.agents.deep_research import DeepResearchAgent
     from nivos.core.config import load_config
-    from nivos.core.events import EventBus
+    from nivos.core.events import EventBus, EventType
     from nivos.engine.ollama import OllamaEngine
     from nivos.security import setup_security
+    from nivos.security.policy import SAFE_READONLY_TOOLS, RequestOrigin
     from nivos.server.agent_manager_routes import (
         _build_deep_research_tools,
     )
@@ -64,12 +67,17 @@ def run_slack_daemon(
     pid_path.parent.mkdir(parents=True, exist_ok=True)
     pid_path.write_text(str(os.getpid()))
 
-    # Build agent
+    # Build agent with strictly read-only tools
     config = load_config()
     bus = EventBus(record_history=False)
     security = setup_security(config, OllamaEngine(), bus)
     engine = security.engine
-    tools = _build_deep_research_tools(engine=engine, model=model)
+    raw_tools = _build_deep_research_tools(engine=engine, model=model)
+    # Strictly filter down to SAFE_READONLY_TOOLS
+    tools = [
+        t for t in raw_tools
+        if getattr(t, "tool_id", getattr(t, "name", "")) in SAFE_READONLY_TOOLS
+    ]
     agent = DeepResearchAgent(
         engine=engine,
         model=model,
@@ -80,20 +88,62 @@ def run_slack_daemon(
         rate_limiter=security.rate_limiter,
         agent_id="channel:slack",
     )
-    logger.info("Slack daemon: agent ready with %d tools", len(tools))
+    logger.info("Slack daemon: agent ready with %d read-only tools (allowlist user: %s)", len(tools), allowed_user_id)
 
     app = App(token=bot_token)
 
     processing = threading.Event()
+    last_message_time = 0.0
+    rate_lock = threading.Lock()
 
     @app.event("message")
     def handle_dm(event: dict, say: Any) -> None:
+        nonlocal last_message_time
+        user_id = event.get("user", "")
+        ch_type = event.get("channel_type", "")
+        ch_id = event.get("channel", "")
+
+        is_dm = ch_type == "im" or ch_id.startswith("D")
+        is_bot = "bot_id" in event or event.get("subtype") == "bot_message"
+
+        if not is_dm or is_bot:
+            return
+
+        # Check single-user allowlist
+        if allowed_user_id and user_id != allowed_user_id:
+            logger.warning(
+                "Slack DM from unauthorized user %s ignored (allow-listed: %s)",
+                user_id,
+                allowed_user_id,
+            )
+            return
+
+        # Rate limiting: 1 message per 1.5s
+        with rate_lock:
+            now = time.time()
+            if now - last_message_time < 1.5:
+                logger.warning("Slack DM rate limited for user %s", user_id)
+                return
+            last_message_time = now
+
         text = event.get("text", "")
         if not text:
             return
 
         ts = event.get("ts", "")
-        logger.info("Slack DM: %s", text[:60])
+        logger.info("Slack DM from %s: %s", user_id, text[:60])
+
+        bus.publish(
+            EventType.CHANNEL_MESSAGE_RECEIVED,
+            {
+                "channel": "slack",
+                "sender": user_id,
+                "content": text,
+                "message_id": ts,
+                "origin": "slack",
+                "is_untrusted_content": True,
+            },
+        )
 
         say(text="Message received! Working on it now...", thread_ts=ts)
         processing.set()
@@ -148,6 +198,7 @@ def run_slack_daemon(
 def start_slack_daemon(
     bot_token: str,
     app_token: str,
+    allowed_user_id: str = "",
     model: str = "qwen3.5:9b",
 ) -> int:
     """Spawn the Slack daemon as a background subprocess.
@@ -156,18 +207,22 @@ def start_slack_daemon(
     """
     import subprocess
 
+    cmd = [
+        sys.executable,
+        "-m",
+        "nivos.channels.slack_daemon",
+        "--bot-token",
+        bot_token,
+        "--app-token",
+        app_token,
+        "--model",
+        model,
+    ]
+    if allowed_user_id:
+        cmd.extend(["--allowed-user-id", allowed_user_id])
+
     proc = subprocess.Popen(
-        [
-            sys.executable,
-            "-m",
-            "nivos.channels.slack_daemon",
-            "--bot-token",
-            bot_token,
-            "--app-token",
-            app_token,
-            "--model",
-            model,
-        ],
+        cmd,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         start_new_session=True,
@@ -215,11 +270,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--bot-token", required=True)
     parser.add_argument("--app-token", required=True)
+    parser.add_argument("--allowed-user-id", default="")
     parser.add_argument("--model", default="qwen3.5:9b")
     args = parser.parse_args()
 
     run_slack_daemon(
         bot_token=args.bot_token,
         app_token=args.app_token,
+        allowed_user_id=args.allowed_user_id,
         model=args.model,
     )

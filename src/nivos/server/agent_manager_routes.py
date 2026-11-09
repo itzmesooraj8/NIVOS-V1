@@ -2000,6 +2000,7 @@ def create_agent_manager_router(
             config = req.config or {}
             bot_token = config.get("bot_token", "")
             app_token = config.get("app_token", "")
+            allowed_user_id = config.get("allowed_user_id", "")
             if bot_token and app_token:
                 try:
                     from nivos.channels.slack_daemon import (
@@ -2028,6 +2029,7 @@ def create_agent_manager_router(
                     pid = start_slack_daemon(
                         bot_token=bot_token,
                         app_token=app_token,
+                        allowed_user_id=allowed_user_id,
                         model=srv_model,
                     )
                     logger.info(

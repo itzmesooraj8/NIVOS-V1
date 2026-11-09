@@ -1303,6 +1303,7 @@ class SlackChannelConfig:
 
     bot_token: str = ""
     app_token: str = ""
+    allowed_user_id: str = ""
 
 
 @dataclass(slots=True)

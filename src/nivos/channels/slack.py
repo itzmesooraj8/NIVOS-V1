@@ -41,15 +41,18 @@ class SlackChannel(BaseChannel):
         bot_token: str = "",
         *,
         app_token: str = "",
+        allowed_user_id: str = "",
         bus: Optional[EventBus] = None,
     ) -> None:
         self._token = bot_token or os.environ.get("SLACK_BOT_TOKEN", "")
         self._app_token = app_token or os.environ.get("SLACK_APP_TOKEN", "")
+        self._allowed_user_id = allowed_user_id or os.environ.get("SLACK_ALLOWED_USER_ID", "")
         self._bus = bus
         self._handlers: List[ChannelHandler] = []
         self._status = ChannelStatus.DISCONNECTED
         self._listener_thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
+        self._last_message_time: float = 0.0
 
     # -- connection lifecycle ---------------------------------------------------
 
@@ -169,16 +172,59 @@ class SlackChannel(BaseChannel):
                 web_client=WebClient(token=self._token),
             )
 
+            import time
+
             def _handle_event(client_obj, req: SocketModeRequest):
                 if req.type == "events_api":
                     event = req.payload.get("event", {})
+                    # Phase 5 requirements:
+                    # 1. Event message.im only; ignore channel, group, mpim
+                    user_id = event.get("user", "")
+                    ch_type = event.get("channel_type", "")
+                    ch_id = event.get("channel", "")
+
+                    is_dm = ch_type == "im" or ch_id.startswith("D")
+                    is_bot = "bot_id" in event or event.get("subtype") == "bot_message"
+
+                    if not is_dm or is_bot:
+                        client_obj.send_socket_mode_response(
+                            SocketModeResponse(envelope_id=req.envelope_id),
+                        )
+                        return
+
+                    # 2. Allow-list of configured Slack user ID only; ignore every other user
+                    if self._allowed_user_id and user_id != self._allowed_user_id:
+                        logger.warning(
+                            "Ignored message from unauthorized Slack user %s (allow-list: %s)",
+                            user_id,
+                            self._allowed_user_id,
+                        )
+                        client_obj.send_socket_mode_response(
+                            SocketModeResponse(envelope_id=req.envelope_id),
+                        )
+                        return
+
+                    # 3. Rate limiting: 1 message per 1.5s
+                    now = time.time()
+                    if now - self._last_message_time < 1.5:
+                        logger.warning("Slack message rate limit hit for user %s", user_id)
+                        client_obj.send_socket_mode_response(
+                            SocketModeResponse(envelope_id=req.envelope_id),
+                        )
+                        return
+                    self._last_message_time = now
+
                     if event.get("type") == "message" and "subtype" not in event:
                         cm = ChannelMessage(
                             channel="slack",
-                            sender=event.get("user", ""),
+                            sender=user_id,
                             content=event.get("text", ""),
                             message_id=event.get("ts", ""),
-                            conversation_id=event.get("channel", ""),
+                            conversation_id=ch_id,
+                            metadata={
+                                "origin": "slack",
+                                "is_untrusted_content": True,
+                            },
                         )
                         for handler in self._handlers:
                             try:
@@ -193,6 +239,8 @@ class SlackChannel(BaseChannel):
                                     "sender": cm.sender,
                                     "content": cm.content,
                                     "message_id": cm.message_id,
+                                    "origin": "slack",
+                                    "is_untrusted_content": True,
                                 },
                             )
                     client_obj.send_socket_mode_response(

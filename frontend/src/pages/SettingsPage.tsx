@@ -62,6 +62,11 @@ import {
   resetSandbox,
   updateSandboxAutoApprove,
   type SandboxStatus,
+  fetchSlackChannelConfig,
+  saveSlackChannelConfig,
+  startSlackDaemon,
+  stopSlackDaemon,
+  type SlackChannelConfigState,
   type InferenceSource,
   type MemoryStats,
   type McpServerConfig,
@@ -1186,6 +1191,219 @@ function SandboxSettingsSection() {
   );
 }
 
+function SlackSettingsSection() {
+  const [config, setConfig] = useState<SlackChannelConfigState | null>(null);
+  const [botToken, setBotToken] = useState('');
+  const [appToken, setAppToken] = useState('');
+  const [allowedUserId, setAllowedUserId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const loadConfig = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await fetchSlackChannelConfig();
+      setConfig(data);
+      if (data.allowed_user_id) setAllowedUserId(data.allowed_user_id);
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      await saveSlackChannelConfig({
+        bot_token: botToken || undefined,
+        app_token: appToken || undefined,
+        allowed_user_id: allowedUserId,
+      });
+      setBotToken('');
+      setAppToken('');
+      setMsg('Slack configuration saved (stored locally, tokens masked).');
+      await loadConfig();
+      setTimeout(() => setMsg(''), 4000);
+    } catch (err: any) {
+      setMsg(`Save failed: ${err.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleDaemon = async () => {
+    try {
+      setLoading(true);
+      if (config?.daemon_running) {
+        await stopSlackDaemon();
+        setMsg('Slack daemon stopped.');
+      } else {
+        await startSlackDaemon();
+        setMsg('Slack daemon started (listening for DMs via Socket Mode).');
+      }
+      await loadConfig();
+      setTimeout(() => setMsg(''), 4000);
+    } catch (err: any) {
+      setMsg(`Action failed: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCopyManifest = () => {
+    if (!config?.manifest) return;
+    navigator.clipboard.writeText(JSON.stringify(config.manifest, null, 2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  return (
+    <Section title="Slack Direct Messages">
+      {msg && (
+        <div className="text-xs p-2 rounded mb-2 text-emerald-400" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+          {msg}
+        </div>
+      )}
+
+      <div
+        className="flex items-center justify-between p-3 rounded-lg mb-3"
+        style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}
+      >
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
+            Slack Socket Mode (DM-Only)
+          </span>
+          <span className="text-[11px] text-[var(--color-text-secondary)]">
+            {config?.has_bot_token && config?.has_app_token
+              ? `Configured • Allowlist: ${config.allowed_user_id || 'Anyone (add your Member ID below)'}`
+              : 'Tokens required (add bot token & app token below)'}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span
+            className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+            style={{
+              background: config?.daemon_running ? 'rgba(16, 185, 129, 0.15)' : 'var(--color-bg-tertiary)',
+              color: config?.daemon_running ? 'var(--color-success)' : 'var(--color-text-tertiary)',
+            }}
+          >
+            {config?.daemon_running ? 'Running' : 'Disconnected'}
+          </span>
+          {config?.has_bot_token && config?.has_app_token && (
+            <button
+              type="button"
+              disabled={loading}
+              onClick={handleToggleDaemon}
+              className="text-xs px-2.5 py-1 rounded font-medium cursor-pointer"
+              style={{
+                background: config.daemon_running ? 'rgba(239, 68, 68, 0.15)' : 'var(--color-accent)',
+                color: config.daemon_running ? '#ef4444' : 'white',
+              }}
+            >
+              {config.daemon_running ? 'Stop' : 'Start'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Manifest Card with Copy Button */}
+      <div className="p-3 rounded-lg mb-3" style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}>
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
+            Minimal DM-Only App Manifest
+          </span>
+          <button
+            type="button"
+            onClick={handleCopyManifest}
+            className="text-[11px] px-2 py-0.5 rounded font-medium cursor-pointer flex items-center gap-1"
+            style={{ background: 'var(--color-bg-tertiary)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
+          >
+            {copied ? 'Copied!' : 'Copy JSON'}
+          </button>
+        </div>
+        <p className="text-[11px] text-[var(--color-text-secondary)] mb-2">
+          In api.slack.com/apps → "Create New App" → "From an app manifest", paste this JSON. Only grants chat:write and im:* scopes.
+        </p>
+      </div>
+
+      <form onSubmit={handleSave} className="flex flex-col gap-2.5">
+        <SettingRow
+          label="Bot User OAuth Token"
+          description={config?.has_bot_token ? "Bot token configured (xoxb-...). Enter new token only to replace." : "Bot User OAuth Token starting with xoxb-..."}
+        >
+          <input
+            type="password"
+            value={botToken}
+            onChange={(e) => setBotToken(e.target.value)}
+            placeholder={config?.has_bot_token ? "••••••••••••••••••••••••" : "xoxb-..."}
+            className="text-xs px-2.5 py-1.5 rounded-lg outline-none w-56 font-mono"
+            style={{
+              background: 'var(--color-bg-secondary)',
+              color: 'var(--color-text)',
+              border: '1px solid var(--color-border)',
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow
+          label="App-Level Token"
+          description={config?.has_app_token ? "App token configured (xapp-...). Enter new token only to replace." : "App-level token for Socket Mode starting with xapp-..."}
+        >
+          <input
+            type="password"
+            value={appToken}
+            onChange={(e) => setAppToken(e.target.value)}
+            placeholder={config?.has_app_token ? "••••••••••••••••••••••••" : "xapp-..."}
+            className="text-xs px-2.5 py-1.5 rounded-lg outline-none w-56 font-mono"
+            style={{
+              background: 'var(--color-bg-secondary)',
+              color: 'var(--color-text)',
+              border: '1px solid var(--color-border)',
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow
+          label="My Slack User ID (Allowlist)"
+          description="Only DMs from this Slack member ID are answered; all other users and channels are strictly ignored. To find it: in Slack, click your profile picture → ... → 'Copy member ID'."
+        >
+          <input
+            type="text"
+            value={allowedUserId}
+            onChange={(e) => setAllowedUserId(e.target.value)}
+            placeholder="e.g. U0123456789"
+            className="text-xs px-2.5 py-1.5 rounded-lg outline-none w-56 font-mono"
+            style={{
+              background: 'var(--color-bg-secondary)',
+              color: 'var(--color-text)',
+              border: '1px solid var(--color-border)',
+            }}
+          />
+        </SettingRow>
+
+        <div className="flex justify-end pt-1">
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer disabled:opacity-50"
+            style={{ background: 'var(--color-accent)', color: 'white' }}
+          >
+            {saving ? 'Saving...' : 'Save Slack Settings'}
+          </button>
+        </div>
+      </form>
+    </Section>
+  );
+}
+
 function ModelRoutingSection() {
   const [routing, setRouting] = useState<RoutingSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1871,6 +2089,9 @@ export function SettingsPage() {
 
           {/* Docker Sandbox */}
           <SandboxSettingsSection />
+
+          {/* Slack Direct Messages */}
+          <SlackSettingsSection />
 
           {/* Model defaults */}
           <Section title="Model Defaults">

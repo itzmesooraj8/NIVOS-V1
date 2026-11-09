@@ -19,7 +19,7 @@ Branch: `feat/big-build`
 | **Phase 2** | Obsidian memory (C:\Nivos\NIVOS-vault, SQLite keyword + bge-m3 background, review screen) | done |
 | **Phase 3** | `open_app` tool (Start menu shortcuts, URL schemes, block dangerous binaries) | done |
 | **Phase 4** | Docker sandbox for shell tool (Ubuntu container, workspace mount, idle stop) | done |
-| **Phase 5** | Slack direct messages (Socket mode, DM-only, user ID allowlist, read-only tools) | pending |
+| **Phase 5** | Slack direct messages (Socket mode, DM-only, user ID allowlist, read-only tools) | done |
 | **Phase 6** | Voice (Kokoro TTS, CPU speech, settings voice picker, read aloud toggle) | pending |
 | **Phase 7** | Nivos logo, icons, desktop shortcut (`nivos install-shortcut`) | pending |
 | **Phase 8** | Self-improvement agent (C:\Nivos\self-dev worktree, strict rules, branch `self/<topic>`) | pending |
@@ -57,10 +57,10 @@ Branch: `feat/big-build`
 - [x] Per-session auto-approve toggle for sandbox (never host).
 
 ### Phase 5: Slack Direct Messages
-- [ ] Socket Mode integration with local token storage.
-- [ ] Minimal DM-only manifest (`im:history`, `im:read`, `im:write`, `chat:write`).
-- [ ] Allowlist restricted strictly to configured user ID.
-- [ ] Strict read-only tools restriction; Slack text marked untrusted content.
+- [x] Socket Mode integration with local token storage.
+- [x] Minimal DM-only manifest (`im:history`, `im:read`, `im:write`, `chat:write`).
+- [x] Allowlist restricted strictly to configured user ID.
+- [x] Strict read-only tools restriction; Slack text marked untrusted content.
 
 ### Phase 6: Voice (Kokoro TTS)
 - [ ] `kokoro` TTS backend config and low-priority CPU generation.

@@ -1592,3 +1592,53 @@ export async function updateSandboxAutoApprove(enabled: boolean): Promise<{ auto
   if (!res.ok) throw new Error(`Failed to update sandbox auto-approve: ${res.status}`);
   return res.json();
 }
+
+// ---------------------------------------------------------------------------
+// Slack Direct Messages Channel
+// ---------------------------------------------------------------------------
+
+export interface SlackChannelConfigState {
+  has_bot_token: boolean;
+  has_app_token: boolean;
+  allowed_user_id: string;
+  daemon_running: boolean;
+  manifest: Record<string, any>;
+}
+
+export async function fetchSlackChannelConfig(): Promise<SlackChannelConfigState> {
+  const res = await apiFetch('/v1/channels/slack/config');
+  if (!res.ok) throw new Error(`Failed to fetch Slack config: ${res.status}`);
+  return res.json();
+}
+
+export async function saveSlackChannelConfig(payload: {
+  bot_token?: string;
+  app_token?: string;
+  allowed_user_id?: string;
+}): Promise<{ success: boolean; has_bot_token: boolean; has_app_token: boolean; allowed_user_id: string }> {
+  const res = await apiFetch('/v1/channels/slack/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to save Slack config: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function startSlackDaemon(): Promise<{ success: boolean; pid: number; daemon_running: boolean }> {
+  const res = await apiFetch('/v1/channels/slack/start', { method: 'POST' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to start Slack: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function stopSlackDaemon(): Promise<{ success: boolean; daemon_running: boolean }> {
+  const res = await apiFetch('/v1/channels/slack/stop', { method: 'POST' });
+  if (!res.ok) throw new Error(`Failed to stop Slack: ${res.status}`);
+  return res.json();
+}
