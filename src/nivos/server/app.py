@@ -455,6 +455,8 @@ def create_app(
     app.include_router(workspace_router)
     app.include_router(mcp_router)
     app.include_router(research_router)
+    from nivos.server.vault_routes import router as vault_router
+    app.include_router(vault_router)
     include_all_routes(app)
 
     # Restore SendBlue channel bindings from database on startup

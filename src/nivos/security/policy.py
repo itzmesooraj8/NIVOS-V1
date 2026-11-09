@@ -147,9 +147,9 @@ def is_tool_allowed(
 
     # Rule 1 & 2: Untrusted content can never invoke dangerous tools or perform file writes
     if is_untrusted_content:
-        if tool_name_clean in DANGEROUS_TOOLS or tool_name_clean == "file_write":
+        if tool_name_clean in DANGEROUS_TOOLS or tool_name_clean in ("file_write", "save_to_inbox"):
             return False, (
-                f"Dangerous tool '{tool_name_clean}' cannot be executed from untrusted content "
+                f"Tool '{tool_name_clean}' cannot be executed from untrusted content "
                 "(web results, notes, files, or external messages)."
             )
 
@@ -160,9 +160,9 @@ def is_tool_allowed(
                 f"Dangerous tool '{tool_name_clean}' is not allowed for origin '{origin.value}'. "
                 "Only local chat turns typed by the user may invoke dangerous tools."
             )
-        if tool_name_clean == "file_write":
+        if tool_name_clean in ("file_write", "save_to_inbox"):
             return False, (
-                f"File write tool is not allowed for origin '{origin.value}'. "
+                f"File write tool '{tool_name_clean}' is not allowed for origin '{origin.value}'. "
                 "Only local chat turns typed by the user may perform file writes."
             )
 

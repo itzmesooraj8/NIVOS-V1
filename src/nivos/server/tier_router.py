@@ -78,6 +78,16 @@ _SCHEDULER_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+_VAULT_SEARCH_PATTERN = re.compile(
+    r"\b(vault|obsidian|second\s+brain|search\s+vault|find\s+in\s+vault|search\s+notes?)\b",
+    re.IGNORECASE,
+)
+
+_VAULT_INBOX_PATTERN = re.compile(
+    r"\b(save_to_inbox|save\s+to\s+inbox|add\s+to\s+inbox|inbox\s+note|new\s+vault\s+note)\b",
+    re.IGNORECASE,
+)
+
 
 def has_tool_intent(query: str) -> bool:
     """Check if a query indicates intent to use tools (files, shell, search, weather, etc.)."""
@@ -92,6 +102,8 @@ def has_tool_intent(query: str) -> bool:
         or _WEB_SEARCH_PATTERN.search(clean)
         or _SCHEDULER_PATTERN.search(clean)
         or _CALCULATOR_PATTERN.search(clean)
+        or _VAULT_SEARCH_PATTERN.search(clean)
+        or _VAULT_INBOX_PATTERN.search(clean)
     )
 
 
@@ -138,6 +150,14 @@ def filter_relevant_tools(
     # Scheduler
     if _SCHEDULER_PATTERN.search(clean_query):
         needed.extend(["schedule_task", "list_scheduled_tasks", "cancel_scheduled_task"])
+
+    # Vault search
+    if _VAULT_SEARCH_PATTERN.search(clean_query):
+        needed.append("search_vault")
+
+    # Vault inbox
+    if _VAULT_INBOX_PATTERN.search(clean_query):
+        needed.append("save_to_inbox")
 
     if available_tools is not None:
         avail_set = set(available_tools)

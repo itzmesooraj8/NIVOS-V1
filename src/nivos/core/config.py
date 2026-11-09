@@ -1257,6 +1257,17 @@ class LocationConfig:
 
 
 @dataclass(slots=True)
+class ObsidianConfig:
+    """Configuration for Obsidian vault integration."""
+
+    vault_path: str = r"C:\Nivos\NIVOS-vault"
+    auto_reconnect: bool = True
+    embedding_model: str = "bge-m3"
+    sync_on_start: bool = True
+    allow_obsidian_to_cloud: bool = False
+
+
+@dataclass(slots=True)
 class RoutingTiersConfig:
     """Model routing tiers settings."""
 
@@ -1822,6 +1833,7 @@ class NivosConfig:
     proactive: ProactiveConfig = field(default_factory=ProactiveConfig)
     user: LocationConfig = field(default_factory=LocationConfig)
     routing: RoutingTiersConfig = field(default_factory=RoutingTiersConfig)
+    obsidian: ObsidianConfig = field(default_factory=ObsidianConfig)
     mining: Optional["MiningConfig"] = None
 
     @property
@@ -2150,6 +2162,7 @@ def load_config(path: Optional[Path] = None) -> NivosConfig:
             "proactive",
             "user",
             "routing",
+            "obsidian",
             "memory_files",
             "system_prompt",
             "compression",

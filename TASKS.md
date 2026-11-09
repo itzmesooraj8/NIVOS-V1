@@ -16,7 +16,7 @@ Branch: `feat/big-build`
 | Phase | Description | Status |
 |---|---|---|
 | **Phase 1** | Tool reliability, Claim Guard, neutral clock, central safety policy | done |
-| **Phase 2** | Obsidian memory (C:\Nivos\NIVOS-vault, SQLite keyword + bge-m3 background, review screen) | pending |
+| **Phase 2** | Obsidian memory (C:\Nivos\NIVOS-vault, SQLite keyword + bge-m3 background, review screen) | done |
 | **Phase 3** | `open_app` tool (Start menu shortcuts, URL schemes, block dangerous binaries) | pending |
 | **Phase 4** | Docker sandbox for shell tool (Ubuntu container, workspace mount, idle stop) | pending |
 | **Phase 5** | Slack direct messages (Socket mode, DM-only, user ID allowlist, read-only tools) | pending |
@@ -37,12 +37,12 @@ Branch: `feat/big-build`
 - [x] Verification: Python tests, frontend tests, frontend build, `uv run nivos doctor`.
 
 ### Phase 2: Obsidian Memory
-- [ ] Vault path saved in `config.toml`, reconnected at start with restart test.
-- [ ] Read-only indexing of `.md` files (frontmatter, `[[links]]`), skipping `.obsidian` and secrets.
-- [ ] Fast SQLite keyword search + background `bge-m3` embedding worker by file hash.
-- [ ] Tools: `search_vault` and `save_to_inbox` (new notes only, path traversal rejection).
-- [ ] Memory review screen in Settings: proposals for `vault-map.md`, `skill-map.md`, and chat memories.
-- [ ] `me.md` protection and privacy filter (no vault data to cloud unless permitted).
+- [x] Vault path saved in `config.toml`, reconnected at start with restart test.
+- [x] Read-only indexing of `.md` files (frontmatter, `[[links]]`), skipping `.obsidian` and secrets.
+- [x] Fast SQLite keyword search + background `bge-m3` embedding worker by file hash.
+- [x] Tools: `search_vault` and `save_to_inbox` (new notes only, path traversal rejection).
+- [x] Memory review screen in Settings: proposals for `vault-map.md`, `skill-map.md`, and chat memories.
+- [x] `me.md` protection and privacy filter (no vault data to cloud unless permitted).
 
 ### Phase 3: `open_app` Tool
 - [ ] Windows Start menu shortcut scanner & URL schemes (`ms-settings:`, `spotify:`).

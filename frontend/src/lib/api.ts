@@ -1454,3 +1454,78 @@ export async function reloadPlugins(): Promise<{ plugins: PluginInfo[]; count: n
   if (!res.ok) throw new Error(`Failed to reload plugins: ${res.status}`);
   return res.json();
 }
+
+// ---------------------------------------------------------------------------
+// Obsidian Vault & Memory Review
+// ---------------------------------------------------------------------------
+
+export interface VaultConfig {
+  vault_path: string;
+  connected: boolean;
+  allow_obsidian_to_cloud: boolean;
+  embedding_model: string;
+}
+
+export interface VaultProposal {
+  filename: string;
+  title: string;
+  content: string;
+  snippet: string;
+  proposal_type: string;
+  mtime: string;
+  size_bytes: number;
+}
+
+export async function fetchVaultConfig(): Promise<VaultConfig> {
+  const res = await apiFetch('/v1/vault/config');
+  if (!res.ok) throw new Error(`Failed to fetch vault config: ${res.status}`);
+  return res.json();
+}
+
+export async function saveVaultConfig(updates: Partial<VaultConfig>): Promise<VaultConfig> {
+  const res = await apiFetch('/v1/vault/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) throw new Error(`Failed to save vault config: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchVaultProposals(): Promise<{ proposals: VaultProposal[] }> {
+  const res = await apiFetch('/v1/vault/proposals');
+  if (!res.ok) throw new Error(`Failed to list vault proposals: ${res.status}`);
+  return res.json();
+}
+
+export async function approveVaultProposal(filename: string): Promise<{ success: boolean; message: string }> {
+  const res = await apiFetch('/v1/vault/proposals/approve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to approve proposal: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function rejectVaultProposal(filename: string): Promise<{ success: boolean; message: string }> {
+  const res = await apiFetch('/v1/vault/proposals/reject', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to reject proposal: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function syncVault(): Promise<{ success: boolean; items_synced: number; message: string }> {
+  const res = await apiFetch('/v1/vault/sync', { method: 'POST' });
+  if (!res.ok) throw new Error(`Failed to sync vault: ${res.status}`);
+  return res.json();
+}

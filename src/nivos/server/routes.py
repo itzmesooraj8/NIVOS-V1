@@ -59,6 +59,38 @@ def _to_messages(chat_messages) -> list[Message]:
     return messages
 
 
+def _load_vault_me_md(vault_path: str = "") -> str:
+    """Read Nivos-Memory/me.md safely and ensure it stays strictly under 300 tokens."""
+    try:
+        from pathlib import Path
+
+        if not vault_path:
+            from nivos.core.config import load_config
+
+            cfg = load_config()
+            obs_cfg = getattr(cfg, "obsidian", None)
+            vault_path = (
+                getattr(obs_cfg, "vault_path", r"C:\Nivos\NIVOS-vault")
+                if obs_cfg
+                else r"C:\Nivos\NIVOS-vault"
+            )
+
+        if not vault_path:
+            return ""
+
+        me_file = Path(vault_path) / "Nivos-Memory" / "me.md"
+        if not me_file.is_file():
+            return ""
+
+        content = me_file.read_text(encoding="utf-8", errors="replace").strip()
+        # Cap at 1000 characters to strictly guarantee < 300 tokens
+        if len(content) > 1000:
+            content = content[:1000].rsplit("\n", 1)[0]
+        return content
+    except Exception:
+        return ""
+
+
 def _ensure_identity_prompt(messages: list[Message], app_config) -> list[Message]:
     """Return one leading system message, adding identity when needed.
 
@@ -125,6 +157,9 @@ def _ensure_identity_prompt(messages: list[Message], app_config) -> list[Message
     system_parts = []
     if prompt:
         system_parts.append(prompt)
+    me_profile = _load_vault_me_md()
+    if me_profile and not any("from me.md" in part or "about me" in part.lower() for part in system_parts):
+        system_parts.append(f"## User Profile (from me.md)\n{me_profile}")
     system_parts.extend(message.text for message in system_messages if message.text)
 
     non_system_messages = [
@@ -368,9 +403,13 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
             if hasattr(request.app.state, "allow_obsidian_to_cloud"):
                 allow_obsidian = request.app.state.allow_obsidian_to_cloud
             else:
-                cfg_sec = getattr(getattr(request.app.state, "config", None), "security", None)
-                if cfg_sec:
-                    allow_obsidian = getattr(cfg_sec, "allow_obsidian_to_cloud", False)
+                cfg_obs = getattr(getattr(request.app.state, "config", None), "obsidian", None)
+                if cfg_obs:
+                    allow_obsidian = getattr(cfg_obs, "allow_obsidian_to_cloud", False)
+                else:
+                    cfg_sec = getattr(getattr(request.app.state, "config", None), "security", None)
+                    if cfg_sec:
+                        allow_obsidian = getattr(cfg_sec, "allow_obsidian_to_cloud", False)
             if request.headers.get("x-allow-obsidian-to-cloud", "").lower() in ("true", "1"):
                 allow_obsidian = True
 

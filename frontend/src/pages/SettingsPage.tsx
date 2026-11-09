@@ -50,10 +50,18 @@ import {
   saveRoutingSettings,
   getContextSettings,
   saveContextSettings,
+  fetchVaultConfig,
+  saveVaultConfig,
+  fetchVaultProposals,
+  approveVaultProposal,
+  rejectVaultProposal,
+  syncVault,
   type InferenceSource,
   type MemoryStats,
   type McpServerConfig,
   type PluginInfo,
+  type VaultConfig,
+  type VaultProposal,
 } from '../lib/api';
 import type { RoutingSettings, ContextSettings } from '../types';
 import { isAutoUpdateDisabled, setAutoUpdateDisabled } from '../components/Desktop/UpdateChecker';
@@ -638,6 +646,286 @@ function McpServersSection() {
           ))
         )}
       </div>
+    </Section>
+  );
+}
+
+function ObsidianVaultSection() {
+  const [vaultConfig, setVaultConfig] = useState<VaultConfig | null>(null);
+  const [vaultPath, setVaultPath] = useState('');
+  const [allowCloud, setAllowCloud] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const loadConfig = useCallback(async () => {
+    try {
+      const cfg = await fetchVaultConfig();
+      setVaultConfig(cfg);
+      setVaultPath(cfg.vault_path);
+      setAllowCloud(cfg.allow_obsidian_to_cloud);
+    } catch {
+      // Ignored
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadConfig();
+  }, [loadConfig]);
+
+  const handleSavePath = async () => {
+    setLoading(true);
+    try {
+      const updated = await saveVaultConfig({ vault_path: vaultPath });
+      setVaultConfig(updated);
+      toast.success('Obsidian vault path saved');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save vault path');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleCloud = async () => {
+    const next = !allowCloud;
+    setAllowCloud(next);
+    try {
+      const updated = await saveVaultConfig({ allow_obsidian_to_cloud: next });
+      setVaultConfig(updated);
+      toast.success(next ? 'Vault notes allowed to cloud models' : 'Vault notes kept strictly local');
+    } catch (err: any) {
+      setAllowCloud(!next);
+      toast.error(err.message || 'Failed to update privacy setting');
+    }
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const res = await syncVault();
+      toast.success(res.message || 'Vault indexed successfully');
+    } catch (err: any) {
+      toast.error(err.message || 'Vault sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  return (
+    <Section title="Obsidian Vault">
+      <SettingRow
+        label="Vault path"
+        description="Local directory containing your markdown notes (read-only indexing)"
+      >
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={vaultPath}
+            onChange={(e) => setVaultPath(e.target.value)}
+            placeholder="C:\Nivos\NIVOS-vault"
+            className="text-xs px-2.5 py-1.5 rounded-lg outline-none w-64"
+            style={{
+              background: 'var(--color-bg-secondary)',
+              color: 'var(--color-text)',
+              border: '1px solid var(--color-border)',
+            }}
+          />
+          <button
+            type="button"
+            onClick={handleSavePath}
+            disabled={loading}
+            className="text-xs px-3 py-1.5 rounded-lg font-medium cursor-pointer"
+            style={{
+              background: 'var(--color-accent)',
+              color: '#fff',
+            }}
+          >
+            Save
+          </button>
+        </div>
+      </SettingRow>
+      <SettingRow
+        label="Vault status"
+        description={
+          vaultConfig?.connected
+            ? 'Connected and accessible'
+            : 'Directory not found or disconnected'
+        }
+      >
+        <div className="flex items-center gap-2">
+          <span
+            className="px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1.5"
+            style={{
+              background: vaultConfig?.connected
+                ? 'rgba(34, 197, 94, 0.15)'
+                : 'rgba(239, 68, 68, 0.15)',
+              color: vaultConfig?.connected
+                ? 'var(--color-success, #22c55e)'
+                : 'var(--color-error, #ef4444)',
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: vaultConfig?.connected
+                  ? 'var(--color-success, #22c55e)'
+                  : 'var(--color-error, #ef4444)',
+              }}
+            />
+            {vaultConfig?.connected ? 'Connected' : 'Disconnected'}
+          </span>
+          <button
+            type="button"
+            onClick={handleSync}
+            disabled={syncing || !vaultConfig?.connected}
+            className="text-xs px-2.5 py-1 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg-tertiary)] flex items-center gap-1 cursor-pointer disabled:opacity-50"
+            style={{ color: 'var(--color-text)' }}
+          >
+            <RefreshCw className={`w-3 h-3 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Indexing...' : 'Re-index'}
+          </button>
+        </div>
+      </SettingRow>
+      <SettingRow
+        label="Allow cloud models"
+        description="Allow vault note content to be sent to cloud models (OpenAI, Anthropic, Gemini, etc.)"
+      >
+        <button
+          type="button"
+          onClick={handleToggleCloud}
+          className="relative w-11 h-6 rounded-full transition-colors cursor-pointer"
+          style={{
+            background: allowCloud ? 'var(--color-accent)' : 'var(--color-bg-tertiary)',
+          }}
+        >
+          <span
+            className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform bg-white"
+            style={{
+              transform: allowCloud ? 'translateX(20px)' : 'translateX(0)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            }}
+          />
+        </button>
+      </SettingRow>
+    </Section>
+  );
+}
+
+function MemoryReviewSection() {
+  const [proposals, setProposals] = useState<VaultProposal[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [actioning, setActioning] = useState<string | null>(null);
+
+  const loadProposals = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetchVaultProposals();
+      setProposals(res.proposals || []);
+    } catch {
+      // Ignored
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadProposals();
+  }, [loadProposals]);
+
+  const handleApprove = async (filename: string) => {
+    setActioning(filename);
+    try {
+      const res = await approveVaultProposal(filename);
+      toast.success(res.message || 'Proposal approved into Nivos-Memory');
+      await loadProposals();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to approve proposal');
+    } finally {
+      setActioning(null);
+    }
+  };
+
+  const handleReject = async (filename: string) => {
+    setActioning(filename);
+    try {
+      const res = await rejectVaultProposal(filename);
+      toast.success(res.message || 'Proposal rejected');
+      await loadProposals();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to reject proposal');
+    } finally {
+      setActioning(null);
+    }
+  };
+
+  return (
+    <Section title="Memory Review">
+      <div className="py-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+        Proposals saved to <code className="px-1 py-0.5 rounded bg-[var(--color-bg-tertiary)]">Nivos-Inbox/</code> await review before promotion into long-term <code className="px-1 py-0.5 rounded bg-[var(--color-bg-tertiary)]">Nivos-Memory/</code>.
+      </div>
+
+      {loading && proposals.length === 0 ? (
+        <div className="py-4 text-center text-xs text-[var(--color-text-tertiary)]">
+          Loading proposals...
+        </div>
+      ) : proposals.length === 0 ? (
+        <div className="py-4 px-3 rounded-lg border border-[var(--color-border)] text-center text-xs text-[var(--color-text-tertiary)] bg-[var(--color-bg-secondary)]">
+          No pending memory proposals in Nivos-Inbox.
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2 mt-2">
+          {proposals.map((p) => (
+            <div
+              key={p.filename}
+              className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex flex-col gap-2"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-xs text-[var(--color-text)]">
+                    {p.title}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] font-mono">
+                    {p.filename}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[rgba(59,130,246,0.15)] text-[var(--color-accent)] font-medium">
+                    {p.proposal_type}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleApprove(p.filename)}
+                    disabled={actioning === p.filename}
+                    className="text-xs px-2.5 py-1 rounded-md bg-[var(--color-success,#22c55e)] hover:opacity-90 text-white font-medium flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  >
+                    <Check className="w-3 h-3" />
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleReject(p.filename)}
+                    disabled={actioning === p.filename}
+                    className="text-xs px-2.5 py-1 rounded-md bg-[var(--color-error,#ef4444)] hover:opacity-90 text-white font-medium flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Reject
+                  </button>
+                </div>
+              </div>
+              <div
+                className="text-xs p-2 rounded border border-[var(--color-border)] font-mono whitespace-pre-wrap max-h-32 overflow-y-auto"
+                style={{
+                  background: 'var(--color-bg-tertiary)',
+                  color: 'var(--color-text-secondary)',
+                }}
+              >
+                {p.snippet}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </Section>
   );
 }
@@ -1315,6 +1603,12 @@ export function SettingsPage() {
               />
             </SettingRow>
           </Section>
+
+          {/* Obsidian Vault */}
+          <ObsidianVaultSection />
+
+          {/* Memory Review */}
+          <MemoryReviewSection />
 
           {/* Model defaults */}
           <Section title="Model Defaults">

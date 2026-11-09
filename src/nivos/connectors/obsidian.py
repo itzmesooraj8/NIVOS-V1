@@ -7,7 +7,12 @@ can be ingested by the knowledge pipeline.
 
 from __future__ import annotations
 
+import hashlib
+import logging
 import os
+import re
+import threading
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple
@@ -31,6 +36,20 @@ _SKIP_DIRS = {
     "node_modules",
     ".venv",
 }
+
+# Secrets patterns to ignore: .env, *key*, *token*, *password*, *secret*
+_SECRETS_PATTERN = re.compile(r"(\.env|key|token|password|secret)", re.IGNORECASE)
+
+
+def _extract_wiki_links(text: str) -> List[str]:
+    """Extract [[wiki_link]] targets from note content."""
+    raw_links = re.findall(r"\[\[(.*?)\]\]", text)
+    links = []
+    for lk in raw_links:
+        target = lk.split("|")[0].strip()
+        if target and target not in links:
+            links.append(target)
+    return links
 
 # ---------------------------------------------------------------------------
 # Frontmatter parser (no PyYAML dependency)
@@ -107,6 +126,17 @@ class ObsidianConnector(BaseConnector):
     auth_type = "filesystem"
 
     def __init__(self, vault_path: str = "") -> None:
+        if not vault_path:
+            try:
+                from nivos.core.config import load_config
+
+                cfg = load_config()
+                cfg_vault = getattr(getattr(cfg, "obsidian", None), "vault_path", "")
+                if cfg_vault and Path(cfg_vault).is_dir():
+                    vault_path = str(cfg_vault)
+            except Exception:
+                pass
+
         self._vault_path = vault_path
         self._connected: bool = bool(vault_path) and Path(vault_path).is_dir()
         self._items_synced: int = 0
@@ -124,6 +154,12 @@ class ObsidianConnector(BaseConnector):
         """Clear vault_path and mark as disconnected."""
         self._vault_path = ""
         self._connected = False
+        try:
+            from nivos.server.routes import _persist_config_section
+
+            _persist_config_section("obsidian", {"vault_path": ""})
+        except Exception:
+            pass
 
     def sync(
         self,
@@ -147,12 +183,22 @@ class ObsidianConnector(BaseConnector):
         collected_paths: List[Path] = []
         for root, dirs, files in os.walk(vault):
             # Prune hidden and known-junk directories in-place so os.walk
-            # does not descend into them.
-            dirs[:] = [d for d in dirs if d not in _SKIP_DIRS and not d.startswith(".")]
+            # does not descend into them. Also skip secrets patterns and nested .obsidian.
+            dirs[:] = [
+                d
+                for d in dirs
+                if d not in _SKIP_DIRS
+                and not d.startswith(".")
+                and not _SECRETS_PATTERN.search(d)
+                and ".obsidian" not in d.lower()
+            ]
 
             for filename in files:
                 fpath = Path(root) / filename
                 if fpath.suffix.lower() not in _TEXT_EXTENSIONS:
+                    continue
+                # Skip secrets patterns: .env, *key*, *token*, *password*, *secret*
+                if _SECRETS_PATTERN.search(filename):
                     continue
                 collected_paths.append(fpath)
 
@@ -179,6 +225,15 @@ class ObsidianConnector(BaseConnector):
                 f"obsidian://open?vault={quote(vault_name)}&file={quote(str(rel_path))}"
             )
 
+            # Extract [[wiki_links]] and sha256 file hash for incremental sync
+            links = _extract_wiki_links(text)
+            file_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+            doc_metadata = {k: v for k, v in metadata.items() if k != "title"}
+            doc_metadata["links"] = links
+            doc_metadata["file_hash"] = file_hash
+            doc_metadata["rel_path"] = str(rel_path)
+
             doc = Document(
                 doc_id=f"obsidian:{rel_path}",
                 source="obsidian",
@@ -187,12 +242,17 @@ class ObsidianConnector(BaseConnector):
                 title=str(title),
                 timestamp=mtime,
                 url=url,
-                metadata={k: v for k, v in metadata.items() if k != "title"},
+                metadata=doc_metadata,
             )
             synced += 1
             yield doc
 
         self._items_synced = synced
+        if synced > 0:
+            try:
+                trigger_obsidian_background_embedding()
+            except Exception as exc:
+                logger.debug("Failed to trigger background embedding: %s", exc)
 
     def sync_status(self) -> SyncStatus:
         """Return sync progress from the most recent :meth:`sync` call."""
@@ -233,3 +293,85 @@ class ObsidianConnector(BaseConnector):
                 category="knowledge",
             )
         ]
+
+
+logger = logging.getLogger(__name__)
+
+_embedding_worker_running = False
+_embedding_worker_lock = threading.Lock()
+
+
+def run_obsidian_background_embeddings(
+    db_path: str = "",
+    model: str = "bge-m3",
+    batch_size: int = 5,
+    force: bool = False,
+) -> int:
+    """Scan knowledge_chunks for obsidian chunks without bge-m3 embeddings and embed them in low-priority background batches."""
+    global _embedding_worker_running
+    if not force:
+        with _embedding_worker_lock:
+            if _embedding_worker_running:
+                return 0
+            _embedding_worker_running = True
+
+    try:
+        from nivos.connectors.embeddings import OllamaEmbedder
+        from nivos.connectors.store import KnowledgeStore
+
+        embedder = OllamaEmbedder(model=model)
+        if not embedder.is_available():
+            logger.debug("Ollama embedder '%s' is not available; skipping background embedding.", model)
+            return 0
+
+        embedded_count = 0
+        with KnowledgeStore(db_path=db_path) as store:
+            rows = store._conn.execute(
+                """
+                SELECT id, content FROM knowledge_chunks
+                WHERE source = 'obsidian' AND (embedding IS NULL OR embedding_model_version != ?)
+                LIMIT 50
+                """,
+                (model,),
+            ).fetchall()
+
+            for i in range(0, len(rows), batch_size):
+                batch = rows[i : i + batch_size]
+                for r in batch:
+                    chunk_id = r["id"]
+                    text = r["content"]
+                    emb = embedder.embed(text)
+                    if emb is not None:
+                        store._conn.execute(
+                            """
+                            UPDATE knowledge_chunks
+                            SET embedding = ?, embedding_model_version = ?
+                            WHERE id = ?
+                            """,
+                            (emb, model, chunk_id),
+                        )
+                        embedded_count += 1
+                store._conn.commit()
+                time.sleep(0.05)
+
+        return embedded_count
+    except Exception as exc:
+        logger.debug("Obsidian background embedding encountered error: %s", exc)
+        return 0
+    finally:
+        if not force:
+            with _embedding_worker_lock:
+                _embedding_worker_running = False
+
+
+def trigger_obsidian_background_embedding(
+    db_path: str = "",
+    model: str = "bge-m3",
+) -> None:
+    """Start background embedding worker in a daemon thread."""
+    t = threading.Thread(
+        target=run_obsidian_background_embeddings,
+        args=(db_path, model),
+        daemon=True,
+    )
+    t.start()

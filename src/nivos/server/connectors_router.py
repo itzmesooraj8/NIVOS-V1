@@ -138,7 +138,17 @@ def create_connectors_router():
         """Return a cached connector instance, creating it if needed."""
         if connector_id not in _instances:
             cls = ConnectorRegistry.get(connector_id)
-            _instances[connector_id] = cls()
+            if connector_id == "obsidian":
+                try:
+                    from nivos.core.config import load_config
+
+                    cfg = load_config()
+                    v_path = getattr(getattr(cfg, "obsidian", None), "vault_path", "")
+                    _instances[connector_id] = cls(vault_path=v_path)
+                except Exception:
+                    _instances[connector_id] = cls()
+            else:
+                _instances[connector_id] = cls()
         return _instances[connector_id]
 
     def _connector_summary(connector_id: str, instance: Any) -> Dict[str, Any]:
@@ -521,13 +531,20 @@ def create_connectors_router():
         try:
             auth_type = getattr(instance, "auth_type", "unknown")
 
-            if auth_type == "filesystem":
+            if auth_type == "filesystem" or connector_id == "obsidian":
                 # Filesystem connectors accept a vault / directory path.
                 if req.path:
                     instance._vault_path = req.path
                     from pathlib import Path
 
                     instance._connected = Path(req.path).is_dir()
+                    # Persist vault_path in config.toml so restarts never require re-pasting
+                    try:
+                        from nivos.server.routes import _persist_config_section
+
+                        _persist_config_section("obsidian", {"vault_path": req.path})
+                    except Exception as exc:
+                        logger.debug("Failed to persist obsidian vault path: %s", exc)
 
             elif auth_type == "oauth":
                 # A pasted ``client_id:client_secret`` pair is NOT a completed
