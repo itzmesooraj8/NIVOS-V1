@@ -64,6 +64,11 @@ import {
   syncVault,
   fetchAllowedApps,
   updateAllowedApp,
+  fetchAppSettings,
+  updateAppSettings,
+  fetchDiscoveredApps,
+  type AppSettings,
+  type DiscoveredApp,
   fetchSandboxStatus,
   resetSandbox,
   updateSandboxAutoApprove,
@@ -949,111 +954,319 @@ function MemoryReviewSection() {
   );
 }
 
-function AllowedAppsSection() {
-  const [apps, setApps] = useState<string[]>([]);
-  const [newApp, setNewApp] = useState('');
-  const [loading, setLoading] = useState(false);
+function AppsManagementSection() {
+  const [settings, setSettings] = useState<AppSettings>({
+    open_any_installed_app: true,
+    always_ask_apps: ['1password', 'bitwarden', 'keepass', 'lastpass', 'bank', 'remote desktop', 'teamviewer', 'anydesk'],
+    allowed_apps: [],
+    blocklist: [
+      'cmd',
+      'powershell',
+      'pwsh',
+      'bash',
+      'sh',
+      'wsl',
+      'wscript',
+      'cscript',
+      'mshta',
+      'rundll32',
+      'regedit',
+      'msiexec',
+      'installers (*.msi, *setup*)',
+    ],
+  });
+  const [discovered, setDiscovered] = useState<DiscoveredApp[]>([]);
+  const [searchFilter, setSearchFilter] = useState('');
+  const [newAsk, setNewAsk] = useState('');
+  const [newAllowed, setNewAllowed] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const loadApps = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
-      const res = await fetchAllowedApps();
-      setApps(res.allowed_apps || []);
-    } catch {
-      // Ignored
+      setLoading(true);
+      const [s, d] = await Promise.all([
+        fetchAppSettings().catch(() => null),
+        fetchDiscoveredApps().catch(() => ({ installed_apps: [], total: 0 })),
+      ]);
+      if (s) setSettings(s);
+      if (d) setDiscovered(d.installed_apps || []);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadApps();
-  }, [loadApps]);
+    void loadData();
+  }, [loadData]);
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const clean = newApp.trim().toLowerCase();
-    if (!clean) return;
-    setLoading(true);
+  const handleToggleOpenAny = async () => {
     try {
-      const res = await updateAllowedApp(clean, 'add');
-      setApps(res.allowed_apps || []);
-      setNewApp('');
-      toast.success(`Added '${clean}' to pre-approved applications`);
+      setSaving(true);
+      const next = !settings.open_any_installed_app;
+      const res = await updateAppSettings({ open_any_installed_app: next });
+      setSettings((prev) => ({ ...prev, open_any_installed_app: res.open_any_installed_app }));
+      toast.success(next ? 'Enabled opening any installed app.' : 'Disabled opening any installed app.');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to add allowed app');
+      toast.error(err.message || 'Failed to update setting');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const handleRemove = async (app: string) => {
+  const handleAddAsk = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = newAsk.trim().toLowerCase();
+    if (!clean || settings.always_ask_apps.includes(clean)) return;
+    const nextList = [...settings.always_ask_apps, clean];
     try {
-      const res = await updateAllowedApp(app, 'remove');
-      setApps(res.allowed_apps || []);
-      toast.success(`Removed '${app}' from pre-approved applications`);
+      setSaving(true);
+      const res = await updateAppSettings({ always_ask_apps: nextList });
+      setSettings((prev) => ({ ...prev, always_ask_apps: res.always_ask_apps }));
+      setNewAsk('');
+      toast.success(`Added '${clean}' to always ask list.`);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to remove allowed app');
+      toast.error(err.message || 'Failed to save');
+    } finally {
+      setSaving(false);
     }
   };
+
+  const handleRemoveAsk = async (item: string) => {
+    const nextList = settings.always_ask_apps.filter((a) => a !== item);
+    try {
+      const res = await updateAppSettings({ always_ask_apps: nextList });
+      setSettings((prev) => ({ ...prev, always_ask_apps: res.always_ask_apps }));
+      toast.success(`Removed '${item}' from always ask list.`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to remove');
+    }
+  };
+
+  const handleAddAllowed = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = newAllowed.trim().toLowerCase();
+    if (!clean || settings.allowed_apps.includes(clean)) return;
+    const nextList = [...settings.allowed_apps, clean];
+    try {
+      setSaving(true);
+      const res = await updateAppSettings({ allowed_apps: nextList });
+      setSettings((prev) => ({ ...prev, allowed_apps: res.allowed_apps }));
+      setNewAllowed('');
+      toast.success(`Added '${clean}' to pre-approved apps.`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemoveAllowed = async (item: string) => {
+    const nextList = settings.allowed_apps.filter((a) => a !== item);
+    try {
+      const res = await updateAppSettings({ allowed_apps: nextList });
+      setSettings((prev) => ({ ...prev, allowed_apps: res.allowed_apps }));
+      toast.success(`Removed '${item}' from pre-approved apps.`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to remove');
+    }
+  };
+
+  const filteredDiscovered = discovered.filter((a) =>
+    a.name.toLowerCase().includes(searchFilter.trim().toLowerCase())
+  );
 
   return (
-    <Section title="Allowed Applications">
-      <div className="py-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-        Applications in this list can be opened without prompting for approval each time. Dangerous programs (cmd, powershell, regedit, installers) are always blocked.
-      </div>
-
-      <form onSubmit={handleAdd} className="flex items-center gap-2 my-2">
-        <input
-          type="text"
-          value={newApp}
-          onChange={(e) => setNewApp(e.target.value)}
-          placeholder="e.g. notepad, spotify, obsidian"
-          className="text-xs px-2.5 py-1.5 rounded-lg outline-none w-64"
+    <Section title="Applications & Launch Controls">
+      {/* Switch: Let nivos open any installed app */}
+      <SettingRow
+        label="Let nivos open any installed app"
+        description="When enabled, nivos can open safe discovered applications directly from local chat turns. Apps matching the 'Always ask first' list will still require your confirmation."
+      >
+        <button
+          type="button"
+          disabled={saving || loading}
+          onClick={handleToggleOpenAny}
+          className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer disabled:opacity-40"
           style={{
-            background: 'var(--color-bg-secondary)',
-            color: 'var(--color-text)',
+            background: settings.open_any_installed_app ? 'var(--color-accent)' : 'var(--color-bg-tertiary)',
             border: '1px solid var(--color-border)',
           }}
-        />
-        <button
-          type="submit"
-          disabled={loading || !newApp.trim()}
-          className="text-xs px-3 py-1.5 rounded-lg font-medium cursor-pointer disabled:opacity-50"
-          style={{
-            background: 'var(--color-accent)',
-            color: '#fff',
-          }}
         >
-          Add
+          <span
+            className="inline-block h-3.5 w-3.5 rounded-full transition-transform"
+            style={{
+              background: 'white',
+              transform: settings.open_any_installed_app ? 'translateX(18px)' : 'translateX(2px)',
+            }}
+          />
         </button>
-      </form>
+      </SettingRow>
 
-      <div className="flex flex-wrap gap-1.5 mt-2">
-        {apps.length === 0 ? (
-          <div className="text-xs text-[var(--color-text-tertiary)] py-1">
-            No pre-approved applications. The first launch of each app will ask Once / Always / Deny.
-          </div>
-        ) : (
-          apps.map((a) => (
+      {/* System Blocklist */}
+      <div className="py-3 border-b border-[var(--color-border-subtle)]">
+        <div className="text-xs font-semibold mb-1" style={{ color: 'var(--color-error)' }}>
+          System Blocklist (Always Blocked)
+        </div>
+        <div className="text-[11px] text-[var(--color-text-tertiary)] mb-2">
+          Shells, script interpreters, registry tools, installers, and administrative executables can never be launched by nivos.
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {settings.blocklist.map((b) => (
             <span
-              key={a}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono"
+              key={b}
+              className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono bg-red-500/10 text-red-400 border border-red-500/20"
+            >
+              {b}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Always ask first */}
+      <div className="py-3 border-b border-[var(--color-border-subtle)]">
+        <div className="text-xs font-semibold mb-1" style={{ color: 'var(--color-text)' }}>
+          Always Ask First
+        </div>
+        <div className="text-[11px] text-[var(--color-text-tertiary)] mb-2">
+          Even with master open-app enabled, apps matching these keywords (password managers, banking, remote desktop) always require explicit approval.
+        </div>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {settings.always_ask_apps.map((item) => (
+            <span
+              key={item}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs"
               style={{
-                background: 'var(--color-bg-secondary)',
-                border: '1px solid var(--color-border)',
+                background: 'rgba(234, 179, 8, 0.1)',
+                border: '1px solid rgba(234, 179, 8, 0.3)',
                 color: 'var(--color-text)',
               }}
             >
-              {a}
+              <span className="font-mono">{item}</span>
               <button
                 type="button"
-                onClick={() => handleRemove(a)}
+                onClick={() => handleRemoveAsk(item)}
                 className="hover:text-red-400 cursor-pointer ml-0.5"
-                title="Remove from allowed apps"
               >
                 <X size={12} />
               </button>
             </span>
-          ))
-        )}
+          ))}
+        </div>
+        <form onSubmit={handleAddAsk} className="flex items-center gap-2">
+          <input
+            type="text"
+            value={newAsk}
+            onChange={(e) => setNewAsk(e.target.value)}
+            placeholder="Add keyword e.g. bitwarden, vpn"
+            className="text-xs px-2.5 py-1.5 rounded-lg outline-none w-56 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-[var(--color-text)]"
+          />
+          <button
+            type="submit"
+            disabled={saving || !newAsk.trim()}
+            className="text-xs px-3 py-1.5 rounded-lg font-medium cursor-pointer disabled:opacity-50 bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)]"
+          >
+            Add
+          </button>
+        </form>
+      </div>
+
+      {/* Pre-approved allow list (if open_any_installed_app is false or for specific overrides) */}
+      {!settings.open_any_installed_app && (
+        <div className="py-3 border-b border-[var(--color-border-subtle)]">
+          <div className="text-xs font-semibold mb-1" style={{ color: 'var(--color-text)' }}>
+            Pre-Approved Applications (Allow List)
+          </div>
+          <div className="text-[11px] text-[var(--color-text-tertiary)] mb-2">
+            Since opening any installed app is turned off, only applications listed here can open without prompt.
+          </div>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {settings.allowed_apps.length === 0 ? (
+              <span className="text-xs italic text-[var(--color-text-tertiary)]">No pre-approved apps.</span>
+            ) : (
+              settings.allowed_apps.map((item) => (
+                <span
+                  key={item}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-[var(--color-text)]"
+                >
+                  {item}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAllowed(item)}
+                    className="hover:text-red-400 cursor-pointer ml-0.5"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              ))
+            )}
+          </div>
+          <form onSubmit={handleAddAllowed} className="flex items-center gap-2">
+            <input
+              type="text"
+              value={newAllowed}
+              onChange={(e) => setNewAllowed(e.target.value)}
+              placeholder="e.g. spotify, obsidian"
+              className="text-xs px-2.5 py-1.5 rounded-lg outline-none w-56 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-[var(--color-text)]"
+            />
+            <button
+              type="submit"
+              disabled={saving || !newAllowed.trim()}
+              className="text-xs px-3 py-1.5 rounded-lg font-medium cursor-pointer disabled:opacity-50 bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)]"
+            >
+              Add
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Discovered Applications on this PC */}
+      <div className="pt-3">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <div className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
+              Auto-Discovered Installed Apps ({discovered.length})
+            </div>
+            <div className="text-[11px] text-[var(--color-text-tertiary)]">
+              Discovered from Windows Start Menu programs and desktop shortcuts.
+            </div>
+          </div>
+          <input
+            type="text"
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            placeholder="Search discovered..."
+            className="text-xs px-2 py-1 rounded border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] w-44"
+          />
+        </div>
+
+        <div className="max-h-48 overflow-y-auto rounded-lg border border-[var(--color-border)] p-2 bg-[var(--color-bg-secondary)]">
+          {filteredDiscovered.length === 0 ? (
+            <div className="text-xs text-[var(--color-text-tertiary)] py-2 text-center">
+              {discovered.length === 0 ? 'Scanning applications...' : 'No applications match filter.'}
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {filteredDiscovered.map((app) => (
+                <span
+                  key={app.name}
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)]"
+                  title={app.path || app.exe || app.name}
+                >
+                  <span className="font-medium">{app.name}</span>
+                  <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)]">
+                    {app.source === 'start_menu' ? 'Start Menu' : app.source === 'windows_builtin' ? 'Built-in' : 'Installed'}
+                  </span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* winget install_app note */}
+        <div className="text-[11px] text-[var(--color-text-tertiary)] mt-3 p-2.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)]">
+          <span className="font-semibold text-[var(--color-text)]">App Installation:</span> Powered by the <code className="font-mono px-1 py-0.5 rounded bg-[var(--color-bg-secondary)]">install_app</code> tool via winget exact package IDs (e.g. <code className="font-mono">Spotify.Spotify</code>, <code className="font-mono">Notion.Notion</code>). Always displays publisher and version details and asks for approval once per package before running.
+        </div>
       </div>
     </Section>
   );
@@ -2316,8 +2529,8 @@ export function SettingsPage() {
           {/* Memory Review */}
           <MemoryReviewSection />
 
-          {/* Allowed Applications */}
-          <AllowedAppsSection />
+          {/* Applications & Launch Controls */}
+          <AppsManagementSection />
 
           {/* Docker Sandbox */}
           <SandboxSettingsSection />

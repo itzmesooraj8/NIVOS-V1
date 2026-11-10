@@ -28,6 +28,7 @@ from nivos.core.paths import get_workspace_dir
 from nivos.core.registry import ToolRegistry
 from nivos.core.types import ToolResult
 from nivos.security.policy import RequestOrigin, is_path_safe_for_write, is_tool_allowed
+from nivos.system.app_discovery import find_matching_app
 from nivos.tools._stubs import BaseTool, ToolSpec
 
 logger = logging.getLogger(__name__)
@@ -183,13 +184,33 @@ class OpenAppTool(BaseTool):
         if not app:
             return ToolResult(tool_name="open_app", content="Error: App name is required.", success=False)
 
-        # 1. Central policy check (must be LOCAL_CHAT and not untrusted content)
+        # 1. Central policy check (must be LOCAL_CHAT and if untrusted content, user confirmation required)
+        user_confirmed = approval in ("once", "always")
         allowed, policy_reason = is_tool_allowed(
             "open_app",
             origin=origin,
             is_untrusted_content=is_untrusted_content,
+            user_approved=user_confirmed,
         )
         if not allowed:
+            if is_untrusted_content and not user_confirmed and origin == RequestOrigin.LOCAL_CHAT:
+                matched = find_matching_app(app)
+                app_disp = matched.get("name", app) if matched else app
+                return ToolResult(
+                    tool_name="open_app",
+                    content=(
+                        f"Approval required: Untrusted content requested opening '{app_disp}'. Do you want to open it?\n"
+                        f"Options: [Once / Always for this app / Deny]"
+                    ),
+                    success=False,
+                    metadata={
+                        "needs_approval": True,
+                        "app": app_disp,
+                        "target": target,
+                        "untrusted_content": True,
+                    },
+                )
+
             _log_launch_activity(app, target, status="blocked_policy", error=policy_reason)
             return ToolResult(
                 tool_name="open_app",
@@ -255,102 +276,128 @@ class OpenAppTool(BaseTool):
 
                 clean_target = str(res_p)
 
-        # 4. Check approval & allowed_apps
-        cfg = load_config()
-        allowed_apps = [a.lower() for a in getattr(cfg.security, "allowed_apps", [])]
-
-        is_always_allowed = app_lower in allowed_apps
-
-        if approval == "deny":
-            _log_launch_activity(app, clean_target, status="denied_user")
+        # 4. Check discovery & match
+        matched = find_matching_app(app)
+        if not matched:
+            _log_launch_activity(app, clean_target, status="not_found", error=f"Application '{app}' not found.")
             return ToolResult(
                 tool_name="open_app",
-                content=f"Launch of '{app}' was denied by user.",
+                content=f"Application '{app}' not found in installed applications or Start menu shortcuts.",
                 success=False,
             )
 
-        if not is_always_allowed and approval not in ("once", "always"):
-            # Needs first-launch approval
+        matched_name = matched.get("name", app)
+        matched_lower = matched_name.lower()
+
+        # 5. Check approval policy
+        cfg = load_config()
+        allowed_apps = [a.lower() for a in (getattr(cfg.security, "allowed_apps", []) or [])]
+        always_ask_list = [a.lower() for a in (getattr(cfg.security, "always_ask_apps", []) or [])]
+        open_any = getattr(cfg.security, "open_any_installed_app", True)
+
+        is_always_ask = any(ask in app_lower or ask in matched_lower for ask in always_ask_list)
+
+        if approval == "deny":
+            _log_launch_activity(matched_name, clean_target, status="denied_user")
+            return ToolResult(
+                tool_name="open_app",
+                content=f"Launch of '{matched_name}' was denied by user.",
+                success=False,
+            )
+
+        # Policy determination:
+        # Untrusted content ALWAYS triggers fresh approval even if "always allowed"
+        if is_untrusted_content:
+            needs_approval = (approval not in ("once", "always"))
+        elif is_always_ask:
+            needs_approval = (approval not in ("once", "always"))
+        elif open_any and origin == RequestOrigin.LOCAL_CHAT:
+            needs_approval = False
+        elif app_lower in allowed_apps or matched_lower in allowed_apps:
+            needs_approval = False
+        else:
+            needs_approval = (approval not in ("once", "always"))
+
+        if needs_approval:
             return ToolResult(
                 tool_name="open_app",
                 content=(
-                    f"Approval required: Do you want to open '{app}'?\n"
+                    f"Approval required: Do you want to open '{matched_name}'?\n"
                     f"Options: [Once / Always for this app / Deny]"
                 ),
                 success=False,
                 metadata={
                     "needs_approval": True,
-                    "app": app,
+                    "app": matched_name,
                     "target": clean_target,
                 },
             )
 
-        # If user approved with "always", persist to config.toml
-        if approval == "always" and not is_always_allowed:
+        # If user approved with "always" and it's not on always_ask list, persist to config.toml
+        if approval == "always" and not is_always_ask and matched_lower not in allowed_apps:
             try:
                 from nivos.server.routes import _persist_config_section
 
-                updated_apps = list(allowed_apps) + [app_lower]
+                updated_apps = list(allowed_apps) + [matched_lower]
                 _persist_config_section("security", {"allowed_apps": updated_apps})
-                logger.info("Added '%s' to allowed_apps in config.toml", app_lower)
+                logger.info("Added '%s' to allowed_apps in config.toml", matched_lower)
             except Exception as exc:
                 logger.debug("Failed to persist allowed_apps: %s", exc)
 
-        # 5. Launch application or URL scheme
+        # 6. Launch application
         launch_err = None
         receipt_status = "launched"
 
         try:
-            # Scheme launch (ms-settings:, spotify:, mailto:)
-            if app_lower.startswith(_ALLOWED_SCHEMES):
+            scheme = matched.get("scheme")
+            path_str = matched.get("path")
+            exe = matched.get("exe")
+
+            if scheme:
                 if sys.platform == "win32" and hasattr(os, "startfile"):
-                    os.startfile(app)
+                    os.startfile(scheme)
                 else:
                     import webbrowser
-                    webbrowser.open(app)
-            else:
-                # Start menu shortcut scanner
-                shortcut_p = _scan_start_menu_shortcuts(app)
-                if shortcut_p and shortcut_p.is_file():
-                    if sys.platform == "win32" and hasattr(os, "startfile"):
-                        if clean_target:
-                            os.startfile(str(shortcut_p), arguments=clean_target)  # type: ignore[call-arg]
-                        else:
-                            os.startfile(str(shortcut_p))
-                    else:
-                        subprocess.Popen([str(shortcut_p)] + ([clean_target] if clean_target else []))
-                elif app_lower in _SAFE_WINDOWS_APPS:
-                    exe_name = _SAFE_WINDOWS_APPS[app_lower]
-                    cmd_list = [exe_name]
+                    webbrowser.open(scheme)
+            elif path_str:
+                shortcut_p = Path(path_str)
+                if sys.platform == "win32" and hasattr(os, "startfile"):
                     if clean_target:
-                        cmd_list.append(clean_target)
-                    subprocess.Popen(cmd_list, shell=False)
+                        os.startfile(str(shortcut_p), arguments=clean_target)  # type: ignore[call-arg]
+                    else:
+                        os.startfile(str(shortcut_p))
                 else:
-                    # Application not found
-                    return ToolResult(
-                        tool_name="open_app",
-                        content=f"Application '{app}' not found in Windows Start menu shortcuts.",
-                        success=False,
-                    )
+                    subprocess.Popen([str(shortcut_p)] + ([clean_target] if clean_target else []))
+            elif exe:
+                cmd_list = [exe]
+                if clean_target:
+                    cmd_list.append(clean_target)
+                subprocess.Popen(cmd_list, shell=False)
+            else:
+                return ToolResult(
+                    tool_name="open_app",
+                    content=f"No executable target found for '{matched_name}'.",
+                    success=False,
+                )
         except Exception as exc:
             launch_err = str(exc)
             receipt_status = "failed"
 
-        _log_launch_activity(app, clean_target, status=receipt_status, error=launch_err)
+        _log_launch_activity(matched_name, clean_target, status=receipt_status, error=launch_err)
 
         if launch_err:
             return ToolResult(
                 tool_name="open_app",
-                content=f"Failed to launch '{app}': {launch_err}",
+                content=f"Failed to launch '{matched_name}': {launch_err}",
                 success=False,
             )
 
-        receipt = f"[Receipt: tool=open_app, app={app}, target={clean_target or 'none'}, status=launched]"
+        receipt = f"[Receipt: tool=open_app, app={matched_name}, target={clean_target or 'none'}, status=launched]"
         return ToolResult(
             tool_name="open_app",
-            content=f"{receipt}\nSuccessfully launched '{app}'.",
+            content=f"{receipt}\nSuccessfully launched '{matched_name}'.",
             success=True,
-            metadata={"app": app, "target": clean_target, "status": "launched"},
+            metadata={"app": matched_name, "target": clean_target, "status": "launched"},
         )
 
 

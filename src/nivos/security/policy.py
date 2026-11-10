@@ -46,6 +46,7 @@ DANGEROUS_TOOLS: Set[str] = {
     "docker_shell",
     "code_interpreter_docker",
     "open_app",
+    "install_app",
     "self_improve",
     "run_code",
 }
@@ -145,12 +146,11 @@ def is_tool_allowed(
 
     tool_name_clean = (tool_name or "").strip()
 
-    # Rule 1 & 2: Untrusted content can never invoke dangerous tools or perform file writes
-    if is_untrusted_content:
+    # Rule 1 & 2: Untrusted content triggers fresh user approval for dangerous tools even if always allowed
+    if is_untrusted_content and not user_approved:
         if tool_name_clean in DANGEROUS_TOOLS or tool_name_clean in ("file_write", "save_to_inbox"):
             return False, (
-                f"Tool '{tool_name_clean}' cannot be executed from untrusted content "
-                "(web results, notes, files, or external messages)."
+                f"Tool '{tool_name_clean}' triggered by untrusted content requires fresh user approval."
             )
 
     # Rule 1 & 2: Origins other than LOCAL_CHAT cannot use dangerous tools or file writes

@@ -17,7 +17,7 @@ Branch: `feat/trust-and-install`
 |---|---|---|
 | **Phase 1** | Messaging: Slack allowlist, Telegram private DM, remove SendBlue/iMessage, read-only tools, no approvals from channels, sanitized notifications | done |
 | **Phase 2** | Docker made easy: Settings status wizard, named volume package persistence, allow/deny permissions, run_code tool | done |
-| **Phase 3** | Apps: Auto-discovery, open any installed app switch, blocklist, always-ask list, winget install_app tool | pending |
+| **Phase 3** | Apps: Auto-discovery, open any installed app switch, blocklist, always-ask list, winget install_app tool | done |
 | **Phase 4** | Checkpoints: Pre-mutation snapshots (keep 50), Undo last change button & chat receipt | pending |
 
 ---
@@ -44,11 +44,14 @@ Branch: `feat/trust-and-install`
 - [x] Full test coverage in `tests/sandbox/test_sandbox_phase2.py` (9 tests passed).
 
 ### Phase 3: Apps
-- [ ] Installed app auto-discovery (Start menu + winget list), matching by name ("open spotify").
-- [ ] Switch: "Let nivos open any installed app" (default on for local chat).
-- [ ] Blocklist (shells, script hosts, installers, admin); editable "always ask first" list (password managers, banking, remote desktop).
-- [ ] `install_app` tool using winget with exact package IDs only (name, publisher, version, source; ask once per package, never silent, never run downloaded raw installers).
-- [ ] Untrusted content fence triggers fresh approval for dangerous actions.
+- [x] Installed app auto-discovery (`src/nivos/system/app_discovery.py`): scans Start menu directories (`APPDATA` and `PROGRAMDATA`) and standard Windows utilities, with fuzzy and token matching.
+- [x] Switch: "Let nivos open any installed app" (default ON for local chat) added to `config.toml` (`[security] open_any_installed_app = true`) and Settings UI.
+- [x] Hardcoded blocklist in code and UI (shells, script hosts, installers, administrative elevation).
+- [x] Editable "Always ask first" list in `config.toml` and Settings (default: password managers, banking, remote desktop) requiring confirmation even when master switch is enabled.
+- [x] `install_app` tool using winget with exact package IDs (`Publisher.PackageName`), showing Name, Publisher, Version, and Source, asking once per package, never running silently, and never executing raw downloaded binaries.
+- [x] Untrusted content fence strictly enforced: turns derived from untrusted content trigger fresh interactive approval even if generally permitted.
+- [x] Replaced allow-list section with unified `AppsManagementSection` in Settings UI.
+- [x] Full test coverage in `tests/tools/test_apps_phase3.py` (13 tests passed).
 
 ### Phase 4: Checkpoints
 - [ ] Pre-mutation file snapshots before any agent write/edit/delete (keep 50 newest).

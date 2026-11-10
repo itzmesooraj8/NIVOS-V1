@@ -1490,6 +1490,19 @@ class SecurityConfig:
     capabilities: CapabilitiesConfig = field(default_factory=CapabilitiesConfig)
     allow_obsidian_to_cloud: bool = False
     allowed_apps: List[str] = field(default_factory=list)
+    open_any_installed_app: bool = True
+    always_ask_apps: List[str] = field(
+        default_factory=lambda: [
+            "1password",
+            "bitwarden",
+            "keepass",
+            "lastpass",
+            "bank",
+            "remote desktop",
+            "teamviewer",
+            "anydesk",
+        ]
+    )
 
 
 # ---------------------------------------------------------------------------

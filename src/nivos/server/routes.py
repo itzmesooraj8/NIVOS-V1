@@ -1902,6 +1902,8 @@ def _persist_config_section(section_name: str, values: dict[str, Any]) -> None:
             sec[k] = v
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(tomlkit.dumps(doc), encoding="utf-8")
+        from nivos.core.config import load_config
+        load_config.cache_clear()
     except Exception as exc:
         logging.getLogger("nivos.server").warning(
             "Failed to persist config section [%s]: %s", section_name, exc

@@ -1490,6 +1490,44 @@ export async function syncVault(): Promise<{ success: boolean; items_synced: num
 // Allowed Apps (open_app tool)
 // ---------------------------------------------------------------------------
 
+export interface AppSettings {
+  open_any_installed_app: boolean;
+  always_ask_apps: string[];
+  allowed_apps: string[];
+  blocklist: string[];
+}
+
+export interface DiscoveredApp {
+  name: string;
+  source: string;
+  path?: string;
+  id?: string;
+  version?: string;
+  exe?: string;
+}
+
+export async function fetchAppSettings(): Promise<AppSettings> {
+  const res = await apiFetch('/v1/apps/settings');
+  if (!res.ok) throw new Error(`Failed to fetch app settings: ${res.status}`);
+  return res.json();
+}
+
+export async function updateAppSettings(settings: Partial<AppSettings>): Promise<AppSettings> {
+  const res = await apiFetch('/v1/apps/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  });
+  if (!res.ok) throw new Error(`Failed to update app settings: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchDiscoveredApps(): Promise<{ installed_apps: DiscoveredApp[]; total: number }> {
+  const res = await apiFetch('/v1/apps/installed');
+  if (!res.ok) throw new Error(`Failed to fetch discovered apps: ${res.status}`);
+  return res.json();
+}
+
 export async function fetchAllowedApps(): Promise<{ allowed_apps: string[] }> {
   const res = await apiFetch('/v1/apps/allowed');
   if (!res.ok) throw new Error(`Failed to fetch allowed apps: ${res.status}`);

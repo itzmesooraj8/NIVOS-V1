@@ -89,7 +89,12 @@ _VAULT_INBOX_PATTERN = re.compile(
 )
 
 _OPEN_APP_PATTERN = re.compile(
-    r"\b(open\s+(?:the\s+)?app|launch\s+(?:the\s+)?app|open\s+app|launch\s+app|open\s+(?:spotify|notepad|calculator|calc|settings|ms-settings|obsidian))\b",
+    r"\b(open\s+(?:the\s+)?app|launch\s+(?:the\s+)?app|open\s+app|launch\s+app|open\s+[a-zA-Z0-9_\-\:]+|launch\s+[a-zA-Z0-9_\-\:]+)\b",
+    re.IGNORECASE,
+)
+
+_INSTALL_APP_PATTERN = re.compile(
+    r"\b(install\s+app|install\s+application|winget\s+install|install\s+[A-Za-z0-9_\-\.]+)\b",
     re.IGNORECASE,
 )
 
@@ -110,6 +115,7 @@ def has_tool_intent(query: str) -> bool:
         or _VAULT_SEARCH_PATTERN.search(clean)
         or _VAULT_INBOX_PATTERN.search(clean)
         or _OPEN_APP_PATTERN.search(clean)
+        or _INSTALL_APP_PATTERN.search(clean)
     )
 
 
@@ -168,6 +174,10 @@ def filter_relevant_tools(
     # Open app
     if _OPEN_APP_PATTERN.search(clean_query):
         needed.append("open_app")
+
+    # Install app
+    if _INSTALL_APP_PATTERN.search(clean_query):
+        needed.append("install_app")
 
     if available_tools is not None:
         avail_set = set(available_tools)
