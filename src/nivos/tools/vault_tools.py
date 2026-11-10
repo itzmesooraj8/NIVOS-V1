@@ -371,20 +371,36 @@ class SaveToInboxTool(BaseTool):
                 success=False,
             )
 
+        # Create checkpoint snapshot before creating new file
+        checkpoint_info = None
+        try:
+            from nivos.storage.checkpoint_manager import create_checkpoint
+
+            checkpoint_info = create_checkpoint(target_file, operation="inbox")
+        except Exception:
+            pass
+
         try:
             target_file.write_text(content, encoding="utf-8")
             file_bytes = len(content.encode("utf-8"))
             rel_path = f"Nivos-Inbox/{filename}"
             receipt = f"[Receipt: tool=save_to_inbox, path={rel_path}, bytes={file_bytes}, status=created]"
+            if checkpoint_info and checkpoint_info.get("receipt"):
+                receipt = f"{receipt}\n{checkpoint_info['receipt']}"
+
+            meta: dict[str, Any] = {
+                "path": rel_path,
+                "bytes": file_bytes,
+                "status": "created",
+            }
+            if checkpoint_info:
+                meta["checkpoint_id"] = checkpoint_info["id"]
+
             return ToolResult(
                 tool_name="save_to_inbox",
                 content=f"{receipt}\nSuccessfully created new note in {rel_path}.",
                 success=True,
-                metadata={
-                    "path": rel_path,
-                    "bytes": file_bytes,
-                    "status": "created",
-                },
+                metadata=meta,
             )
         except Exception as exc:
             return ToolResult(

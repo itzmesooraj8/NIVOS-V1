@@ -312,6 +312,15 @@ class ApplyPatchTool(BaseTool):
                     success=False,
                 )
 
+        # Create checkpoint snapshot before mutation
+        checkpoint_info = None
+        try:
+            from nivos.storage.checkpoint_manager import create_checkpoint
+
+            checkpoint_info = create_checkpoint(path, operation="patch")
+        except Exception:
+            pass
+
         # Write patched content
         try:
             path.write_text(patched, encoding="utf-8")
@@ -329,9 +338,16 @@ class ApplyPatchTool(BaseTool):
         if backup_path:
             metadata["backup_path"] = backup_path
 
+        msg = f"Patch applied successfully ({len(hunks)} hunk(s))."
+        if checkpoint_info:
+            metadata["checkpoint_id"] = checkpoint_info["id"]
+            rcpt = checkpoint_info.get("receipt")
+            if rcpt:
+                msg = f"{msg}\n{rcpt}"
+
         return ToolResult(
             tool_name="apply_patch",
-            content=f"Patch applied successfully ({len(hunks)} hunk(s)).",
+            content=msg,
             success=True,
             metadata=metadata,
         )

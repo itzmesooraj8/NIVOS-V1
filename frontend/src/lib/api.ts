@@ -1786,3 +1786,52 @@ export async function discardSelfDev(topic?: string): Promise<{ success: boolean
   if (!res.ok) throw new Error(`Failed to discard self-dev: ${res.status}`);
   return res.json();
 }
+
+export interface CheckpointInfo {
+  id: string;
+  timestamp: number;
+  file_path: string;
+  display_path: string;
+  operation: string;
+  existed_before: boolean;
+  backup_file?: string | null;
+  size_bytes: number;
+  receipt?: string;
+}
+
+export async function fetchCheckpoints(limit = 50): Promise<{ checkpoints: CheckpointInfo[]; count: number }> {
+  try {
+    const res = await apiFetch(`/v1/checkpoints?limit=${limit}`);
+    if (!res.ok) return { checkpoints: [], count: 0 };
+    return res.json();
+  } catch {
+    return { checkpoints: [], count: 0 };
+  }
+}
+
+export async function fetchLatestCheckpoint(): Promise<{ latest: CheckpointInfo | null }> {
+  try {
+    const res = await apiFetch('/v1/checkpoints/latest');
+    if (!res.ok) return { latest: null };
+    return res.json();
+  } catch {
+    return { latest: null };
+  }
+}
+
+export async function undoLastChange(checkpointId?: string): Promise<{
+  success: boolean;
+  message: string;
+  checkpoint: CheckpointInfo | null;
+}> {
+  const res = await apiFetch('/v1/checkpoints/undo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ checkpoint_id: checkpointId }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to undo change: ${res.status}`);
+  }
+  return res.json();
+}

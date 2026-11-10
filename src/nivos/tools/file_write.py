@@ -157,6 +157,15 @@ class FileWriteTool(BaseTool):
                     success=False,
                 )
 
+        # Create checkpoint snapshot before mutation
+        checkpoint_info = None
+        try:
+            from nivos.storage.checkpoint_manager import create_checkpoint
+
+            checkpoint_info = create_checkpoint(path, operation=mode)
+        except Exception:
+            pass
+
         if mode == "write":
             try:
                 from nivos._rust_bridge import get_rust_module
@@ -202,11 +211,19 @@ class FileWriteTool(BaseTool):
         except OSError:
             size = len(content_bytes)
 
+        metadata: dict[str, Any] = {"path": str(path.resolve()), "size_bytes": size}
+        msg = f"Successfully wrote to {file_path}"
+        if checkpoint_info:
+            metadata["checkpoint_id"] = checkpoint_info["id"]
+            rcpt = checkpoint_info.get("receipt")
+            if rcpt:
+                msg = f"{msg}\n{rcpt}"
+
         return ToolResult(
             tool_name="file_write",
-            content=f"Successfully wrote to {file_path}",
+            content=msg,
             success=True,
-            metadata={"path": str(path.resolve()), "size_bytes": size},
+            metadata=metadata,
         )
 
 

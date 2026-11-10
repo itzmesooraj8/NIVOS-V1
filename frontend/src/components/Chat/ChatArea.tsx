@@ -6,8 +6,10 @@ import { StreamingDots } from './StreamingDots';
 import { useAppStore } from '../../lib/store';
 import { shouldAutoplayFinishedReply, useTtsStore } from '../../lib/tts';
 import { stripThinkTags } from '../../lib/message-text';
-import { Sparkles, PanelRightOpen, PanelRightClose, Database, MessageSquare, X } from 'lucide-react';
+import { Sparkles, PanelRightOpen, PanelRightClose, Database, MessageSquare, X, RotateCcw } from 'lucide-react';
 import { listConnectors } from '../../lib/connectors-api';
+import { fetchLatestCheckpoint, undoLastChange, type CheckpointInfo } from '../../lib/api';
+import { toast } from 'sonner';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -91,6 +93,50 @@ export function ChatArea() {
   const [hasConnectedSources, setHasConnectedSources] = useState<boolean | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
+  // Checkpoint snapshots & undo state
+  const [latestCheckpoint, setLatestCheckpoint] = useState<CheckpointInfo | null>(null);
+  const [isUndoing, setIsUndoing] = useState(false);
+
+  const refreshCheckpoint = useCallback(async () => {
+    try {
+      const res = await fetchLatestCheckpoint();
+      setLatestCheckpoint(res.latest || null);
+    } catch {
+      setLatestCheckpoint(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshCheckpoint();
+  }, [refreshCheckpoint, messages, isCurrentChatStreaming]);
+
+  const handleUndo = async () => {
+    if (isUndoing) return;
+    setIsUndoing(true);
+    try {
+      const res = await undoLastChange();
+      if (res.success) {
+        toast.success(res.message || 'Change undone');
+        if (activeId && res.checkpoint) {
+          const receiptText = `[Receipt: checkpoint=${res.checkpoint.id}, file=${res.checkpoint.display_path}, status=undone]`;
+          useAppStore.getState().addMessage(activeId, {
+            id: `undo_${Date.now()}`,
+            role: 'assistant',
+            content: `**Reverted last change**\n${receiptText}\n${res.message}`,
+            timestamp: Date.now(),
+          });
+        }
+        await refreshCheckpoint();
+      } else {
+        toast.error(res.message || 'Failed to undo change');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Undo operation failed');
+    } finally {
+      setIsUndoing(false);
+    }
+  };
+
   useEffect(() => {
     listConnectors()
       .then((list) => setHasConnectedSources(list.some((c) => c.connected)))
@@ -134,16 +180,42 @@ export function ChatArea() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Toggle bar */}
-      <div className="flex items-center justify-end px-3 py-1.5 shrink-0">
-        <button
-          onClick={toggleSystemPanel}
-          className="p-1.5 rounded-md transition-colors cursor-pointer"
-          style={{ color: 'var(--color-text-tertiary)' }}
-          title={`${systemPanelOpen ? 'Hide' : 'Show'} system panel (${navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+I)`}
-        >
-          <PanelIcon size={16} />
-        </button>
+      {/* Top action bar */}
+      <div className="flex items-center justify-between px-3 py-1.5 shrink-0">
+        <div>
+          {latestCheckpoint && (
+            <button
+              onClick={handleUndo}
+              disabled={isUndoing}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors cursor-pointer disabled:opacity-50 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              style={{
+                borderColor: 'var(--color-border)',
+                color: 'var(--color-text-secondary)',
+                background: 'var(--color-surface)',
+              }}
+              title={`Undo last file mutation (${latestCheckpoint.display_path})`}
+            >
+              <RotateCcw size={13} className={isUndoing ? 'animate-spin' : ''} />
+              <span>Undo last change</span>
+              <span
+                className="max-w-[140px] truncate text-[11px] opacity-75 font-mono"
+                style={{ color: 'var(--color-text-tertiary)' }}
+              >
+                ({latestCheckpoint.display_path})
+              </span>
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleSystemPanel}
+            className="p-1.5 rounded-md transition-colors cursor-pointer"
+            style={{ color: 'var(--color-text-tertiary)' }}
+            title={`${systemPanelOpen ? 'Hide' : 'Show'} system panel (${navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+I)`}
+          >
+            <PanelIcon size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Data sources banner */}

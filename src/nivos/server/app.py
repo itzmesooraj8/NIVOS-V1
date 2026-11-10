@@ -368,11 +368,13 @@ def create_app(
     from nivos.server.sandbox_routes import router as sandbox_router
     from nivos.server.slack_routes import router as slack_channel_router
     from nivos.server.self_dev_routes import router as self_dev_router
+    from nivos.server.checkpoint_routes import router as checkpoint_router
     app.include_router(vault_router)
     app.include_router(app_launcher_router)
     app.include_router(sandbox_router)
     app.include_router(slack_channel_router)
     app.include_router(self_dev_router)
+    app.include_router(checkpoint_router)
     include_all_routes(app)
 
     # Restore SendBlue channel bindings from database on startup
