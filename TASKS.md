@@ -16,7 +16,7 @@ Branch: `feat/trust-and-install`
 | Phase | Description | Status |
 |---|---|---|
 | **Phase 1** | Messaging: Slack allowlist, Telegram private DM, remove SendBlue/iMessage, read-only tools, no approvals from channels, sanitized notifications | done |
-| **Phase 2** | Docker made easy: Settings status wizard, named volume package persistence, allow/deny permissions, run_code tool | pending |
+| **Phase 2** | Docker made easy: Settings status wizard, named volume package persistence, allow/deny permissions, run_code tool | done |
 | **Phase 3** | Apps: Auto-discovery, open any installed app switch, blocklist, always-ask list, winget install_app tool | pending |
 | **Phase 4** | Checkpoints: Pre-mutation snapshots (keep 50), Undo last change button & chat receipt | pending |
 
@@ -36,11 +36,12 @@ Branch: `feat/trust-and-install`
 - [x] Full test coverage in `tests/channels/test_channels_policy.py` and `tests/server/test_approval_routes.py`.
 
 ### Phase 2: Docker Made Easy
-- [ ] Sandbox card in Settings: status wizard (installed, running, WSL2 check), "Start Docker Desktop", "Prepare sandbox" with progress, "Reset sandbox".
-- [ ] Persistent "auto-approve inside sandbox" toggle in config and Settings (applies ONLY to sandbox commands from local chat turns; never host/channel/scheduled).
-- [ ] Named volume for installed packages (`nivos-sandbox-packages`) with size cap and "installed in sandbox" badge in UI.
-- [ ] `[permissions]` allow/deny patterns in `config.toml` (defaults: allow `pip install *`, `npm install *`, `git clone *` in sandbox; deny shell download piping `curl | sh` and destructive commands).
-- [ ] `run_code` tool executing python in Docker with `workspace/` mounted.
+- [x] Sandbox card in Settings: status wizard (installed, running, WSL2 check), "Start Docker Desktop", "Prepare sandbox" with progress bar and step status, "Reset sandbox".
+- [x] Persistent "auto-approve inside sandbox" toggle in `config.toml` (`[sandbox] auto_approve = true`) and Settings UI (applies ONLY to sandbox commands from local chat turns; never host/channel/scheduled).
+- [x] Named volume for installed packages (`nivos-sandbox-packages`) mounted to `/packages` with `PYTHONUSERBASE=/packages`, size cap (5120 MB), and "installed in sandbox" badge in UI.
+- [x] `[permissions]` allow/deny patterns in `config.toml` and Settings editor (defaults: allow `pip install *`, `npm install *`, `git clone *` in sandbox; deny shell download piping `curl | sh` and destructive commands).
+- [x] `run_code` tool executing Python and shell scripts inside Docker container with `workspace/` mounted and returning generated artifact receipts.
+- [x] Full test coverage in `tests/sandbox/test_sandbox_phase2.py` (9 tests passed).
 
 ### Phase 3: Apps
 - [ ] Installed app auto-discovery (Start menu + winget list), matching by name ("open spotify").
@@ -53,58 +54,3 @@ Branch: `feat/trust-and-install`
 - [ ] Pre-mutation file snapshots before any agent write/edit/delete (keep 50 newest).
 - [ ] "Undo last change" button in UI and `/v1/checkpoints/undo` endpoint.
 - [ ] Receipt in chat response (`[Receipt: checkpoint=..., file=..., status=snapshot_taken]`).
-
----
-
-## Phase Details
-
-### Phase 1: Tool Reliability and Central Policy
-- [x] Route file/command/install/schedule/search/weather queries (including typos like "Donwload" and phrasings like "make a file", "put this in my downloads") to main tier with tools enabled.
-- [x] Tool receipts in chat response (`[Receipt: tool=..., path=..., bytes=..., status=...]`) and logged in Activity.
-- [x] Claim Guard in `src/nivos/server/claim_guard.py`: replace unverified action claims with `"No tool ran, so nothing was changed."`.
-- [x] Clock: neutral `[now: ...]` without directive text that leaks into replies; broadened direct date/time/day detection with typos.
-- [x] Central origin and untrusted-content policy in `src/nivos/security/policy.py` with full unit test coverage.
-- [x] Verification: Python tests, frontend tests, frontend build, `uv run nivos doctor`.
-
-### Phase 2: Obsidian Memory
-- [x] Vault path saved in `config.toml`, reconnected at start with restart test.
-- [x] Read-only indexing of `.md` files (frontmatter, `[[links]]`), skipping `.obsidian` and secrets.
-- [x] Fast SQLite keyword search + background `bge-m3` embedding worker by file hash.
-- [x] Tools: `search_vault` and `save_to_inbox` (new notes only, path traversal rejection).
-- [x] Memory review screen in Settings: proposals for `vault-map.md`, `skill-map.md`, and chat memories.
-- [x] `me.md` protection and privacy filter (no vault data to cloud unless permitted).
-
-### Phase 3: `open_app` Tool
-- [x] Windows Start menu shortcut scanner & URL schemes (`ms-settings:`, `spotify:`).
-- [x] Security blocks for `cmd`, `powershell`, `wscript`, `regedit`, installers, and admin privileges.
-- [x] First-launch approval prompt (Once / Always for this app / Deny).
-- [x] Activity logging and injection prevention tests.
-
-### Phase 4: Docker Sandbox
-- [x] Containerized shell execution for `workspace/` mount only.
-- [x] Fallback guidance if Docker unavailable.
-- [x] Capabilities dropped, unprivileged, memory capped at 2 GB, idle shutdown.
-- [x] Per-session auto-approve toggle for sandbox (never host).
-
-### Phase 5: Slack Direct Messages
-- [x] Socket Mode integration with local token storage.
-- [x] Minimal DM-only manifest (`im:history`, `im:read`, `im:write`, `chat:write`).
-- [x] Allowlist restricted strictly to configured user ID.
-- [x] Strict read-only tools restriction; Slack text marked untrusted content.
-
-### Phase 6: Voice (Kokoro TTS)
-- [x] `kokoro` TTS backend config and low-priority CPU generation.
-- [x] UI voice selector, Test button, and "Read replies aloud" toggle.
-- [x] Graceful fallback, download progress, and Windows audio handling.
-
-### Phase 7: Nivos Logo, Icons & Shortcut
-- [x] Original dark rounded square with cyan "N" monogram SVG.
-- [x] Favicon, PWA icons (192, 512), apple-touch-icon, and desktop icons.
-- [x] `nivos install-shortcut` command creating user Desktop & Start menu shortcuts.
-
-### Phase 8: Self-Improvement Agent
-- [x] Dedicated git worktree (`C:\Nivos\self-dev`) on `self/<topic>` branches.
-- [x] Protected path invariant enforced in code and git pre-commit hook (SAFETY_RULES.md, security, sandbox, shell, open_app, claim_guard, vault_routes, memory, me.md, .env).
-- [x] Review UI in Settings with diff summary, Test Runner button, Discard button, and manual merge instructions.
-- [x] Lesson proposals saved strictly to `Nivos-Inbox/` with new-notes-only invariant and frontmatter.
-- [x] Central policy gate: local chat origin only, requires operator approval, blocked on Slack / schedules / untrusted input.

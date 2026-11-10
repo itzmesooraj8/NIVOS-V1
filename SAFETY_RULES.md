@@ -9,7 +9,7 @@ These rules are strictly enforced for all automated, agentic, and developer oper
 2. **Central Safety Model (Origin & Content Trust)**:
    - **Request Origin**: Every request entering Nivos is tagged with an origin: `local_chat` (typed by user in local web/desktop chat), `scheduled_task`, `slack`, or `channel`.
    - **Untrusted Content**: External text (web search snippets, notes from vaults, files, Slack messages) is treated as untrusted data and fenced as untrusted.
-   - **Dangerous Tools**: `sandboxed_shell`, `docker_shell`, `open_app`, `self_improve`, and file writes outside `workspace/` and `Nivos-Inbox/` are classified as dangerous.
+   - **Dangerous Tools**: `sandboxed_shell`, `docker_shell`, `open_app`, `run_code`, `self_improve`, and file writes outside `workspace/` and `Nivos-Inbox/` are classified as dangerous.
    - **Execution Invariant**: Dangerous tools can ONLY run on turns typed by the user in `local_chat`. They ALWAYS require explicit user approval.
    - **Channel & Schedule Prohibition**: Dangerous tools are NEVER available to scheduled tasks, Slack, external channels, or turns derived from untrusted content.
    - **Channel Policy & Prohibitions**:
@@ -29,10 +29,12 @@ These rules are strictly enforced for all automated, agentic, and developer oper
    - When Docker is active, shell tools execute in an isolated Ubuntu container:
      - 2 GB memory limit, CPU limit, all capabilities dropped (`--cap-drop=ALL`).
      - Non-root user (1000:1000), no privileged mode, bridge network (never `--network host`), no Docker socket.
-     - Mounts ONLY `workspace/`. Never mount vault, config directory, keys, or tokens; never pass secrets in environment variables.
-     - pip, npm, and apt installs permitted strictly inside container.
+     - Mounts strictly `workspace/` at `/workspace:rw` and named volume `nivos-sandbox-packages` at `/packages:rw` (`PYTHONUSERBASE=/packages`, size cap 5120 MB).
+     - Never mount vault, config directory, keys, or tokens; never pass secrets in environment variables.
+     - Persistent and per-session auto-approve toggles inside sandbox apply ONLY to commands from `local_chat` turns matching allowed permission rules; NEVER apply to host, channels, or scheduled tasks.
+     - Security policy strictly denies piping downloads into shell (`curl ... | sh`, `wget ... | bash`) and destructive system commands (`rm -rf /`, fork bombs, etc.).
      - Container stops automatically after 300s of idle inactivity.
-   - Per-session auto-approve toggle for sandbox execution NEVER applies to host commands.
+     - `run_code` tool executes Python/Bash inside the sandbox and outputs artifacts directly to `workspace/` with receipt logging.
    - If Docker is offline, execution falls back to host workspace shell (`workspace/` only, `git/pip/npm` only) and ALWAYS requires explicit user confirmation.
 
 5. **Secrets & Network Restraint**:

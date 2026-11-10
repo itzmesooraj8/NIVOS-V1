@@ -1515,10 +1515,30 @@ export async function updateAllowedApp(
 
 export interface SandboxStatus {
   docker_available: boolean;
+  docker_installed: boolean;
+  docker_version: string;
   docker_running: boolean;
   container_running: boolean;
   sandbox_backend: 'docker' | 'host';
   auto_approve_session: boolean;
+  auto_approve_persistent: boolean;
+  named_volume: string;
+  volume_size_mb: number;
+  volume_cap_mb: number;
+  volume_capped: boolean;
+  installed_packages: { name: string; version: string }[];
+  wsl?: {
+    wsl_installed: boolean;
+    wslconfig_found: boolean;
+    wslconfig_memory: string;
+    guidance: string;
+  };
+  prepare_status?: {
+    status: 'idle' | 'preparing' | 'ready' | 'error';
+    progress: number;
+    step: string;
+    error?: string;
+  };
   image: string;
   memory_limit: string;
   guidance: string;
@@ -1546,6 +1566,53 @@ export async function updateSandboxAutoApprove(enabled: boolean): Promise<{ auto
     body: JSON.stringify({ enabled }),
   });
   if (!res.ok) throw new Error(`Failed to update sandbox auto-approve: ${res.status}`);
+  return res.json();
+}
+
+export async function updateSandboxPersistentAutoApprove(enabled: boolean): Promise<{ auto_approve_persistent: boolean }> {
+  const res = await apiFetch('/v1/sandbox/persistent-auto-approve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enabled }),
+  });
+  if (!res.ok) throw new Error(`Failed to update persistent sandbox auto-approve: ${res.status}`);
+  return res.json();
+}
+
+export async function startDockerDesktop(): Promise<{ success: boolean; message: string }> {
+  const res = await apiFetch('/v1/sandbox/start-daemon', { method: 'POST' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to start Docker Desktop: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function prepareSandbox(): Promise<{ status: string; progress: number; step: string }> {
+  const res = await apiFetch('/v1/sandbox/prepare', { method: 'POST' });
+  if (!res.ok) throw new Error(`Failed to start preparing sandbox: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchPrepareStatus(): Promise<{ status: 'idle' | 'preparing' | 'ready' | 'error'; progress: number; step: string; error?: string }> {
+  const res = await apiFetch('/v1/sandbox/prepare/status');
+  if (!res.ok) throw new Error(`Failed to fetch prepare status: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchSandboxPermissions(): Promise<{ allow: string[]; deny: string[] }> {
+  const res = await apiFetch('/v1/sandbox/permissions');
+  if (!res.ok) throw new Error(`Failed to fetch permissions: ${res.status}`);
+  return res.json();
+}
+
+export async function updateSandboxPermissions(perms: { allow?: string[]; deny?: string[] }): Promise<{ allow: string[]; deny: string[] }> {
+  const res = await apiFetch('/v1/sandbox/permissions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(perms),
+  });
+  if (!res.ok) throw new Error(`Failed to update permissions: ${res.status}`);
   return res.json();
 }
 

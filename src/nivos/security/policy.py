@@ -47,6 +47,7 @@ DANGEROUS_TOOLS: Set[str] = {
     "code_interpreter_docker",
     "open_app",
     "self_improve",
+    "run_code",
 }
 
 # Tools explicitly permitted for read-only / channel / scheduled origins

@@ -36,7 +36,9 @@ from nivos.core.registry import ToolRegistry
 from nivos.core.types import ToolResult
 from nivos.sandbox.docker_manager import (
     check_docker_availability,
+    evaluate_command_security,
     execute_in_sandbox,
+    get_persistent_auto_approve,
     get_sandbox_auto_approve,
 )
 from nivos.security.policy import RequestOrigin, is_tool_allowed
@@ -227,9 +229,23 @@ class SandboxedShellTool(BaseTool):
         # 2. Check Docker availability
         docker_available, docker_reason = check_docker_availability()
 
+        # Security & permissions evaluation
+        cmd_allowed, sec_reason, auto_approved = evaluate_command_security(
+            command=command,
+            origin=origin_val,
+            is_sandbox=docker_available,
+        )
+        if not cmd_allowed:
+            return ToolResult(
+                tool_name="sandboxed_shell",
+                content=f"Security Policy Rejection: {sec_reason}",
+                success=False,
+                error=sec_reason,
+            )
+
         if docker_available:
             # DOCKER SANDBOX EXECUTION
-            auto_approve = get_sandbox_auto_approve()
+            auto_approve = auto_approved or get_sandbox_auto_approve() or get_persistent_auto_approve()
             if not confirm_passed and not auto_approve:
                 return ToolResult(
                     tool_name="sandboxed_shell",

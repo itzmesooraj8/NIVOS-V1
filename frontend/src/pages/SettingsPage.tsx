@@ -67,6 +67,12 @@ import {
   fetchSandboxStatus,
   resetSandbox,
   updateSandboxAutoApprove,
+  updateSandboxPersistentAutoApprove,
+  startDockerDesktop,
+  prepareSandbox,
+  fetchPrepareStatus,
+  fetchSandboxPermissions,
+  updateSandboxPermissions,
   type SandboxStatus,
   type InferenceSource,
   type MemoryStats,
@@ -1057,12 +1063,42 @@ function SandboxSettingsSection() {
   const [status, setStatus] = useState<SandboxStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [startingDocker, setStartingDocker] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const [prepareProgress, setPrepareProgress] = useState<{
+    status: 'idle' | 'preparing' | 'ready' | 'error';
+    progress: number;
+    step: string;
+    error?: string;
+  } | null>(null);
+  const [permissions, setPermissions] = useState<{ allow: string[]; deny: string[] }>({
+    allow: [],
+    deny: [],
+  });
+  const [newAllow, setNewAllow] = useState('');
+  const [newDeny, setNewDeny] = useState('');
+  const [savingPerms, setSavingPerms] = useState(false);
   const [msg, setMsg] = useState('');
 
   const loadStatus = useCallback(async () => {
     try {
       const res = await fetchSandboxStatus();
       setStatus(res);
+      if (res.prepare_status) {
+        setPrepareProgress(res.prepare_status);
+        if (res.prepare_status.status === 'preparing') {
+          setPreparing(true);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const loadPermissions = useCallback(async () => {
+    try {
+      const perms = await fetchSandboxPermissions();
+      setPermissions(perms);
     } catch {
       // ignore
     }
@@ -1070,15 +1106,66 @@ function SandboxSettingsSection() {
 
   useEffect(() => {
     loadStatus();
-  }, [loadStatus]);
+    loadPermissions();
+  }, [loadStatus, loadPermissions]);
 
-  const handleToggleAutoApprove = async () => {
+  // Poll prepare progress if active
+  useEffect(() => {
+    let timer: any = null;
+    if (preparing) {
+      timer = setInterval(async () => {
+        try {
+          const res = await fetchPrepareStatus();
+          setPrepareProgress(res);
+          if (res.status === 'ready' || res.status === 'error') {
+            setPreparing(false);
+            await loadStatus();
+          }
+        } catch {
+          // ignore
+        }
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [preparing, loadStatus]);
+
+  const handleStartDocker = async () => {
+    try {
+      setStartingDocker(true);
+      const res = await startDockerDesktop();
+      setMsg(res.message);
+      setTimeout(() => loadStatus(), 3000);
+      setTimeout(() => setMsg(''), 5000);
+    } catch (e: any) {
+      setMsg(`Start Docker failed: ${e.message}`);
+    } finally {
+      setStartingDocker(false);
+    }
+  };
+
+  const handlePrepareSandbox = async () => {
+    try {
+      setPreparing(true);
+      const res = await prepareSandbox();
+      setPrepareProgress(res as any);
+      setMsg('Preparing sandbox container and package volume...');
+      setTimeout(() => setMsg(''), 4000);
+    } catch (e: any) {
+      setPreparing(false);
+      setMsg(`Prepare failed: ${e.message}`);
+    }
+  };
+
+  const handleTogglePersistentAutoApprove = async () => {
     if (!status) return;
     try {
       setLoading(true);
-      const res = await updateSandboxAutoApprove(!status.auto_approve_session);
-      setStatus((prev) => (prev ? { ...prev, auto_approve_session: res.auto_approve_session } : null));
-      setMsg(res.auto_approve_session ? 'Auto-approve inside sandbox enabled for this session.' : 'Auto-approve disabled.');
+      const next = !status.auto_approve_persistent;
+      const res = await updateSandboxPersistentAutoApprove(next);
+      setStatus((prev) => (prev ? { ...prev, auto_approve_persistent: res.auto_approve_persistent } : null));
+      setMsg(res.auto_approve_persistent ? 'Persistent sandbox auto-approve enabled.' : 'Persistent sandbox auto-approve disabled.');
       setTimeout(() => setMsg(''), 3000);
     } catch (e: any) {
       setMsg(`Failed: ${e.message}`);
@@ -1101,63 +1188,207 @@ function SandboxSettingsSection() {
     }
   };
 
+  const handleAddAllow = () => {
+    const val = newAllow.trim();
+    if (!val || permissions.allow.includes(val)) return;
+    setPermissions((p) => ({ ...p, allow: [...p.allow, val] }));
+    setNewAllow('');
+  };
+
+  const handleRemoveAllow = (pattern: string) => {
+    setPermissions((p) => ({ ...p, allow: p.allow.filter((x) => x !== pattern) }));
+  };
+
+  const handleAddDeny = () => {
+    const val = newDeny.trim();
+    if (!val || permissions.deny.includes(val)) return;
+    setPermissions((p) => ({ ...p, deny: [...p.deny, val] }));
+    setNewDeny('');
+  };
+
+  const handleRemoveDeny = (pattern: string) => {
+    setPermissions((p) => ({ ...p, deny: p.deny.filter((x) => x !== pattern) }));
+  };
+
+  const handleSavePermissions = async () => {
+    try {
+      setSavingPerms(true);
+      const updated = await updateSandboxPermissions(permissions);
+      setPermissions(updated);
+      setMsg('Permissions saved.');
+      setTimeout(() => setMsg(''), 3000);
+    } catch (e: any) {
+      setMsg(`Failed: ${e.message}`);
+    } finally {
+      setSavingPerms(false);
+    }
+  };
+
   return (
-    <Section title="Docker Sandbox & Shell Execution">
+    <Section title="Docker Sandbox & Execution">
       {msg && (
-        <div className="text-xs p-2 rounded mb-2 text-emerald-400" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+        <div className="text-xs p-2 rounded mb-3 text-emerald-400" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
           {msg}
         </div>
       )}
 
+      {/* Status Wizard Card */}
       <div
-        className="flex items-center justify-between p-3 rounded-lg mb-3"
+        className="p-3.5 rounded-lg mb-4"
         style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}
       >
-        <div className="flex flex-col gap-0.5">
-          <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
-            Sandbox Execution Mode
-          </span>
-          <span className="text-[11px] text-[var(--color-text-secondary)]">
-            {status?.docker_available
-              ? 'Docker container (Ubuntu, non-root, 2 GB RAM limit, strictly workspace/ mounted)'
-              : 'Host workspace fallback (limited to workspace/)'}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
+              Sandbox Environment Wizard
+            </span>
+          </div>
+          <span
+            className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+            style={{
+              background: status?.docker_available ? 'rgba(16, 185, 129, 0.15)' : 'rgba(234, 179, 8, 0.15)',
+              color: status?.docker_available ? 'var(--color-success)' : '#eab308',
+            }}
+          >
+            {status?.docker_available ? (status.container_running ? 'Docker Active' : 'Docker Ready') : 'Host Fallback'}
           </span>
         </div>
-        <span
-          className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-          style={{
-            background: status?.docker_available ? 'rgba(16, 185, 129, 0.15)' : 'rgba(234, 179, 8, 0.15)',
-            color: status?.docker_available ? 'var(--color-success)' : '#eab308',
-          }}
-        >
-          {status?.docker_available ? (status.container_running ? 'Docker Active' : 'Docker Ready') : 'Host Fallback'}
-        </span>
+
+        {/* Wizard Step Badges */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+          {/* Step 1: Installed */}
+          <div
+            className="p-2.5 rounded border text-xs"
+            style={{
+              background: 'var(--color-surface)',
+              borderColor: status?.docker_installed ? 'rgba(16, 185, 129, 0.3)' : 'var(--color-border)',
+            }}
+          >
+            <div className="text-[10px] uppercase font-bold text-[var(--color-text-tertiary)]">1. Docker CLI</div>
+            <div className="font-medium mt-0.5" style={{ color: status?.docker_installed ? 'var(--color-success)' : 'var(--color-text-secondary)' }}>
+              {status?.docker_installed ? `Installed (v${status.docker_version})` : 'Not Found'}
+            </div>
+          </div>
+
+          {/* Step 2: Daemon */}
+          <div
+            className="p-2.5 rounded border text-xs"
+            style={{
+              background: 'var(--color-surface)',
+              borderColor: status?.docker_running ? 'rgba(16, 185, 129, 0.3)' : 'var(--color-border)',
+            }}
+          >
+            <div className="text-[10px] uppercase font-bold text-[var(--color-text-tertiary)]">2. Engine / Daemon</div>
+            <div className="font-medium mt-0.5" style={{ color: status?.docker_running ? 'var(--color-success)' : '#eab308' }}>
+              {status?.docker_running ? 'Running' : 'Stopped'}
+            </div>
+          </div>
+
+          {/* Step 3: WSL2 */}
+          <div
+            className="p-2.5 rounded border text-xs"
+            style={{
+              background: 'var(--color-surface)',
+              borderColor: status?.wsl?.wslconfig_found ? 'rgba(16, 185, 129, 0.3)' : 'var(--color-border)',
+            }}
+          >
+            <div className="text-[10px] uppercase font-bold text-[var(--color-text-tertiary)]">3. WSL2 Memory</div>
+            <div className="font-medium mt-0.5" style={{ color: status?.wsl?.wslconfig_found ? 'var(--color-success)' : 'var(--color-text-secondary)' }}>
+              {status?.wsl?.wsl_installed
+                ? status.wsl.wslconfig_found
+                  ? `Capped (${status.wsl.wslconfig_memory})`
+                  : 'Uncapped (.wslconfig)'
+                : 'Not Detected'}
+            </div>
+          </div>
+        </div>
+
+        {status?.wsl?.guidance && !status.wsl.wslconfig_found && (
+          <div className="text-[11px] p-2 rounded mb-3 bg-amber-500/10 text-amber-300 font-mono">
+            {status.wsl.guidance}
+          </div>
+        )}
+
+        {/* Wizard Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          {!status?.docker_running && (
+            <button
+              type="button"
+              disabled={startingDocker}
+              onClick={handleStartDocker}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors disabled:opacity-50"
+              style={{
+                background: 'var(--color-accent)',
+                color: 'white',
+              }}
+            >
+              {startingDocker ? 'Starting Docker Desktop...' : 'Start Docker Desktop'}
+            </button>
+          )}
+
+          <button
+            type="button"
+            disabled={preparing || !status?.docker_installed}
+            onClick={handlePrepareSandbox}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors disabled:opacity-50"
+            style={{
+              background: 'var(--color-surface)',
+              color: 'var(--color-text)',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            {preparing ? 'Preparing Sandbox...' : 'Prepare Sandbox'}
+          </button>
+
+          <button
+            type="button"
+            disabled={resetting || !status?.docker_available}
+            onClick={handleReset}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors disabled:opacity-50 ml-auto"
+            style={{
+              background: 'var(--color-surface)',
+              color: 'var(--color-error)',
+              border: '1px solid var(--color-error)',
+            }}
+          >
+            {resetting ? 'Resetting...' : 'Reset Sandbox'}
+          </button>
+        </div>
+
+        {/* Prepare Progress Bar */}
+        {prepareProgress && prepareProgress.status !== 'idle' && (
+          <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
+            <div className="flex justify-between text-xs mb-1">
+              <span className="font-medium" style={{ color: 'var(--color-text)' }}>
+                {prepareProgress.step}
+              </span>
+              <span className="text-[var(--color-text-tertiary)]">{prepareProgress.progress}%</span>
+            </div>
+            <div className="w-full bg-[var(--color-surface)] h-2 rounded-full overflow-hidden border border-[var(--color-border)]">
+              <div
+                className="h-full bg-emerald-500 transition-all duration-300"
+                style={{ width: `${prepareProgress.progress}%` }}
+              />
+            </div>
+            {prepareProgress.error && (
+              <div className="text-[11px] text-red-400 mt-1">{prepareProgress.error}</div>
+            )}
+          </div>
+        )}
       </div>
 
-      {!status?.docker_available && status?.guidance && (
-        <div
-          className="text-xs p-3 rounded-lg mb-3 leading-relaxed whitespace-pre-wrap font-mono"
-          style={{
-            background: 'rgba(234, 179, 8, 0.08)',
-            border: '1px solid rgba(234, 179, 8, 0.2)',
-            color: 'var(--color-text)',
-          }}
-        >
-          {status.guidance}
-        </div>
-      )}
-
+      {/* Persistent Auto-Approve Toggle */}
       <SettingRow
-        label="Auto-approve inside sandbox"
-        description="Allow commands to run inside the Docker container without confirmation. Never applies to host commands (resets on restart)."
+        label="Auto-approve inside sandbox (persistent)"
+        description="Allow commands to run inside Docker without confirmation. Applies ONLY to sandbox commands typed in local chat; never applies to host, messaging channels, or scheduled tasks."
       >
         <button
           type="button"
           disabled={loading || !status?.docker_available}
-          onClick={handleToggleAutoApprove}
+          onClick={handleTogglePersistentAutoApprove}
           className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer disabled:opacity-40"
           style={{
-            background: status?.auto_approve_session ? 'var(--color-accent)' : 'var(--color-bg-tertiary)',
+            background: status?.auto_approve_persistent ? 'var(--color-accent)' : 'var(--color-bg-tertiary)',
             border: '1px solid var(--color-border)',
           }}
         >
@@ -1165,30 +1396,182 @@ function SandboxSettingsSection() {
             className="inline-block h-3.5 w-3.5 rounded-full transition-transform"
             style={{
               background: 'white',
-              transform: status?.auto_approve_session ? 'translateX(18px)' : 'translateX(2px)',
+              transform: status?.auto_approve_persistent ? 'translateX(18px)' : 'translateX(2px)',
             }}
           />
         </button>
       </SettingRow>
 
-      <SettingRow
-        label="Reset sandbox"
-        description="Stop and force-remove the Docker sandbox container to reset its environment."
-      >
+      {/* Installed in Sandbox (Named Volume & Packages) */}
+      <div className="py-3.5 border-b border-[var(--color-border-subtle)]">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <div className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>
+              Installed in Sandbox
+            </div>
+            <div className="text-xs text-[var(--color-text-tertiary)]">
+              Packages persist in named volume <code className="font-mono text-[11px] px-1 py-0.5 rounded bg-[var(--color-surface)]">{status?.named_volume || 'nivos-sandbox-packages'}</code>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-xs font-mono font-medium" style={{ color: 'var(--color-text)' }}>
+              {status?.volume_size_mb ?? 0} MB / {status?.volume_cap_mb ?? 5120} MB
+            </span>
+            <div className="text-[10px] text-[var(--color-text-tertiary)]">volume size cap</div>
+          </div>
+        </div>
+
+        {status?.installed_packages && status.installed_packages.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {status.installed_packages.map((pkg) => (
+              <span
+                key={pkg.name}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs"
+                style={{
+                  background: 'var(--color-bg-secondary)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-text)',
+                }}
+              >
+                <span className="font-medium">{pkg.name}</span>
+                {pkg.version && <span className="text-[var(--color-text-tertiary)] text-[10px]">v{pkg.version}</span>}
+                <span className="text-[9px] uppercase font-bold tracking-wider px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-400">
+                  installed in sandbox
+                </span>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div className="text-xs italic text-[var(--color-text-tertiary)] mt-1">
+            No custom packages installed yet. Commands like <code className="font-mono text-[11px]">pip install pandas</code> run in sandbox persist here.
+          </div>
+        )}
+      </div>
+
+      {/* Permissions Allow / Deny Pattern Editor */}
+      <div className="pt-4">
+        <div className="text-sm font-medium mb-1" style={{ color: 'var(--color-text)' }}>
+          Sandbox Command Permissions
+        </div>
+        <div className="text-xs text-[var(--color-text-tertiary)] mb-3">
+          Configure command patterns that are auto-approved or strictly blocked inside the sandbox.
+        </div>
+
+        {/* Allow Patterns */}
+        <div className="mb-4">
+          <div className="text-xs font-semibold text-emerald-400 mb-1">
+            Allowed Patterns (Auto-approved in sandbox)
+          </div>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {permissions.allow.map((pat) => (
+              <span
+                key={pat}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
+                style={{
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  color: 'var(--color-text)',
+                }}
+              >
+                <code className="font-mono text-[11px]">{pat}</code>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveAllow(pat)}
+                  className="hover:text-red-400 text-[var(--color-text-tertiary)]"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="e.g. pip install *"
+              value={newAllow}
+              onChange={(e) => setNewAllow(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddAllow();
+                }
+              }}
+              className="flex-1 px-2.5 py-1 text-xs rounded border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
+            />
+            <button
+              type="button"
+              onClick={handleAddAllow}
+              className="px-2.5 py-1 text-xs rounded bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)] text-[var(--color-text)]"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+
+        {/* Deny Patterns */}
+        <div className="mb-4">
+          <div className="text-xs font-semibold text-red-400 mb-1">
+            Denied Patterns (Blocked everywhere)
+          </div>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {permissions.deny.map((pat) => (
+              <span
+                key={pat}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
+                style={{
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: 'var(--color-text)',
+                }}
+              >
+                <code className="font-mono text-[11px]">{pat}</code>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveDeny(pat)}
+                  className="hover:text-red-400 text-[var(--color-text-tertiary)]"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="e.g. rm -rf /*"
+              value={newDeny}
+              onChange={(e) => setNewDeny(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddDeny();
+                }
+              }}
+              className="flex-1 px-2.5 py-1 text-xs rounded border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
+            />
+            <button
+              type="button"
+              onClick={handleAddDeny}
+              className="px-2.5 py-1 text-xs rounded bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)] text-[var(--color-text)]"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+
         <button
           type="button"
-          disabled={resetting || !status?.docker_available}
-          onClick={handleReset}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors disabled:opacity-50"
+          disabled={savingPerms}
+          onClick={handleSavePermissions}
+          className="px-3 py-1.5 text-xs font-medium rounded cursor-pointer transition-colors"
           style={{
-            background: 'var(--color-bg-secondary)',
-            color: 'var(--color-text)',
-            border: '1px solid var(--color-border)',
+            background: 'var(--color-accent)',
+            color: 'white',
           }}
         >
-          {resetting ? 'Resetting...' : 'Reset Sandbox'}
+          {savingPerms ? 'Saving...' : 'Save Permissions'}
         </button>
-      </SettingRow>
+      </div>
     </Section>
   );
 }

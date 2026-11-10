@@ -176,6 +176,11 @@ except ImportError:
     pass
 
 try:
+    import nivos.tools.run_code  # noqa: F401
+except ImportError:
+    pass
+
+try:
     import nivos.tools.browser  # noqa: F401
     import nivos.tools.browser_axtree  # noqa: F401
 except ImportError:

@@ -1596,6 +1596,37 @@ class SandboxConfig:
     runtime: str = "docker"
     wasm_fuel_limit: int = 1_000_000
     wasm_memory_limit_mb: int = 256
+    auto_approve: bool = False
+    package_volume: str = "nivos-sandbox-packages"
+    volume_size_cap_mb: int = 5120
+
+
+@dataclass(slots=True)
+class PermissionsConfig:
+    """Execution permissions allow/deny patterns."""
+
+    allow: List[str] = field(
+        default_factory=lambda: [
+            "pip install *",
+            "npm install *",
+            "git clone *",
+        ]
+    )
+    deny: List[str] = field(
+        default_factory=lambda: [
+            "*|*sh*",
+            "*|*bash*",
+            "*|*zsh*",
+            "*|*powershell*",
+            "curl * | *",
+            "wget * | *",
+            "rm -rf /*",
+            "rm -rf ~*",
+            ":(){ :|:& };:",
+            "mkfs*",
+            "dd if=*",
+        ]
+    )
 
 
 @dataclass(slots=True)
@@ -1837,6 +1868,7 @@ class NivosConfig:
     user: LocationConfig = field(default_factory=LocationConfig)
     routing: RoutingTiersConfig = field(default_factory=RoutingTiersConfig)
     obsidian: ObsidianConfig = field(default_factory=ObsidianConfig)
+    permissions: PermissionsConfig = field(default_factory=PermissionsConfig)
     mining: Optional["MiningConfig"] = None
 
     @property
@@ -2166,6 +2198,7 @@ def load_config(path: Optional[Path] = None) -> NivosConfig:
             "user",
             "routing",
             "obsidian",
+            "permissions",
             "memory_files",
             "system_prompt",
             "compression",
