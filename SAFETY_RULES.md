@@ -12,6 +12,13 @@ These rules are strictly enforced for all automated, agentic, and developer oper
    - **Dangerous Tools**: `sandboxed_shell`, `docker_shell`, `open_app`, `self_improve`, and file writes outside `workspace/` and `Nivos-Inbox/` are classified as dangerous.
    - **Execution Invariant**: Dangerous tools can ONLY run on turns typed by the user in `local_chat`. They ALWAYS require explicit user approval.
    - **Channel & Schedule Prohibition**: Dangerous tools are NEVER available to scheduled tasks, Slack, external channels, or turns derived from untrusted content.
+   - **Channel Policy & Prohibitions**:
+     - Messaging channels (Slack, Telegram) are restricted strictly to read-only tools: `web_search`, `get_weather`, `search_vault`, `calculator`, and `time`.
+     - Slack requires the minimal DM-only manifest (`im:*`, `chat:write`) and an allow-list of only the user's own Slack user ID.
+     - Telegram requires private chats only (strictly ignores groups) and an allow-list of only the user's own Telegram user ID.
+     - Approvals can NEVER be granted from a channel; approvals require interactive local chat turn confirmation.
+     - Channel notifications on task finish or approval request must be sanitized with zero secrets or raw file contents.
+     - iMessage and SMS (SendBlue) are excluded from registries, UI, and config.
    - **Central Policy Engine**: All tool executions are validated by `src/nivos/security/policy.py:is_tool_allowed`.
 
 3. **Vault & Memory Integrity**:

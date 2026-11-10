@@ -40,7 +40,6 @@ _CHANNEL_MODULES = [
     "twitter_channel",
     "nostr_channel",
     "twilio_sms",
-    "sendblue",
     "gmail",
 ]
 

@@ -56,7 +56,6 @@ SAFE_READONLY_TOOLS: Set[str] = {
     "search_vault",
     "calculator",
     "time",
-    "file_read",
 }
 
 # Paths and file patterns that can NEVER be written to by any agent or tool
@@ -155,10 +154,10 @@ def is_tool_allowed(
 
     # Rule 1 & 2: Origins other than LOCAL_CHAT cannot use dangerous tools or file writes
     if origin != RequestOrigin.LOCAL_CHAT:
-        if origin == RequestOrigin.SLACK and tool_name_clean not in SAFE_READONLY_TOOLS:
+        if origin in (RequestOrigin.SLACK, RequestOrigin.CHANNEL) and tool_name_clean not in SAFE_READONLY_TOOLS:
             return False, (
-                f"Tool '{tool_name_clean}' is not allowed for origin 'slack'. "
-                f"Slack requests may use only read-only tools ({', '.join(sorted(SAFE_READONLY_TOOLS))})."
+                f"Tool '{tool_name_clean}' is not allowed for origin '{origin.value}'. "
+                f"Channel requests may use only read-only tools ({', '.join(sorted(SAFE_READONLY_TOOLS))})."
             )
         if tool_name_clean in DANGEROUS_TOOLS:
             return False, (

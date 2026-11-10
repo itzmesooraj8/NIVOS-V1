@@ -63,7 +63,6 @@ def _apple_ts_to_datetime(apple_ns: int) -> datetime:
 # ---------------------------------------------------------------------------
 
 
-@ConnectorRegistry.register("imessage")
 class IMessageConnector(BaseConnector):
     """Connector that reads messages from the macOS Messages SQLite database.
 

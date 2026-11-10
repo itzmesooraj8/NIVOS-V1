@@ -227,6 +227,23 @@ class TestApproveAction:
         assert body["count"] == 1
         assert body["actions"][0]["id"] == id_b
 
+    def test_approve_rejects_channel_origin(self, client, approval_store):
+        """Approvals cannot be granted from a channel or external origin."""
+        action_id = _queue(approval_store)
+        resp = client.post(
+            f"/v1/approvals/{action_id}/approve",
+            headers={"x-nivos-origin": "channel"},
+        )
+        assert resp.status_code == 403
+        assert "channel" in resp.text.lower()
+
+        # Origin slack is also forbidden
+        resp_slack = client.post(
+            f"/v1/approvals/{action_id}/approve",
+            headers={"x-nivos-origin": "slack"},
+        )
+        assert resp_slack.status_code == 403
+
 
 @pytest.mark.skipif(not HAS_FASTAPI, reason="fastapi not installed")
 class TestDenyAction:

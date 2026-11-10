@@ -13,7 +13,7 @@ from nivos.tools.approval_store import (
 )
 
 try:
-    from fastapi import APIRouter, HTTPException
+    from fastapi import APIRouter, HTTPException, Request
 except ImportError:
     raise ImportError("fastapi is required for approval routes")
 
@@ -55,7 +55,13 @@ async def list_pending_approvals() -> Dict[str, Any]:
 
 
 @router.post("/v1/approvals/{action_id}/approve")
-async def approve_action(action_id: str) -> Dict[str, Any]:
+async def approve_action(action_id: str, request: Request) -> Dict[str, Any]:
+    origin = request.headers.get("x-nivos-origin", "").strip().lower()
+    if origin in ("slack", "channel", "telegram", "scheduled_task"):
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: approvals can never be granted from a channel.",
+        )
     store = _get_store()
     action = store.get_action(action_id)
     if action is None:

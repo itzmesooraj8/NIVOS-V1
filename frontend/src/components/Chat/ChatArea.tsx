@@ -157,7 +157,7 @@ export function ChatArea() {
         >
           <Database size={16} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />
           <span style={{ color: 'var(--color-text-secondary)', flex: 1 }}>
-            Connect your data sources (Gmail, iMessage, Slack, etc.) to get personalized answers.
+            Connect your data sources (Gmail, Slack, Telegram, etc.) to get personalized answers.
           </span>
           <button
             onClick={() => navigate('/data-sources')}

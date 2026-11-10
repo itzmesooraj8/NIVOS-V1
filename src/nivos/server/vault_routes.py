@@ -147,6 +147,12 @@ async def list_proposals(request: Request) -> Dict[str, Any]:
 @router.post("/proposals/approve")
 async def approve_proposal(req: ProposalActionReq, request: Request) -> Dict[str, Any]:
     """Approve a proposal, moving it from Nivos-Inbox/ to Nivos-Memory/."""
+    origin = request.headers.get("x-nivos-origin", "").strip().lower()
+    if origin in ("slack", "channel", "telegram", "scheduled_task"):
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: approvals can never be granted from a channel.",
+        )
     filename = req.filename.strip()
     if not filename or ".." in filename or "/" in filename or "\\" in filename:
         raise HTTPException(status_code=400, detail="Invalid filename.")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import time
 from typing import Any, Dict, List, Optional
 
@@ -14,6 +15,33 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_MAX_LENGTH = 4000
 _SMS_MAX_LENGTH = 1600
+
+_SECRET_PATTERNS = [
+    re.compile(r"(xoxb|xapp|ghp|sk|gho|glpat|npm_)[a-zA-Z0-9_\-]{8,}", re.IGNORECASE),
+    re.compile(r"(?:api[_-]?key|secret|password|token)\s*[:=]\s*([^\s]{6,})", re.IGNORECASE),
+    re.compile(r"Bearer\s+([a-zA-Z0-9\._\-]{10,})", re.IGNORECASE),
+    re.compile(r"\b[a-f0-9]{32,}\b", re.IGNORECASE),
+]
+
+
+def sanitize_notification_text(text: str) -> str:
+    """Sanitize notification text so no secrets or file contents leak to messaging channels."""
+    if not text:
+        return ""
+    # Mask secrets
+    for pat in _SECRET_PATTERNS:
+        text = pat.sub("[REDACTED_SECRET]", text)
+    # Strip multiline code blocks
+    if "```" in text:
+        text = re.sub(r"```[\s\S]*?```", "[content omitted]", text)
+    # Truncate multiline file content or long error traces
+    lines = text.strip().splitlines()
+    if len(lines) > 3:
+        text = lines[0] + " " + lines[1] + "... [content omitted]"
+    if len(text) > 250:
+        text = text[:240] + "... [content omitted]"
+    return text.strip()
+
 
 _HELP_TEXT = """\
 Available commands:
@@ -34,6 +62,7 @@ _NOTIFICATION_EVENTS = [
     EventType.AGENT_TICK_ERROR,
     EventType.AGENT_BUDGET_EXCEEDED,
     EventType.SCHEDULER_TASK_END,
+    EventType.APPROVAL_REQUIRED,
 ]
 
 
@@ -123,8 +152,19 @@ class ChannelBridge:
     ) -> str:
         self._session_store.get_or_create(sender_id, channel_type)
 
-        # Command routing
+        # Approvals can never be granted from a channel
         stripped = content.strip()
+        stripped_lower = stripped.lower()
+        if (
+            stripped_lower in ("/approve", "approve", "yes", "y", "confirm")
+            or stripped_lower.startswith(("/approve", "approve ", "yes "))
+        ):
+            return (
+                "Approvals cannot be granted from a messaging channel. "
+                "Please open Nivos desktop or web chat to review and approve."
+            )
+
+        # Command routing
         if stripped.startswith("/"):
             result = self._handle_command(sender_id, stripped, channel_type)
             if result is not None:
@@ -332,7 +372,19 @@ class ChannelBridge:
         if not message:
             return
 
-        targets = self._session_store.get_notification_targets()
+        targets = list(self._session_store.get_notification_targets())
+        if not targets:
+            # Fall back to configured allowed users on active channels
+            for ch_name, ch in self._channels.items():
+                if ch_name == "slack":
+                    user_id = getattr(ch, "_allowed_user_id", "")
+                    if user_id:
+                        targets.append({"preferred_notification_channel": "slack", "sender_id": user_id})
+                elif ch_name == "telegram":
+                    allowed_ids = getattr(ch, "_allowed_user_ids", set())
+                    for uid in allowed_ids:
+                        targets.append({"preferred_notification_channel": "telegram", "sender_id": uid})
+
         for target in targets:
             pref_channel = target["preferred_notification_channel"]
             sender_id = target["sender_id"]
@@ -345,18 +397,26 @@ class ChannelBridge:
         data = event.data or {}
         name = data.get("agent_name", data.get("name", "unknown"))
 
+        if event.event_type == EventType.APPROVAL_REQUIRED:
+            desc = data.get("description", data.get("action", data.get("tool", "An action")))
+            clean_desc = sanitize_notification_text(str(desc))
+            return (
+                f"Approval required for '{name}': {clean_desc}. "
+                "Please open Nivos desktop or web chat to review and approve (approvals cannot be granted from a channel)."
+            )
         if event.event_type == EventType.AGENT_TICK_END:
-            summary = data.get("summary", data.get("result", ""))
+            raw_summary = str(data.get("summary", data.get("result", "")))
+            summary = sanitize_notification_text(raw_summary)
             return f"Agent '{name}' finished: {summary}" if summary else None
         if event.event_type == EventType.AGENT_TICK_ERROR:
-            error = data.get("error", "unknown error")
+            error = sanitize_notification_text(str(data.get("error", "unknown error")))
             return f"Agent '{name}' error: {error}"
         if event.event_type == EventType.AGENT_BUDGET_EXCEEDED:
             return f"Agent '{name}' hit budget limit."
         if event.event_type == EventType.SCHEDULER_TASK_END:
             if data.get("success", True):
                 return f"Scheduled task '{name}' completed."
-            error = data.get("error", "unknown error")
+            error = sanitize_notification_text(str(data.get("error", "unknown error")))
             return f"Scheduled task '{name}' failed: {error}"
         return None
 
@@ -374,6 +434,7 @@ class ChannelBridge:
             )
             return
         try:
-            ch.send(sender_id, message)
+            safe_message = sanitize_notification_text(message)
+            ch.send(sender_id, safe_message)
         except Exception:
             logger.exception("Failed to send notification to %s", channel_type)

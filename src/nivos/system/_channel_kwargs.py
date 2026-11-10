@@ -184,7 +184,6 @@ _CHANNEL_MAPPERS: Dict[str, tuple] = {
     "feishu": ("feishu", _feishu),
     "bluebubbles": ("bluebubbles", _bluebubbles),
     "whatsapp_baileys": ("whatsapp_baileys", _whatsapp_baileys),
-    "sendblue": ("sendblue", _sendblue),
 }
 
 

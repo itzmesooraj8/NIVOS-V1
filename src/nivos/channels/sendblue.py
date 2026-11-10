@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 _API_BASE = "https://api.sendblue.co"
 
 
-@ChannelRegistry.register("sendblue")
 class SendBlueChannel(BaseChannel):
     """SendBlue iMessage/SMS channel adapter.
 

@@ -44,11 +44,6 @@ except ImportError:
     pass
 
 try:
-    import nivos.connectors.imessage  # noqa: F401
-except ImportError:
-    pass
-
-try:
     import nivos.connectors.apple_notes  # noqa: F401
 except ImportError:
     pass

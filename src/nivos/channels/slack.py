@@ -215,10 +215,26 @@ class SlackChannel(BaseChannel):
                     self._last_message_time = now
 
                     if event.get("type") == "message" and "subtype" not in event:
+                        text = event.get("text", "")
+                        text_lower = text.strip().lower()
+                        if (
+                            text_lower in ("/approve", "approve", "yes", "y", "confirm")
+                            or text_lower.startswith(("/approve", "approve ", "yes "))
+                        ):
+                            client_obj.send_socket_mode_response(
+                                SocketModeResponse(envelope_id=req.envelope_id),
+                            )
+                            self.send(
+                                ch_id,
+                                "Approvals cannot be granted from a messaging channel. "
+                                "Please open Nivos desktop or web chat to review and approve.",
+                            )
+                            return
+
                         cm = ChannelMessage(
                             channel="slack",
                             sender=user_id,
-                            content=event.get("text", ""),
+                            content=text,
                             message_id=event.get("ts", ""),
                             conversation_id=ch_id,
                             metadata={

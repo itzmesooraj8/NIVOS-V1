@@ -7,7 +7,7 @@ import logging
 import os
 import textwrap
 import threading
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from nivos.channels._stubs import (
     BaseChannel,
@@ -44,11 +44,27 @@ class TelegramChannel(BaseChannel):
         bot_token: str = "",
         *,
         allowed_chat_ids: str = "",
+        allowed_user_id: str = "",
         parse_mode: str = "Markdown",
         bus: Optional[EventBus] = None,
     ) -> None:
         self._token = bot_token or os.environ.get("TELEGRAM_BOT_TOKEN", "")
         self._allowed_chat_ids = allowed_chat_ids
+        raw_allowed = []
+        if allowed_user_id:
+            raw_allowed.append(str(allowed_user_id))
+        if allowed_chat_ids:
+            raw_allowed.append(str(allowed_chat_ids))
+        env_allowed = os.environ.get("TELEGRAM_ALLOWED_USER_ID", "")
+        if env_allowed:
+            raw_allowed.append(env_allowed)
+
+        self._allowed_user_ids: Set[str] = {
+            uid.strip()
+            for r in raw_allowed
+            for uid in r.split(",")
+            if uid.strip()
+        }
         self._parse_mode = parse_mode
         self._bus = bus
         self._handlers: List[ChannelHandler] = []
@@ -387,26 +403,54 @@ class TelegramChannel(BaseChannel):
                 msg = update.message
                 if msg is None:
                     return
-                cm = ChannelMessage(
-                    channel="telegram",
-                    sender=str(msg.from_user.id) if msg.from_user else "",
-                    content=msg.text or "",
-                    message_id=str(msg.message_id),
-                    conversation_id=str(msg.chat.id),
-                )
-                # Enforce allow-list when configured
-                if self._allowed_chat_ids:
-                    _allowed = {
-                        cid.strip()
-                        for cid in self._allowed_chat_ids.split(",")
-                        if cid.strip()
-                    }
-                    if cm.conversation_id not in _allowed:
+
+                # Private chats only, strictly ignore groups
+                chat_type = getattr(msg.chat, "type", "")
+                if chat_type != "private":
+                    logger.debug(
+                        "Ignoring Telegram message from non-private chat %s (type=%s)",
+                        getattr(msg.chat, "id", None),
+                        chat_type,
+                    )
+                    return
+
+                sender_id = str(msg.from_user.id) if msg.from_user else ""
+                chat_id = str(msg.chat.id) if msg.chat else ""
+
+                # Enforce allow-list when configured (matches user ID or chat ID)
+                if self._allowed_user_ids:
+                    if sender_id not in self._allowed_user_ids and chat_id not in self._allowed_user_ids:
                         logger.debug(
-                            "Ignoring message from unlisted chat %s",
-                            cm.conversation_id,
+                            "Ignoring Telegram message from unauthorized sender %s / chat %s",
+                            sender_id,
+                            chat_id,
                         )
                         return
+
+                content = (msg.text or "").strip()
+
+                # Approvals can never be granted from a channel
+                content_lower = content.lower()
+                if (
+                    content_lower in ("/approve", "approve", "yes", "y", "confirm")
+                    or content_lower.startswith(("/approve", "approve ", "yes "))
+                ):
+                    try:
+                        await msg.reply_text(
+                            "Approvals cannot be granted from a messaging channel. "
+                            "Please open Nivos desktop or web chat to review and approve."
+                        )
+                    except Exception:
+                        pass
+                    return
+
+                cm = ChannelMessage(
+                    channel="telegram",
+                    sender=sender_id or chat_id,
+                    content=content,
+                    message_id=str(msg.message_id),
+                    conversation_id=chat_id,
+                )
                 for handler in self._handlers:
                     try:
                         handler(cm)
