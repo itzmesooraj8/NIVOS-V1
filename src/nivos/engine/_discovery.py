@@ -183,6 +183,8 @@ def get_engine(
     config: NivosConfig,
     engine_key: str | None = None,
     model: str | None = None,
+    *,
+    fast: bool = False,
 ) -> Tuple[str, InferenceEngine] | None:
     """Get a specific engine by key, or the default with a named fallback.
 
@@ -197,6 +199,9 @@ def get_engine(
     "OpenAI client not available" instead of a helpful "start your local
     engine" message (see #532). When *model* is ``None`` selection stays
     model-agnostic (unchanged behaviour).
+
+    When *fast* is ``True``, probing does not sweep all registered engines if
+    the default engine is unreachable, allowing server boot to bind immediately.
 
     Returns ``(key, engine_instance)`` or ``None`` if no engine is available.
     """
@@ -233,6 +238,9 @@ def get_engine(
                 return (default_key, engine)
         except Exception as exc:
             logger.debug("Engine %r health check failed: %s", default_key, exc)
+
+    if fast:
+        return None
 
     candidates = [
         (key, engine)

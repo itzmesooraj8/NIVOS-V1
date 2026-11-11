@@ -661,3 +661,6 @@ def get_sandbox_status_info() -> Dict[str, Any]:
         "memory_limit": "2GB",
         "guidance": wsl_info.get("guidance", ""),
     }
+
+
+get_docker_status = get_sandbox_status_info

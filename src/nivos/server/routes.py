@@ -404,12 +404,11 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
                 allow_obsidian = request.app.state.allow_obsidian_to_cloud
             else:
                 cfg_obs = getattr(getattr(request.app.state, "config", None), "obsidian", None)
-                if cfg_obs:
-                    allow_obsidian = getattr(cfg_obs, "allow_obsidian_to_cloud", False)
-                else:
-                    cfg_sec = getattr(getattr(request.app.state, "config", None), "security", None)
-                    if cfg_sec:
-                        allow_obsidian = getattr(cfg_sec, "allow_obsidian_to_cloud", False)
+                cfg_sec = getattr(getattr(request.app.state, "config", None), "security", None)
+                allow_obsidian = bool(
+                    getattr(cfg_obs, "allow_obsidian_to_cloud", False)
+                    or getattr(cfg_sec, "allow_obsidian_to_cloud", False)
+                )
             if request.headers.get("x-allow-obsidian-to-cloud", "").lower() in ("true", "1"):
                 allow_obsidian = True
 
@@ -1020,8 +1019,22 @@ def _handle_agent(
     # Append real tool receipts to chat response
     if guarded_content != GUARD_REPLACEMENT and result.tool_results:
         receipts = []
+        action_tools = {
+            "file_write",
+            "sandboxed_shell",
+            "run_code",
+            "install_app",
+            "open_app",
+            "schedule_task",
+            "cancel_scheduled_task",
+            "save_to_inbox",
+            "self_improve",
+        }
         for tr in result.tool_results:
+            tname = getattr(tr, "tool_name", "")
             meta = getattr(tr, "metadata", None) or {}
+            if tname not in action_tools and not meta.get("receipt"):
+                continue
             path = meta.get("path") or meta.get("working_dir") or meta.get("file_path") or ""
             bytes_count = meta.get("size_bytes") or meta.get("bytes")
             if bytes_count is None:
@@ -1029,7 +1042,7 @@ def _handle_agent(
                 if c:
                     bytes_count = len(str(c).encode("utf-8"))
             status = "success" if getattr(tr, "success", True) else "failure"
-            parts = [f"tool={getattr(tr, 'tool_name', 'tool')}"]
+            parts = [f"tool={tname or 'tool'}"]
             if path:
                 parts.append(f"path={path}")
             if bytes_count is not None:
@@ -2119,14 +2132,61 @@ async def server_info(request: Request):
     }
 
 
+def _is_lazy_engine(eng: Any) -> bool:
+    """Traverse wrapped engines to check if the underlying engine is LazyEngine."""
+    try:
+        from unittest.mock import NonCallableMock
+        if isinstance(eng, NonCallableMock):
+            return False
+    except ImportError:
+        pass
+    visited = set()
+    current = eng
+    while current is not None and id(current) not in visited:
+        try:
+            from unittest.mock import NonCallableMock
+            if isinstance(current, NonCallableMock):
+                return False
+        except ImportError:
+            pass
+        visited.add(id(current))
+        if getattr(current, "is_lazy", False) is True or getattr(current, "engine_id", "") == "lazy":
+            return True
+        if type(current).__name__ == "LazyEngine":
+            return True
+        next_engine = (
+            getattr(current, "_engine", None)
+            or getattr(current, "_inner", None)
+            or getattr(current, "engine", None)
+            or getattr(current, "inner", None)
+        )
+        try:
+            from unittest.mock import NonCallableMock
+            if isinstance(next_engine, NonCallableMock):
+                return False
+        except ImportError:
+            pass
+        current = next_engine
+    return False
+
+
 @router.get("/health")
 async def health(request: Request):
-    """Health check endpoint."""
-    engine = request.app.state.engine
-    healthy = engine.health()
-    if not healthy:
+    """Health check endpoint — liveness probe for the API server."""
+    engine = getattr(request.app.state, "engine", None)
+    engine_name = getattr(request.app.state, "engine_name", "")
+    is_lazy = engine_name == "lazy" or _is_lazy_engine(engine)
+
+    engine_healthy = False
+    if engine is not None:
+        try:
+            engine_healthy = bool(engine.health())
+        except Exception:
+            engine_healthy = False
+
+    if not engine_healthy and not is_lazy:
         raise HTTPException(status_code=503, detail="Engine unhealthy")
-    return {"status": "ok"}
+    return {"status": "ok", "engine": engine_healthy}
 
 
 # ---------------------------------------------------------------------------

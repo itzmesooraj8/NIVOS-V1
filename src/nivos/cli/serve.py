@@ -26,7 +26,24 @@ from nivos.intelligence import (
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_TOOLS = frozenset({"think", "calculator", "web_search"})
+_DEFAULT_TOOLS = frozenset({
+    "think",
+    "calculator",
+    "web_search",
+    "get_weather",
+    "get_current_time",
+    "file_read",
+    "file_write",
+    "sandboxed_shell",
+    "schedule_task",
+    "list_scheduled_tasks",
+    "cancel_scheduled_task",
+    "search_vault",
+    "save_to_inbox",
+    "open_app",
+    "install_app",
+    "run_code",
+})
 
 
 def _resolve_server_cors_origins(configured: object) -> list[str]:
@@ -194,15 +211,18 @@ def serve(
     selection_model = (
         model_name or config.server.model or config.intelligence.default_model or None
     )
-    resolved = get_engine(config, engine_key, model=selection_model)
+    resolved = get_engine(config, engine_key, model=selection_model, fast=True)
     if resolved is None:
         console.print(
-            "[red bold]No inference engine available.[/red bold]\n\n"
-            "Make sure an engine is running."
+            "[yellow]No inference engine currently reachable. Starting server in degraded mode "
+            "(GUI and Settings are accessible; local models will connect when an engine starts).[/yellow]"
         )
-        sys.exit(1)
+        from nivos.engine.lazy import LazyEngine
 
-    engine_name, engine = resolved
+        engine_name = engine_key or getattr(getattr(config, "engine", None), "default", "ollama") or "ollama"
+        engine = LazyEngine(config, engine_key=engine_key)
+    else:
+        engine_name, engine = resolved
 
     # Apply security guardrails
     from nivos.security import setup_security
@@ -257,11 +277,15 @@ def serve(
     except Exception as exc:
         logger.debug("Engine instrumentation failed: %s", exc)
 
-    # Discover models
-    all_engines = discover_engines(config)
-    all_models = discover_models(all_engines)
-    for ek, model_ids in all_models.items():
-        merge_discovered_models(ek, model_ids)
+    # Discover models (fast startup: use active engine; avoid blocking on offline engines)
+    if engine_name == "lazy":
+        all_engines = []
+        all_models = {}
+    else:
+        all_engines = [(engine_name, engine)]
+        all_models = {engine_name: _safe_list_models(engine)}
+        for ek, model_ids in all_models.items():
+            merge_discovered_models(ek, model_ids)
 
     multi_entries = [(engine_name, engine)]
     for discovered_name, discovered_engine in all_engines:
@@ -295,14 +319,14 @@ def serve(
             f"{configured_model!r} is not reachable; using {model_name!r}.[/yellow]"
         )
     if not model_name:
-        console.print(
-            "[red]No model available on any reachable engine.[/red]\n\n"
-            "Start an inference backend and make sure it lists at least one model.\n"
-            "For Ollama: [cyan]ollama serve[/cyan] and "
-            "[cyan]ollama pull qwen3.5:9b[/cyan].\n"
-            "For MLX: start the MLX OpenAI-compatible server on the configured host."
+        model_name = (
+            configured_model
+            or getattr(getattr(config, "routing", None), "main", "qwen3.5:4b")
+            or "qwen3.5:9b"
         )
-        sys.exit(1)
+        console.print(
+            f"[yellow]No models currently listed on active engine; using placeholder {model_name!r}.[/yellow]"
+        )
 
     # Resolve agent
     agent = None
@@ -444,9 +468,8 @@ def serve(
             sb._bus = bus
             channel_bridge = sb._resolve_channel(config, bus)
             if channel_bridge is not None:
-                channel_bridge.connect()
                 console.print(
-                    f"  Channel: [cyan]{config.channel.default_channel}[/cyan]"
+                    f"  Channel: [cyan]{config.channel.default_channel}[/cyan] (connecting in background)"
                 )
         except Exception as exc:
             console.print(f"[yellow]Channel failed to start: {exc}[/yellow]")
@@ -520,14 +543,13 @@ def serve(
         )
         _wire_system.wire_channel(channel_bridge)
 
-    # Set up speech backend
+    # Set up speech backend (lazy wrapper so CTranslate2 load never blocks port binding)
     speech_backend = None
     try:
-        from nivos.speech._discovery import get_speech_backend
+        from nivos.speech.lazy import LazySpeechBackend
 
-        speech_backend = get_speech_backend(config)
-        if speech_backend:
-            console.print(f"  Speech: [cyan]{speech_backend.backend_id}[/cyan]")
+        speech_backend = LazySpeechBackend(config)
+        console.print("  Speech: [cyan]ready (lazy)[/cyan]")
     except Exception as exc:
         logger.debug("Speech backend discovery failed: %s", exc)
 

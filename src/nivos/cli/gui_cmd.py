@@ -386,12 +386,116 @@ def _check_frontend_port(port: int) -> None:
 def _api_healthy(port: int, timeout: float = 3.0) -> bool:
     """Return whether an API server is answering on *port*."""
     try:
+        with socket.create_connection(("127.0.0.1", port), timeout=0.1):
+            pass
         with urllib.request.urlopen(
             f"http://127.0.0.1:{port}/health", timeout=timeout
         ) as response:
             return response.status == 200
     except (urllib.error.URLError, OSError, ValueError):
         return False
+
+
+def _find_port_occupant(port: int) -> dict | None:
+    """Find the process listening on port."""
+    try:
+        import psutil
+        for conn in psutil.net_connections(kind="inet"):
+            if conn.laddr and conn.laddr.port == port and conn.status == psutil.CONN_LISTEN:
+                pid = conn.pid
+                if pid:
+                    try:
+                        p = psutil.Process(pid)
+                        return {
+                            "pid": pid,
+                            "name": p.name(),
+                            "cmdline": " ".join(p.cmdline()),
+                        }
+                    except Exception:
+                        return {"pid": pid, "name": "unknown", "cmdline": ""}
+    except Exception:
+        pass
+    return None
+
+
+def _clean_stale_nivos_processes_and_locks(port: int) -> list[str]:
+    """Safely terminate stale nivos processes and remove stale locks (only nivos ones)."""
+    actions = []
+    # 1. Check port occupant
+    occ = _find_port_occupant(port)
+    if occ:
+        cmdline = occ.get("cmdline", "").lower()
+        pname = occ.get("name", "").lower()
+        if "nivos" in cmdline or "nivos" in pname:
+            try:
+                import psutil
+                p = psutil.Process(occ["pid"])
+                p.terminate()
+                actions.append(f"Terminated stale Nivos process on port {port} (PID {occ['pid']})")
+            except Exception as e:
+                actions.append(f"Failed to terminate stale Nivos process {occ['pid']}: {e}")
+
+    # 2. Check stale PID file
+    from nivos.cli.daemon_cmd import _PID_FILE, _STATE_FILE, _read_pid_file, _pid_alive
+    pid = _read_pid_file()
+    if pid is not None and not _pid_alive(pid):
+        _PID_FILE.unlink(missing_ok=True)
+        _STATE_FILE.unlink(missing_ok=True)
+        actions.append(f"Removed stale PID file pointing to dead PID {pid}")
+
+    lock_file = _PID_FILE.with_suffix(".lock")
+    if lock_file.exists():
+        try:
+            lock_file.unlink(missing_ok=True)
+            actions.append("Removed stale server.lock")
+        except Exception:
+            pass
+
+    return actions
+
+
+def _wait_for_api_healthy(effective_port: int, console: Console, timeout: float = 180.0) -> None:
+    """Wait for API server to become healthy with progress, logging real reasons on failure."""
+    start_time = time.monotonic()
+    last_print = -1
+
+    with console.status("[cyan]Waiting for Nivos API server to become healthy...[/cyan]") as status:
+        while time.monotonic() - start_time < timeout:
+            if _api_healthy(effective_port):
+                return
+            elapsed = int(time.monotonic() - start_time)
+            if elapsed > 0 and elapsed % 5 == 0 and elapsed != last_print:
+                last_print = elapsed
+                status.update(f"[cyan]Waiting for Nivos API server to become healthy... ({elapsed}s/{int(timeout)}s)[/cyan]")
+            time.sleep(0.5)
+
+    # Reached timeout without becoming healthy
+    from nivos.cli.daemon_cmd import _LOG_FILE
+
+    log_lines: list[str] = []
+    if _LOG_FILE.exists():
+        try:
+            content = _LOG_FILE.read_text(encoding="utf-8", errors="replace")
+            all_lines = [l for l in content.splitlines() if l.strip()]
+            log_lines = all_lines[-20:]
+        except Exception:
+            pass
+
+    occupant = _find_port_occupant(effective_port)
+    cleaned = _clean_stale_nivos_processes_and_locks(effective_port)
+
+    err_parts = [
+        f"The API server did not become healthy on port {effective_port} within {int(timeout)} seconds."
+    ]
+    if occupant:
+        err_parts.append(f"Port occupant: PID {occupant['pid']} ({occupant['name']}) -> {occupant['cmdline']}")
+    if cleaned:
+        err_parts.append("Safely cleaned up: " + ", ".join(cleaned))
+    if log_lines:
+        err_parts.append("\nLast 20 log lines from server.log:")
+        err_parts.extend(f"  {line}" for line in log_lines)
+
+    raise click.ClickException("\n".join(err_parts))
 
 
 def _daemon_pid_alive(port: int, *, require_ready: bool = False) -> bool:
@@ -656,14 +760,8 @@ def gui(
             if server.returncode != 0:
                 raise click.ClickException("Could not start the Nivos API server.")
 
-            # Wait for API to become healthy
-            deadline = time.monotonic() + 15.0
-            while time.monotonic() < deadline:
-                if _api_healthy(effective_port):
-                    break
-                time.sleep(0.2)
-            if not _api_healthy(effective_port):
-                raise click.ClickException("The API server did not become healthy.")
+            # Wait for API to become healthy (up to 3 minutes with progress and diagnostics)
+            _wait_for_api_healthy(effective_port, console, timeout=180.0)
 
         url = (
             f"http://[{bind_host}]:{effective_port}"
@@ -728,6 +826,7 @@ def gui(
         )
         if server.returncode != 0:
             raise click.ClickException("Could not start the Nivos API server.")
+        _wait_for_api_healthy(effective_port, console, timeout=180.0)
 
     env = os.environ.copy()
     # Let browser requests use Vite's same-origin proxy at any frontend port.

@@ -98,6 +98,11 @@ _INSTALL_APP_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+_TIME_TOOL_PATTERN = re.compile(
+    r"\b(time|what\s+time|current\s+time|date|what\s+is\s+the\s+time|clock|what\s+time\s+is\s+it)\b",
+    re.IGNORECASE,
+)
+
 
 def has_tool_intent(query: str) -> bool:
     """Check if a query indicates intent to use tools (files, shell, search, weather, etc.)."""
@@ -116,6 +121,7 @@ def has_tool_intent(query: str) -> bool:
         or _VAULT_INBOX_PATTERN.search(clean)
         or _OPEN_APP_PATTERN.search(clean)
         or _INSTALL_APP_PATTERN.search(clean)
+        or _TIME_TOOL_PATTERN.search(clean)
     )
 
 
@@ -135,12 +141,16 @@ def filter_relevant_tools(
 
     needed: List[str] = []
 
-    # Web search: only when explicitly searching and not already pre-fetched
-    if not has_prefetched_data and _WEB_SEARCH_PATTERN.search(clean_query):
+    # Time tool: instant time inquiry
+    if _TIME_TOOL_PATTERN.search(clean_query):
+        needed.append("get_current_time")
+
+    # Web search
+    if _WEB_SEARCH_PATTERN.search(clean_query):
         needed.append("web_search")
 
-    # Weather: only when weather keywords present and not already pre-fetched
-    if not has_prefetched_data and _WEATHER_PATTERN.search(clean_query):
+    # Weather
+    if _WEATHER_PATTERN.search(clean_query):
         needed.append("get_weather")
 
     # File read
@@ -151,17 +161,25 @@ def filter_relevant_tools(
     if _FILE_WRITE_PATTERN.search(clean_query):
         needed.append("file_write")
 
-    # Shell
+    # Shell: strictly forbid for scheduled task queries unless explicit shell command keywords are used
     if _SHELL_PATTERN.search(clean_query):
-        needed.append("sandboxed_shell")
+        clean_lower = clean_query.lower()
+        is_task_query = "scheduled task" in clean_lower or "schedule task" in clean_lower or "scheduled_task" in clean_lower
+        has_explicit_shell = any(k in clean_lower for k in ["bash", "sh ", "powershell", "cmd.exe", "pip ", "npm ", "docker "])
+        if not is_task_query or has_explicit_shell:
+            needed.append("sandboxed_shell")
 
     # Calculator
     if _CALCULATOR_PATTERN.search(clean_query):
         needed.append("calculator")
 
-    # Scheduler
+    # Scheduler (never use sandboxed_shell for scheduled tasks)
     if _SCHEDULER_PATTERN.search(clean_query):
-        needed.extend(["schedule_task", "list_scheduled_tasks", "cancel_scheduled_task"])
+        needed.append("list_scheduled_tasks")
+        if re.search(r"\b(cancel|delete|stop|remove)\b", clean_query, re.IGNORECASE):
+            needed.append("cancel_scheduled_task")
+        if re.search(r"\b(schedule|create|add|new|remind|set\s+timer)\b", clean_query, re.IGNORECASE):
+            needed.append("schedule_task")
 
     # Vault search
     if _VAULT_SEARCH_PATTERN.search(clean_query):
@@ -182,6 +200,8 @@ def filter_relevant_tools(
     if available_tools is not None:
         avail_set = set(available_tools)
         return [t for t in needed if t in avail_set]
+
+    return needed
 
     return needed
 

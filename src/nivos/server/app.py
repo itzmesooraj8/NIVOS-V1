@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import pathlib
@@ -223,14 +224,65 @@ def create_app(
 
     @app.on_event("startup")
     async def _startup_runtime() -> None:
-        try:
-            from nivos.server.tier_router import warmup_dual_models
-            asyncio.create_task(asyncio.to_thread(warmup_dual_models))
-        except Exception as exc:
-            logger.debug("Fast/main model dual startup warmup failed: %s", exc)
+        import asyncio
+
+        async def _run_post_startup_tasks() -> None:
+            # 1. Model warmup (dual models: fast + main)
+            try:
+                from nivos.server.tier_router import warmup_dual_models
+                await asyncio.wait_for(asyncio.to_thread(warmup_dual_models), timeout=15.0)
+            except Exception as exc:
+                logger.debug("Dual model warmup background task: %s", exc)
+
+            # 2. Vault indexing / scan
+            try:
+                obs_cfg = getattr(config, "obsidian", None)
+                v_path = getattr(obs_cfg, "vault_path", "") if obs_cfg else ""
+                if v_path:
+                    from nivos.connectors.obsidian import ObsidianConnector
+                    connector = ObsidianConnector(vault_path=str(v_path))
+                    await asyncio.wait_for(asyncio.to_thread(lambda: list(connector.sync())), timeout=15.0)
+            except Exception as exc:
+                logger.debug("Vault indexing background task: %s", exc)
+
+            # 3. bge-m3 embeddings
+            try:
+                from nivos.connectors.obsidian import trigger_obsidian_background_embedding
+                trigger_obsidian_background_embedding(model="bge-m3")
+            except Exception as exc:
+                logger.debug("bge-m3 background embedding trigger: %s", exc)
+
+            # 4. App scan (warm installed app cache)
+            try:
+                from nivos.tools.open_app import get_all_installed_apps
+                await asyncio.wait_for(asyncio.to_thread(get_all_installed_apps), timeout=10.0)
+            except Exception as exc:
+                logger.debug("App discovery background scan: %s", exc)
+
+            # 5. Docker daemon health check
+            try:
+                from nivos.sandbox.docker_manager import get_docker_status
+                await asyncio.wait_for(asyncio.to_thread(get_docker_status), timeout=5.0)
+            except Exception as exc:
+                logger.debug("Docker status background check: %s", exc)
+
+            # 6. Channel connections
+            try:
+                cb = getattr(app.state, "channel_bridge", None)
+                if cb is not None and hasattr(cb, "connect"):
+                    await asyncio.wait_for(asyncio.to_thread(cb.connect), timeout=10.0)
+            except Exception as exc:
+                logger.debug("Channel connection background task: %s", exc)
+
+        if not os.environ.get("PYTEST_CURRENT_TEST") or getattr(config, "_run_post_startup_tasks", False):
+            post_task = asyncio.create_task(_run_post_startup_tasks())
+            app.state._post_startup_task = post_task
 
     @app.on_event("shutdown")
     async def _shutdown_managed_runtime() -> None:
+        pst = getattr(app.state, "_post_startup_task", None)
+        if pst is not None and not pst.done():
+            pst.cancel()
         # Quiesce every producer before touching the shared MCP pool. Route
         # workers are registered under this lock, so none can slip in after
         # the snapshot. The scheduler has a two-phase stop because closing an

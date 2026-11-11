@@ -536,9 +536,19 @@ class OllamaEngine(AsyncHTTPEngineMixin, InferenceEngine):
         data = resp.json()
         return [m["name"] for m in data.get("models", [])]
 
-    def health(self) -> bool:
+    def health(self, timeout: float = 1.0) -> bool:
         try:
-            resp = self._client.get("/api/tags", timeout=2.0)
+            import socket, urllib.parse
+            parsed = urllib.parse.urlparse(self._host)
+            h = parsed.hostname or "127.0.0.1"
+            if h in ("127.0.0.1", "localhost", "::1"):
+                p = parsed.port or (443 if parsed.scheme == "https" else 11434)
+                with socket.create_connection((h, p), timeout=0.1):
+                    pass
+        except OSError:
+            return False
+        try:
+            resp = self._client.get("/api/tags", timeout=timeout)
             return resp.status_code == 200
         except Exception as exc:
             logger.debug("Ollama health check failed at %s: %s", self._host, exc)

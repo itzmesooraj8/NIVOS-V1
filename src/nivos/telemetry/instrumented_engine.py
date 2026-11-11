@@ -644,6 +644,10 @@ class InstrumentedEngine(InferenceEngine):
     def list_models(self) -> List[str]:
         return self._inner.list_models()
 
+    @property
+    def is_lazy(self) -> bool:
+        return getattr(self._inner, "is_lazy", False) or getattr(self._inner, "engine_id", "") == "lazy"
+
     def health(self) -> bool:
         return self._inner.health()
 

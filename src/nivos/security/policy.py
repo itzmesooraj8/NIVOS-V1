@@ -58,6 +58,7 @@ SAFE_READONLY_TOOLS: Set[str] = {
     "search_vault",
     "calculator",
     "time",
+    "get_current_time",
 }
 
 # Paths and file patterns that can NEVER be written to by any agent or tool

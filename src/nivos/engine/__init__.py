@@ -17,6 +17,7 @@ from nivos.engine._base import (
     messages_to_dicts,
 )
 from nivos.engine._discovery import discover_engines, discover_models, get_engine
+from nivos.engine.lazy import LazyEngine
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ __all__ = [
     "EngineConnectionError",
     "EngineContextLengthError",
     "InferenceEngine",
+    "LazyEngine",
     "discover_engines",
     "discover_models",
     "get_engine",

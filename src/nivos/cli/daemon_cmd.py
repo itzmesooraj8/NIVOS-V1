@@ -370,6 +370,19 @@ def daemon() -> None:
     """Manage the Nivos server daemon."""
 
 
+def _api_healthy(port: int, timeout: float = 2.0) -> bool:
+    """Check if an API server is responding on port."""
+    import socket
+    import urllib.request
+    try:
+        with socket.create_connection(("127.0.0.1", port), timeout=0.1):
+            pass
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=timeout) as resp:
+            return resp.status == 200
+    except Exception:
+        return False
+
+
 @daemon.command()
 @click.option("--host", default=None, help="Bind address.")
 @click.option("--port", default=None, type=int, help="Port number.")
@@ -386,15 +399,20 @@ def start(
     """Start the Nivos server as a background daemon."""
     console = Console(stderr=True)
 
+    config = load_config()
+    bind_host = host or config.server.host
+    bind_port = port if port is not None else config.server.port
+
+    # If already healthy on this port, cooperate
+    if _api_healthy(bind_port):
+        console.print(f"[green]Server is already running and healthy on port {bind_port}.[/green]")
+        return
+
     existing = _read_pid()
     if existing is not None:
         console.print(f"[yellow]Server already running (PID {existing}).[/yellow]")
         console.print("Use 'nivos stop' to stop it first, or 'nivos restart'.")
         sys.exit(1)
-
-    config = load_config()
-    bind_host = host or config.server.host
-    bind_port = port if port is not None else config.server.port
 
     # Build command to run nivos serve
     cmd = [sys.executable, "-m", "nivos.cli", "serve"]
@@ -478,12 +496,20 @@ def start(
 def stop() -> None:
     """Stop the running Nivos server daemon."""
     console = Console(stderr=True)
-    # Stop the graphical frontend too. It is a sibling process, not a child of
-    # the daemon, so it otherwise outlives `stop` and keeps holding its port —
-    # leaving both a GUI that serves pages but fails every request, and a next
-    # `nivos gui` that dies on "Frontend port 5173 is unavailable".
-    # Imported here rather than at module scope: gui_cmd is a sibling CLI
-    # module and only `stop` needs it.
+
+    # 1. Stop Windows scheduled task if registered/running
+    if sys.platform == "win32":
+        try:
+            subprocess.run(["schtasks", "/end", "/tn", "Nivos"], capture_output=True, check=False)
+            subprocess.run(
+                ["powershell", "-NoProfile", "-Command", "Stop-ScheduledTask -TaskName Nivos -ErrorAction SilentlyContinue"],
+                capture_output=True,
+                check=False,
+            )
+        except Exception as exc:
+            logger.debug("Failed stopping scheduled task: %s", exc)
+
+    # 2. Stop frontend
     from nivos.cli.gui_cmd import stop_frontend
 
     frontend_pid = stop_frontend()
@@ -491,16 +517,49 @@ def stop() -> None:
         console.print(f"[green]Frontend stopped[/green] (PID {frontend_pid}).")
 
     pid = _read_pid()
-    if pid is None:
+    config = load_config()
+    configured_port = int(getattr(config.server, "port", 8000))
+
+    killed_any = False
+    if pid is not None:
+        terminate_process(pid, grace_seconds=10.0)
+        clear_server_state(pid)
+        killed_any = True
+        console.print(f"[green]Server stopped[/green] (PID {pid}).")
+
+    # 3. Check if any process is still listening on the configured server port
+    try:
+        import psutil
+
+        for conn in psutil.net_connections(kind="inet"):
+            if conn.laddr and conn.laddr.port == configured_port and conn.status == psutil.CONN_LISTEN:
+                occ_pid = conn.pid
+                if occ_pid and occ_pid != pid:
+                    try:
+                        proc = psutil.Process(occ_pid)
+                        cmdline = " ".join(proc.cmdline()).lower()
+                        pname = proc.name().lower()
+                        if "nivos" in cmdline or "nivos" in pname:
+                            terminate_process(occ_pid, grace_seconds=5.0)
+                            killed_any = True
+                            console.print(f"[green]Terminated Nivos server process on port {configured_port}[/green] (PID {occ_pid}).")
+                    except Exception:
+                        pass
+    except Exception as exc:
+        logger.debug("Port scan during stop failed: %s", exc)
+
+    # 4. Clean up any stale lock files
+    try:
+        _PID_FILE.unlink(missing_ok=True)
+        _STATE_FILE.unlink(missing_ok=True)
+        _PID_FILE.with_suffix(".lock").unlink(missing_ok=True)
+        _PID_FILE.with_suffix(".identity.json").unlink(missing_ok=True)
+    except Exception:
+        pass
+
+    if not killed_any and frontend_pid is None:
         console.print("[yellow]No running server found.[/yellow]")
-        sys.exit(0 if frontend_pid is not None else 1)
-
-    # Graceful shutdown (SIGTERM / taskkill), escalating to a forced kill after
-    # 10s if still running. Cross-platform — no POSIX-only os.kill/SIGKILL.
-    terminate_process(pid, grace_seconds=10.0)
-
-    clear_server_state(pid)
-    console.print(f"[green]Server stopped[/green] (PID {pid}).")
+        sys.exit(1)
 
 
 @daemon.command()
@@ -529,6 +588,21 @@ def status() -> None:
     """Show status of the Nivos server daemon."""
     console = Console(stderr=True)
     pid = _read_pid()
+    if pid is None:
+        config = load_config()
+        configured_port = int(getattr(config.server, "port", 8000))
+        if _api_healthy(configured_port):
+            try:
+                import psutil
+                for conn in psutil.net_connections(kind="inet"):
+                    if conn.laddr and conn.laddr.port == configured_port and conn.status == psutil.CONN_LISTEN:
+                        if conn.pid:
+                            pid = conn.pid
+                            record_server_state(pid, config.server.host, configured_port)
+                            break
+            except Exception:
+                pass
+
     if pid is None:
         console.print("[yellow]Server is not running.[/yellow]")
         return

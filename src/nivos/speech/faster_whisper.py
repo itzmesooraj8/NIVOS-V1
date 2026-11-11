@@ -10,16 +10,6 @@ from typing import List, Optional
 from nivos.core.registry import SpeechRegistry
 from nivos.speech._stubs import Segment, SpeechBackend, TranscriptionResult
 
-try:
-    from faster_whisper import WhisperModel
-except ImportError:
-    WhisperModel = None  # type: ignore[assignment, misc]
-
-try:
-    import ctranslate2
-except ImportError:
-    ctranslate2 = None  # type: ignore[assignment]
-
 logger = logging.getLogger(__name__)
 
 
@@ -43,6 +33,11 @@ class FasterWhisperBackend(SpeechBackend):
 
     def _resolve_compute_type(self) -> str:
         """Pick a CTranslate2 compute type supported by the configured device."""
+        try:
+            import ctranslate2
+        except ImportError:
+            ctranslate2 = None
+
         if ctranslate2 is None:
             return self._compute_type
 
@@ -80,6 +75,11 @@ class FasterWhisperBackend(SpeechBackend):
     def _ensure_model(self) -> WhisperModel:
         """Lazy-load the Whisper model on first use."""
         if self._model is None:
+            try:
+                from faster_whisper import WhisperModel
+            except ImportError:
+                WhisperModel = None
+
             if WhisperModel is None:
                 self._last_error = (
                     "faster-whisper is not installed. "

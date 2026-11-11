@@ -170,6 +170,18 @@ def _check_models(
         except Exception:
             continue
 
+    if not any(r.name == "Models: ollama" for r in results):
+        ollama_probe = resolved_probes.get("ollama")
+        if ollama_probe and not ollama_probe.healthy:
+            results.append(
+                CheckResult(
+                    "Models: ollama",
+                    "warn",
+                    "Engine unreachable",
+                    details="Start Ollama ('ollama serve') to query local models.",
+                )
+            )
+
     return results
 
 
@@ -358,6 +370,31 @@ def _check_nodejs() -> CheckResult:
         return CheckResult("Node.js", "warn", f"Error checking version: {exc}")
 
 
+def _check_docker() -> CheckResult:
+    """Check Docker daemon availability for the sandbox."""
+    try:
+        from nivos.sandbox.docker_manager import get_sandbox_status_info
+
+        status = get_sandbox_status_info()
+        if status.get("docker_running"):
+            return CheckResult("Docker Sandbox", "ok", "Docker daemon running")
+        if status.get("docker_installed"):
+            return CheckResult(
+                "Docker Sandbox",
+                "warn",
+                "Docker installed but daemon is not running",
+                details="Start Docker Desktop to enable the sandbox.",
+            )
+        return CheckResult(
+            "Docker Sandbox",
+            "warn",
+            "Docker not installed (optional)",
+            details="Install Docker Desktop if you plan to use code execution sandbox.",
+        )
+    except Exception as exc:
+        return CheckResult("Docker Sandbox", "warn", f"Could not check: {exc}")
+
+
 # -- Main command -------------------------------------------------------------
 
 _STATUS_ICONS = {
@@ -380,6 +417,7 @@ def _run_all_checks() -> List[CheckResult]:
     checks.extend(_check_optional_deps())
     checks.append(_check_speech_backend())
     checks.append(_check_nodejs())
+    checks.append(_check_docker())
     checks.append(_check_security_profile())
     return checks
 
@@ -423,6 +461,16 @@ def doctor(as_json: bool) -> None:
     fail_count = sum(1 for c in checks if c.status == "fail")
     console.print()
     console.print(f"  {ok_count} passed, {warn_count} warnings, {fail_count} failures")
+
+    # Explanation for why check count drops when engines are stopped
+    unreachable_ollama = any(c.name == "Engine: ollama" and c.status == "warn" for c in checks)
+    if unreachable_ollama:
+        console.print()
+        console.print(
+            "[dim]Explanation: When Ollama is stopped, 3-5 checks (Engine: ollama, Models: ollama, "
+            "Default model) show as warnings rather than passed. Starting Ollama (`ollama serve`) "
+            "restores all local engine checks to passed.[/dim]"
+        )
     console.print()
 
     # Background tasks section

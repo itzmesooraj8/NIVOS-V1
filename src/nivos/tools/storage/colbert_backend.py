@@ -14,24 +14,6 @@ from __future__ import annotations
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
-try:
-    import torch  # noqa: F401
-except ImportError as exc:
-    raise ImportError(
-        "PyTorch is required for the ColBERT memory backend. "
-        "Install it with:\n\n"
-        "    pip install torch\n"
-    ) from exc
-
-try:
-    from colbert.modeling.checkpoint import Checkpoint  # noqa: F401
-except ImportError as exc:
-    raise ImportError(
-        "The 'colbert-ai' package is required for the ColBERT "
-        "memory backend. Install it with:\n\n"
-        "    pip install colbert-ai\n"
-    ) from exc
-
 from nivos.core.events import EventType, get_event_bus
 from nivos.core.registry import MemoryRegistry
 from nivos.tools.storage._stubs import MemoryBackend, RetrievalResult
@@ -76,10 +58,26 @@ class ColBERTMemory(MemoryBackend):
         if self._checkpoint_loaded:
             return
 
-        from colbert.infra import ColBERTConfig
-        from colbert.modeling.checkpoint import (
-            Checkpoint as _Checkpoint,
-        )
+        try:
+            import torch  # noqa: F401
+        except ImportError as exc:
+            raise ImportError(
+                "PyTorch is required for the ColBERT memory backend. "
+                "Install it with:\n\n"
+                "    pip install torch\n"
+            ) from exc
+
+        try:
+            from colbert.infra import ColBERTConfig
+            from colbert.modeling.checkpoint import (
+                Checkpoint as _Checkpoint,
+            )
+        except ImportError as exc:
+            raise ImportError(
+                "The 'colbert-ai' package is required for the ColBERT "
+                "memory backend. Install it with:\n\n"
+                "    pip install colbert-ai\n"
+            ) from exc
 
         cfg = ColBERTConfig(
             doc_maxlen=512,

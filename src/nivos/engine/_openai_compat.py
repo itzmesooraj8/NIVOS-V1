@@ -318,14 +318,24 @@ class _OpenAICompatibleEngine(AsyncHTTPEngineMixin, InferenceEngine):
         data = resp.json()
         return [m["id"] for m in data.get("data", [])]
 
-    def health(self) -> bool:
+    def health(self, timeout: float = 2.0) -> bool:
         import os
         # Do not self-probe loopback port 8000 (default Nivos server) without explicit env
         if self.engine_id == "uzu" and self._host in ("http://localhost:8000", "http://127.0.0.1:8000"):
             if not os.environ.get("UZU_HOST"):
                 return False
         try:
-            resp = self._client.get(f"{self._api_prefix}/models", timeout=2.0)
+            import socket, urllib.parse
+            parsed = urllib.parse.urlparse(self._host)
+            h = parsed.hostname or "127.0.0.1"
+            if h in ("127.0.0.1", "localhost", "::1"):
+                p = parsed.port or (443 if parsed.scheme == "https" else 80)
+                with socket.create_connection((h, p), timeout=0.1):
+                    pass
+        except OSError:
+            return False
+        try:
+            resp = self._client.get(f"{self._api_prefix}/models", timeout=timeout)
             if resp.status_code == 200:
                 content_type = resp.headers.get("content-type", "")
                 return "application/json" in content_type

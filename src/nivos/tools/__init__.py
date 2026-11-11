@@ -186,6 +186,11 @@ except ImportError:
     pass
 
 try:
+    import nivos.tools.time_tool  # noqa: F401
+except ImportError:
+    pass
+
+try:
     import nivos.tools.browser  # noqa: F401
     import nivos.tools.browser_axtree  # noqa: F401
 except ImportError:

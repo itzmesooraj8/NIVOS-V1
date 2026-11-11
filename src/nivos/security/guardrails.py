@@ -70,6 +70,10 @@ class GuardrailsEngine(InferenceEngine):
         """Delegate to the wrapped engine."""
         return self._engine.engine_id
 
+    @property
+    def is_lazy(self) -> bool:
+        return getattr(self._engine, "is_lazy", False) or getattr(self._engine, "engine_id", "") == "lazy"
+
     # -- scanning helpers ----------------------------------------------------
 
     def _scan_text(self, text: str) -> ScanResult:
