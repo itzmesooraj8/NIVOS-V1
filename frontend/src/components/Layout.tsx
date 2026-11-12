@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar/Sidebar';
 import { SystemPulse } from './SystemPulse';
 import { useAppStore } from '../lib/store';
 import { checkHealth } from '../lib/api';
+import { OllamaStatusBanner } from './OllamaStatusBanner';
 
 export function Layout() {
   const sidebarOpen = useAppStore((s) => s.sidebarOpen);
@@ -30,6 +31,7 @@ export function Layout() {
       <SystemPulse apiReachable={apiReachable} />
       <ApprovalBell />
 
+      <OllamaStatusBanner />
       {/* Health check banner */}
       {apiReachable === false && (
         <div

@@ -49,14 +49,45 @@ export default function App() {
     return () => clearInterval(interval);
   }, [importOverlay]);
 
-  // Fetch models on mount
+  // Fetch models on mount and auto-refresh when Ollama comes back online
   useEffect(() => {
-    fetchModels()
-      .then((m) => {
-        setModels(m);
-      })
-      .catch(() => setModels([]))
-      .finally(() => setModelsLoading(false));
+    let active = true;
+    let emptyCount = true;
+    const refreshModels = () => {
+      fetchModels()
+        .then((m) => {
+          if (!active) return;
+          emptyCount = m.length === 0;
+          setModels(m);
+        })
+        .catch(() => {
+          if (!active) return;
+          emptyCount = true;
+          setModels([]);
+        })
+        .finally(() => {
+          if (active) setModelsLoading(false);
+        });
+    };
+    refreshModels();
+    const interval = setInterval(() => {
+      if (emptyCount) refreshModels();
+    }, 10_000);
+    const onOllamaStatus = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ reachable?: boolean }>).detail;
+      if (detail?.reachable && emptyCount) refreshModels();
+    };
+    const onFocus = () => {
+      if (emptyCount) refreshModels();
+    };
+    window.addEventListener('nivos:ollama-status', onOllamaStatus);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      active = false;
+      clearInterval(interval);
+      window.removeEventListener('nivos:ollama-status', onOllamaStatus);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch server info

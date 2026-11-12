@@ -14,6 +14,108 @@ import subprocess
 import time
 import webbrowser
 
+PROTECTED_OLLAMA_PROCESS_NAMES = frozenset({"ollama.exe", "ollama app.exe", "ollama"})
+
+
+def is_protected_ollama_process(pid: int | None) -> bool:
+    """Return True if *pid* belongs to an Ollama process that Nivos must never kill."""
+    if pid is None or pid <= 0:
+        return False
+    try:
+        import psutil
+
+        proc = psutil.Process(pid)
+        candidates: list[str] = []
+        try:
+            name = proc.name()
+            if name:
+                candidates.append(name)
+        except Exception:
+            pass
+        try:
+            exe = proc.exe()
+            if exe:
+                candidates.append(os.path.basename(exe))
+        except Exception:
+            pass
+        try:
+            cmdline = proc.cmdline()
+            if cmdline:
+                candidates.append(os.path.basename(cmdline[0]))
+        except Exception:
+            pass
+        for item in candidates:
+            low = item.strip().lower()
+            if low in PROTECTED_OLLAMA_PROCESS_NAMES:
+                return True
+        return False
+    except Exception as exc:
+        if type(exc).__name__ == "NoSuchProcess":
+            return False
+
+    if platform.system() == "Windows":
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            process_query_limited_information = 0x1000
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+            kernel32.OpenProcess.restype = wintypes.HANDLE
+            kernel32.QueryFullProcessImageNameW.argtypes = [
+                wintypes.HANDLE,
+                wintypes.DWORD,
+                wintypes.LPWSTR,
+                ctypes.POINTER(wintypes.DWORD),
+            ]
+            kernel32.QueryFullProcessImageNameW.restype = wintypes.BOOL
+            kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+            kernel32.CloseHandle.restype = wintypes.BOOL
+
+            handle = kernel32.OpenProcess(process_query_limited_information, False, pid)
+            if handle:
+                try:
+                    buf = ctypes.create_unicode_buffer(1024)
+                    size = wintypes.DWORD(len(buf))
+                    if kernel32.QueryFullProcessImageNameW(handle, 0, buf, ctypes.byref(size)):
+                        if os.path.basename(buf.value).strip().lower() in PROTECTED_OLLAMA_PROCESS_NAMES:
+                            return True
+                finally:
+                    kernel32.CloseHandle(handle)
+        except Exception:
+            pass
+    return False
+
+
+def _process_tree_has_protected_ollama(pid: int) -> bool:
+    """Return True if *pid* or any descendant process is an Ollama process."""
+    if is_protected_ollama_process(pid):
+        return True
+    try:
+        import psutil
+
+        proc = psutil.Process(pid)
+        for child in proc.children(recursive=True):
+            if is_protected_ollama_process(child.pid):
+                return True
+    except Exception:
+        pass
+    return False
+
+
+def _windows_taskkill_safe(pid: int, *, force: bool) -> None:
+    """Terminate *pid* on Windows without ever killing protected Ollama processes."""
+    if is_protected_ollama_process(pid):
+        return
+    args = ["taskkill"]
+    if force:
+        args.append("/F")
+    # Only include /T (process tree kill) when no descendant is an Ollama process.
+    if not _process_tree_has_protected_ollama(pid):
+        args.append("/T")
+    args.extend(["/PID", str(pid)])
+    subprocess.run(args, capture_output=True, check=False)
+
 
 def _windows_process_alive(pid: int) -> bool:
     """Query a Windows process handle without sending it a signal."""
@@ -150,16 +252,14 @@ def terminate_process(pid: int | None, *, grace_seconds: float = 3.0) -> None:
     ``taskkill /F /T`` (force). ``signal.SIGKILL`` does not exist on Windows,
     so it is only referenced inside the POSIX branch.
     """
+    if is_protected_ollama_process(pid):
+        return
     if not process_alive(pid):
         return
     is_windows = platform.system() == "Windows"
 
     if is_windows:
-        subprocess.run(
-            ["taskkill", "/T", "/PID", str(pid)],
-            capture_output=True,
-            check=False,
-        )
+        _windows_taskkill_safe(pid, force=False)
     else:
         try:
             os.kill(pid, signal.SIGTERM)
@@ -173,11 +273,7 @@ def terminate_process(pid: int | None, *, grace_seconds: float = 3.0) -> None:
         time.sleep(0.05)
 
     if is_windows:
-        subprocess.run(
-            ["taskkill", "/F", "/T", "/PID", str(pid)],
-            capture_output=True,
-            check=False,
-        )
+        _windows_taskkill_safe(pid, force=True)
     else:
         try:
             os.kill(pid, signal.SIGKILL)

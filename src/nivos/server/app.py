@@ -274,15 +274,34 @@ def create_app(
             except Exception as exc:
                 logger.debug("Channel connection background task: %s", exc)
 
+        async def _run_ollama_supervisor_loop() -> None:
+            supervisor = getattr(app.state, "ollama_supervisor", None)
+            if supervisor is None:
+                return
+            poll_s = float(getattr(supervisor, "poll_interval_seconds", 10.0) or 10.0)
+            while True:
+                try:
+                    await asyncio.wait_for(asyncio.to_thread(supervisor.check_once), timeout=8.0)
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:
+                    logger.debug("Ollama supervisor loop tick failed: %s", exc)
+                await asyncio.sleep(poll_s)
+
         if not os.environ.get("PYTEST_CURRENT_TEST") or getattr(config, "_run_post_startup_tasks", False):
             post_task = asyncio.create_task(_run_post_startup_tasks())
             app.state._post_startup_task = post_task
+            sup_task = asyncio.create_task(_run_ollama_supervisor_loop())
+            app.state._ollama_supervisor_task = sup_task
 
     @app.on_event("shutdown")
     async def _shutdown_managed_runtime() -> None:
         pst = getattr(app.state, "_post_startup_task", None)
         if pst is not None and not pst.done():
             pst.cancel()
+        ost = getattr(app.state, "_ollama_supervisor_task", None)
+        if ost is not None and not ost.done():
+            ost.cancel()
         # Quiesce every producer before touching the shared MCP pool. Route
         # workers are registered under this lock, so none can slip in after
         # the snapshot. The scheduler has a two-phase stop because closing an
@@ -406,7 +425,12 @@ def create_app(
     except Exception:
         pass  # traces are optional; don't block server startup
 
+    from nivos.server.ollama_supervisor import OllamaSupervisor, router as ollama_supervisor_router
+
+    app.state.ollama_supervisor = OllamaSupervisor(app)
+
     app.include_router(router)
+    app.include_router(ollama_supervisor_router)
     app.include_router(dashboard_router)
     app.include_router(comparison_router)
     app.include_router(create_connectors_router())

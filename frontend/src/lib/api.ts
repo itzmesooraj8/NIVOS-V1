@@ -1113,6 +1113,68 @@ export async function fetchOllamaModels(): Promise<Array<{ name: string; size: n
   }
 }
 
+export interface OllamaSupervisorStatus {
+  reachable: boolean | null;
+  restarting: boolean;
+  banner: string | null;
+  stopped_at: string | null;
+  version: string | null;
+  models: string[];
+  model_count: number;
+  last_error: string | null;
+  events?: Array<{
+    timestamp: number;
+    time: string;
+    kind: string;
+    message: string;
+    reason: string;
+  }>;
+}
+
+export async function fetchOllamaStatus(): Promise<OllamaSupervisorStatus | null> {
+  try {
+    const res = await apiFetch('/v1/engine/ollama/status');
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function triggerOllamaCheck(): Promise<OllamaSupervisorStatus | null> {
+  try {
+    const res = await apiFetch('/v1/engine/ollama/check', { method: 'POST' });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export interface DiagnosticsReport {
+  generated_at: string;
+  nivos_version: string;
+  ollama: {
+    processes: string[];
+    reachable: boolean;
+    host: string;
+    version: string | null;
+    models: string[];
+    error: string | null;
+  };
+  system: {
+    disk: string;
+    memory: string;
+  };
+  report: string;
+}
+
+export async function fetchDiagnostics(): Promise<DiagnosticsReport> {
+  const res = await apiFetch('/v1/diagnostics');
+  if (!res.ok) throw new Error(`Failed to collect diagnostics: ${res.status}`);
+  return await res.json();
+}
+
 // ---------------------------------------------------------------------------
 // Memory
 // ---------------------------------------------------------------------------

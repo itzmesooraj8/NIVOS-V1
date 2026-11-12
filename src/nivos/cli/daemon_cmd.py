@@ -152,6 +152,10 @@ def _legacy_linux_daemon(pid: int) -> bool | None:
 
 def _registered_pid_alive(pid: int) -> bool:
     """Reject reused Linux PIDs without comparing mutable wall-clock times."""
+    from nivos.core.utils import is_protected_ollama_process
+
+    if is_protected_ollama_process(pid):
+        return False
     if not _pid_alive(pid):
         return False
     if sys.platform != "linux":

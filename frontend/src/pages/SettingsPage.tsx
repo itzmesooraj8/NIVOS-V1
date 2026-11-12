@@ -25,6 +25,7 @@ import {
   Terminal,
   Volume2,
   Square,
+  Copy,
 } from 'lucide-react';
 import { useAppStore, type ThemeMode } from '../lib/store';
 import {
@@ -47,6 +48,9 @@ import {
   deleteToolCredential,
   isTauri,
   fetchOllamaModels,
+  fetchModels,
+  fetchServerInfo,
+  fetchDiagnostics,
   fetchMcpServers,
   addMcpServer,
   deleteMcpServer,
@@ -92,12 +96,122 @@ import { SelfDevReviewSection } from '../components/SelfDevReviewSection';
 
 const CLOUD_KEY_STATUS_CHANGED = 'nivos-cloud-key-status-changed';
 
-function OllamaModelList() {
+export function DiagnosticsButton() {
+  const [status, setStatus] = useState<'idle' | 'loading' | 'copied' | 'error'>('idle');
+
+  const handleCopyDiagnostics = async () => {
+    setStatus('loading');
+    try {
+      const data = await fetchDiagnostics();
+      const text = data.report || '';
+      let copied = false;
+      if (navigator?.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(text);
+          copied = true;
+        } catch {
+          copied = false;
+        }
+      }
+      if (!copied && typeof document !== 'undefined') {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          copied = document.execCommand('copy');
+        } finally {
+          document.body.removeChild(ta);
+        }
+      }
+      if (copied) {
+        setStatus('copied');
+        toast.success('Diagnostics copied (no secrets included)');
+        setTimeout(() => setStatus('idle'), 2500);
+      } else {
+        setStatus('error');
+        toast.error('Unable to access clipboard');
+        setTimeout(() => setStatus('idle'), 2500);
+      }
+    } catch {
+      setStatus('error');
+      toast.error('Failed to collect diagnostics');
+      setTimeout(() => setStatus('idle'), 2500);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        void handleCopyDiagnostics();
+      }}
+      disabled={status === 'loading'}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+      style={{
+        background: status === 'copied' ? 'var(--color-accent-subtle)' : 'var(--color-bg-tertiary)',
+        border: '1px solid var(--color-border)',
+        color: status === 'copied' ? 'var(--color-success)' : 'var(--color-text)',
+      }}
+    >
+      {status === 'copied' ? <Check size={12} /> : <Copy size={12} />}
+      {status === 'loading'
+        ? 'Collecting...'
+        : status === 'copied'
+          ? 'Copied'
+          : status === 'error'
+            ? 'Failed'
+            : 'Diagnostics'}
+    </button>
+  );
+}
+
+export function OllamaModelList() {
   const [models, setModels] = useState<Array<{ name: string; size: number }>>([]);
   useEffect(() => {
-    fetchOllamaModels()
-      .then(setModels)
-      .catch(() => setModels([]));
+    let active = true;
+    const refresh = async () => {
+      try {
+        const next = await fetchOllamaModels();
+        if (!active) return;
+        setModels(next);
+        if (next.length > 0) {
+          fetchModels()
+            .then((all) => {
+              if (active && all.length > 0) useAppStore.getState().setModels(all);
+            })
+            .catch(() => {});
+          fetchServerInfo()
+            .then((info) => {
+              if (active) useAppStore.getState().setServerInfo(info);
+            })
+            .catch(() => {});
+        }
+      } catch {
+        if (active) setModels([]);
+      }
+    };
+    void refresh();
+    const interval = setInterval(() => {
+      void refresh();
+    }, 8_000);
+    const onStatus = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ reachable?: boolean }>).detail;
+      if (detail?.reachable) void refresh();
+    };
+    const onFocus = () => {
+      void refresh();
+    };
+    window.addEventListener('nivos:ollama-status', onStatus);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      active = false;
+      clearInterval(interval);
+      window.removeEventListener('nivos:ollama-status', onStatus);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
   if (models.length === 0) return <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>No models loaded</span>;
   return (
@@ -2265,6 +2379,12 @@ export function SettingsPage() {
                   {healthy === true ? 'Connected' : healthy === false ? 'Disconnected' : 'Checking...'}
                 </span>
               </div>
+            </SettingRow>
+            <SettingRow
+              label="Diagnostics"
+              description="Copy a short status report (Ollama process, reachability, version, logs, disk, memory, Nivos version) with no secrets"
+            >
+              <DiagnosticsButton />
             </SettingRow>
             <SettingRow label="API URL" description="Set if backend runs on a different port or host">
               <input

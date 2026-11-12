@@ -424,9 +424,11 @@ def _clean_stale_nivos_processes_and_locks(port: int) -> list[str]:
     # 1. Check port occupant
     occ = _find_port_occupant(port)
     if occ:
+        from nivos.core.utils import is_protected_ollama_process
+
         cmdline = occ.get("cmdline", "").lower()
         pname = occ.get("name", "").lower()
-        if "nivos" in cmdline or "nivos" in pname:
+        if ("nivos" in cmdline or "nivos" in pname) and not is_protected_ollama_process(occ["pid"]):
             try:
                 import psutil
                 p = psutil.Process(occ["pid"])
