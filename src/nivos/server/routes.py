@@ -349,9 +349,28 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
     model = selected_model
     request_body.model = model
 
-    # If the fast tier is chosen, omit tool descriptions to save prompt tokens
-    if not should_send_tools and request_body.tools:
+    # Tool filtering (Prompt Diet):
+    # If fast tier is chosen or no tools needed, omit all tool descriptions.
+    # If tool-capable tier is chosen, send ONLY the tools relevant to the user query.
+    if not should_send_tools:
         request_body.tools = None
+    elif request_body.tools:
+        from nivos.server.tier_router import filter_relevant_tools
+
+        avail_names = [
+            t.get("function", {}).get("name", "")
+            for t in request_body.tools
+            if isinstance(t, dict) and "function" in t
+        ]
+        relevant = filter_relevant_tools(user_query, available_tools=avail_names)
+        if relevant:
+            request_body.tools = [
+                t
+                for t in request_body.tools
+                if isinstance(t, dict) and t.get("function", {}).get("name") in relevant
+            ]
+        else:
+            request_body.tools = None
 
     fast_m = getattr(getattr(config, "routing", None), "fast", "qwen3.5:2b")
     main_m = getattr(getattr(config, "routing", None), "main", "qwen3.5:4b")

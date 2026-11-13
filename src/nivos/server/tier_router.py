@@ -84,7 +84,7 @@ _VAULT_SEARCH_PATTERN = re.compile(
 )
 
 _VAULT_INBOX_PATTERN = re.compile(
-    r"\b(save_to_inbox|save\s+to\s+inbox|add\s+to\s+inbox|inbox\s+note|new\s+vault\s+note)\b",
+    r"\b(save_to_inbox|save\s+to\s+inbox|add\s+to\s+inbox|inbox\s+note|new\s+vault\s+note|save\s+note\b.*?\binbox|take\s+a\s+note|save\s+note)\b",
     re.IGNORECASE,
 )
 
@@ -157,9 +157,16 @@ def filter_relevant_tools(
     if _FILE_READ_PATTERN.search(clean_query):
         needed.append("file_read")
 
-    # File write
+    # Vault inbox
+    is_inbox = bool(_VAULT_INBOX_PATTERN.search(clean_query))
+    if is_inbox:
+        needed.append("save_to_inbox")
+
+    # File write (only if not an inbox note saving query, or if explicit file keywords exist)
     if _FILE_WRITE_PATTERN.search(clean_query):
-        needed.append("file_write")
+        has_file_kw = any(k in clean_query.lower() for k in ["workspace", ".txt", ".json", ".py", "directory", "folder", "script"])
+        if not is_inbox or has_file_kw:
+            needed.append("file_write")
 
     # Shell: strictly forbid for scheduled task queries unless explicit shell command keywords are used
     if _SHELL_PATTERN.search(clean_query):
@@ -185,9 +192,6 @@ def filter_relevant_tools(
     if _VAULT_SEARCH_PATTERN.search(clean_query):
         needed.append("search_vault")
 
-    # Vault inbox
-    if _VAULT_INBOX_PATTERN.search(clean_query):
-        needed.append("save_to_inbox")
 
     # Open app
     if _OPEN_APP_PATTERN.search(clean_query):
