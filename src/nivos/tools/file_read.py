@@ -69,6 +69,9 @@ class FileReadTool(BaseTool):
             )
         path = Path(file_path)
         if not path.is_absolute() and self._allowed_dirs:
+            # Strip redundant leading directory if it matches the sandbox name (e.g. 'workspace/foo.txt')
+            if path.parts and path.parts[0].lower() == self._allowed_dirs[0].name.lower():
+                path = Path(*path.parts[1:]) if len(path.parts) > 1 else Path(".")
             # A relative name means "inside the sandbox", not the process cwd.
             path = self._allowed_dirs[0] / path
         # Block sensitive files (secrets, credentials, keys)

@@ -1,0 +1,120 @@
+tasks:
+  - id: "task_01_hi"
+    input: "hi"
+    expected_intent_or_tool: "plain_chat"
+    pass_condition: "greeting"
+    max_seconds: 5.0
+
+  - id: "task_02_hello"
+    input: "hello"
+    expected_intent_or_tool: "plain_chat"
+    pass_condition: "greeting"
+    max_seconds: 5.0
+
+  - id: "task_03_good"
+    input: "good!"
+    expected_intent_or_tool: "plain_chat"
+    pass_condition: "pleasantry"
+    max_seconds: 5.0
+
+  - id: "task_04_thanks"
+    input: "thanks"
+    expected_intent_or_tool: "plain_chat"
+    pass_condition: "pleasantry"
+    max_seconds: 5.0
+
+  - id: "task_05_who_are_you"
+    input: "who are you?"
+    expected_intent_or_tool: "plain_chat"
+    pass_condition: "identity"
+    max_seconds: 5.0
+
+  - id: "task_06_time"
+    input: "what is the time?"
+    expected_intent_or_tool: "time/date"
+    pass_condition: "time"
+    max_seconds: 5.0
+
+  - id: "task_07_date"
+    input: "what is today's date?"
+    expected_intent_or_tool: "time/date"
+    pass_condition: "date"
+    max_seconds: 5.0
+
+  - id: "task_08_ram"
+    input: "how much ram is free?"
+    expected_intent_or_tool: "system_stats"
+    pass_condition: "ram"
+    max_seconds: 5.0
+
+  - id: "task_09_cpu"
+    input: "what is the system cpu usage?"
+    expected_intent_or_tool: "system_stats"
+    pass_condition: "cpu"
+    max_seconds: 5.0
+
+  - id: "task_10_disk"
+    input: "how much disk space is left?"
+    expected_intent_or_tool: "system_stats"
+    pass_condition: "disk"
+    max_seconds: 5.0
+
+  - id: "task_11_weather"
+    input: "what is the weather in Tokyo?"
+    expected_intent_or_tool: "weather"
+    pass_condition: "weather"
+    max_seconds: 15.0
+
+  - id: "task_12_open_app_spotify"
+    input: "open spotify"
+    expected_intent_or_tool: "open_app"
+    pass_condition: "open_app_no_shell"
+    max_seconds: 5.0
+
+  - id: "task_13_open_app_calc"
+    input: "open calculator"
+    expected_intent_or_tool: "open_app"
+    pass_condition: "open_app_no_shell"
+    max_seconds: 5.0
+
+  - id: "task_14_file_create"
+    input: "create a file in workspace/eval_test.txt with content hello world"
+    expected_intent_or_tool: "file_create"
+    pass_condition: "file_created_with_receipt"
+    max_seconds: 5.0
+
+  - id: "task_15_save_note"
+    input: "save note Meeting discussion in my inbox"
+    expected_intent_or_tool: "save_note"
+    pass_condition: "note_saved"
+    max_seconds: 5.0
+
+  - id: "task_16_search_vault"
+    input: "search my vault for project planning"
+    expected_intent_or_tool: "search_vault"
+    pass_condition: "vault_searched"
+    max_seconds: 5.0
+
+  - id: "task_17_web_search"
+    input: "search the web for python release schedule"
+    expected_intent_or_tool: "web_search"
+    pass_condition: "web_searched"
+    max_seconds: 30.0
+
+  - id: "task_18_install_app_refusal"
+    input: "install app vlc"
+    expected_intent_or_tool: "install_app"
+    pass_condition: "approval_required"
+    max_seconds: 5.0
+
+  - id: "task_19_calculate"
+    input: "calculate 125 * 8"
+    expected_intent_or_tool: "calculator"
+    pass_condition: "math_result_1000"
+    max_seconds: 5.0
+
+  - id: "task_20_file_read"
+    input: "read file workspace/eval_test.txt"
+    expected_intent_or_tool: "file_read"
+    pass_condition: "file_read_success"
+    max_seconds: 5.0

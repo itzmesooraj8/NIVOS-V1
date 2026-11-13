@@ -65,7 +65,7 @@ _SAVE_NOTE_PATTERN = re.compile(
 )
 
 _SEARCH_VAULT_PATTERN = re.compile(
-    r"^(?:search\s+(?:the\s+)?vault|search\s+(?:my\s+)?notes|find\s+in\s+vault|find\s+in\s+notes)\s*(?:for\s+)?(.+)$",
+    r"^(?:search\s+(?:the\s+|my\s+)?vault|search\s+(?:the\s+|my\s+)?notes|find\s+in\s+(?:the\s+|my\s+)?vault|find\s+in\s+(?:the\s+|my\s+)?notes)\s*(?:for\s+)?(.+)$",
     re.IGNORECASE,
 )
 
@@ -75,7 +75,17 @@ _WEB_SEARCH_PATTERN = re.compile(
 )
 
 _FILE_CREATE_PATTERN = re.compile(
-    r"\b(?:create|write|make)\s+(?:a\s+)?(?:text\s+)?file\s+(?:in\s+)?([A-Za-z0-9_\-\.\/\\\:]+)(?:\s+with\s+(.+))?",
+    r"\b(?:create|write|make)\s+(?:a\s+)?(?:text\s+)?file\s+(?:in\s+)?([A-Za-z0-9_\-\.\/\\\:]+)(?:\s+with\s+(?:content\s+)?(.+))?",
+    re.IGNORECASE,
+)
+
+_CALCULATOR_PATTERN = re.compile(
+    r"^(?:calculate|calc|compute)\s+(.+)$",
+    re.IGNORECASE,
+)
+
+_FILE_READ_PATTERN = re.compile(
+    r"^(?:read|view|show|cat)\s+(?:the\s+)?file\s+([A-Za-z0-9_\-\.\/\\\:]+)$",
     re.IGNORECASE,
 )
 
@@ -162,6 +172,18 @@ def classify_intent(query: str) -> Optional[IntentMatch]:
     if web_match:
         sq = web_match.group(1).strip()
         return IntentMatch(intent="web_search", params={"query": sq})
+
+    # 11. Calculator
+    calc_match = _CALCULATOR_PATTERN.match(cleaned)
+    if calc_match:
+        expr = calc_match.group(1).strip()
+        return IntentMatch(intent="calculator", params={"expression": expr})
+
+    # 12. File read
+    file_read_match = _FILE_READ_PATTERN.match(cleaned)
+    if file_read_match:
+        fpath = file_read_match.group(1).strip().strip("'\"")
+        return IntentMatch(intent="file_read", params={"path": fpath})
 
     return None
 
@@ -349,12 +371,22 @@ def execute_intent(
     # 9. Install app
     elif intent == "install_app":
         tool_name = "install_app"
-        app_name = params.get("app", "")
+        app_name = params.get("app", "").strip()
+        common_pkgs = {
+            "vlc": "VideoLAN.VLC",
+            "spotify": "Spotify.Spotify",
+            "git": "Git.Git",
+            "chrome": "Google.Chrome",
+            "firefox": "Mozilla.Firefox",
+            "vscode": "Microsoft.VisualStudioCode",
+            "7zip": "7zip.7zip",
+        }
+        pkg_id = common_pkgs.get(app_name.lower(), app_name)
         try:
             from nivos.tools.install_app import InstallAppTool
 
             tool = InstallAppTool()
-            res = tool.execute(app=app_name, origin="local_chat")
+            res = tool.execute(package_id=pkg_id, app=pkg_id, origin="local_chat")
             tool_success = bool(res.success)
             reply_text = res.content
         except Exception as exc:
@@ -375,6 +407,38 @@ def execute_intent(
         except Exception as exc:
             tool_success = False
             reply_text = f"Web search failed: {exc}"
+
+    # 11. Calculator
+    elif intent == "calculator":
+        tool_name = "calculator"
+        expr = params.get("expression", "")
+        try:
+            from nivos.tools.calculator import CalculatorTool
+
+            tool = CalculatorTool()
+            res = tool.execute(expression=expr)
+            tool_success = bool(res.success)
+            reply_text = f"The result of {expr} is {res.content}."
+        except Exception as exc:
+            tool_success = False
+            reply_text = f"Calculation failed: {exc}"
+
+    # 12. File read
+    elif intent == "file_read":
+        tool_name = "file_read"
+        fpath = params.get("path", "")
+        try:
+            from nivos.tools.file_read import FileReadTool
+
+            ws_dir = get_workspace_dir()
+            cfg_dir = get_workspace_dir().parent
+            tool = FileReadTool(allowed_dirs=[str(ws_dir), str(cfg_dir), "."])
+            res = tool.execute(path=fpath)
+            tool_success = bool(res.success)
+            reply_text = res.content
+        except Exception as exc:
+            tool_success = False
+            reply_text = f"File read failed: {exc}"
 
     # Log to Activity (TraceStore)
     if trace_store is not None:
