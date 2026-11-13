@@ -89,6 +89,21 @@ _FILE_READ_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Heavy job intent: big code generation (e.g. "build a 3D page with shaders"), long reasoning, long documents
+_HEAVY_JOB_PATTERN = re.compile(
+    r"\b(?:build|create|write|develop|generate|code|implement)\b.*\b(?:3d\s+page|shaders?|webgl|three\.?js|ray\s*tracer|neural\s*net|full\s*stack|complete\s*(?:application|app|game|engine)|compiler)\b|"
+    r"\b(?:long\s+reasoning|deep\s+reasoning|mathematical\s+proof|step-by-step\s+(?:proof|derivation)|complex\s+logic\s+puzzle|causal\s+analysis)\b|"
+    r"\b(?:write|draft|generate)\b.*\b(?:comprehensive\s+report|multi-chapter|exhaustive\s+doc(?:umentation)?|whitepaper|\d{3,4}\s*words?\s*(?:essay|article|report)|detailed\s+research\s+paper|dissertation|long\s+document)\b|"
+    r"\b(?:heavy\s+job|heavy\s+task)\b",
+    re.IGNORECASE,
+)
+
+# User responses to cloud prompts
+_CLOUD_APPROVAL_ONCE = re.compile(r"^\s*(?:allow\s+once|approve\s+once|allow|proceed\s+with\s+cloud|send\s+to\s+cloud)\s*$", re.IGNORECASE)
+_CLOUD_APPROVAL_ALWAYS = re.compile(r"^\s*(?:allow\s+always(?:\s+for\s+this\s+provider)?|always\s+allow(?:\s+for\s+this\s+provider)?)\s*$", re.IGNORECASE)
+_CLOUD_APPROVAL_CANCEL = re.compile(r"^\s*(?:cancel|deny|reject|abort|don't\s+send|do\s+not\s+send)\s*$", re.IGNORECASE)
+_RUN_LOCALLY = re.compile(r"^\s*(?:run\s+locally(?:\s+on\s+(?:the\s+)?deep\s+tier)?|run\s+on\s+local|run\s+locally|run\s+on\s+deep\s+tier)\s*$", re.IGNORECASE)
+
 
 @dataclass
 class IntentMatch:
@@ -106,10 +121,20 @@ class IntentExecutionResult:
 
 
 def classify_intent(query: str) -> Optional[IntentMatch]:
-    """Classify user query into one of the 10 deterministic intents, or return None."""
+    """Classify user query into one of the deterministic intents, or return None."""
     if not query or not query.strip():
         return None
     cleaned = query.strip()
+
+    # 0. User responses to cloud prompts
+    if _CLOUD_APPROVAL_ONCE.match(cleaned):
+        return IntentMatch(intent="cloud_approval_once", params={"query": cleaned})
+    if _CLOUD_APPROVAL_ALWAYS.match(cleaned):
+        return IntentMatch(intent="cloud_approval_always", params={"query": cleaned})
+    if _CLOUD_APPROVAL_CANCEL.match(cleaned):
+        return IntentMatch(intent="cloud_approval_cancel", params={"query": cleaned})
+    if _RUN_LOCALLY.match(cleaned):
+        return IntentMatch(intent="run_locally", params={"query": cleaned})
 
     # 1. Plain chat (greetings / pleasantries — NO search, NO tools)
     if _PLAIN_CHAT_EXACT.match(cleaned):
@@ -184,6 +209,10 @@ def classify_intent(query: str) -> Optional[IntentMatch]:
     if file_read_match:
         fpath = file_read_match.group(1).strip().strip("'\"")
         return IntentMatch(intent="file_read", params={"path": fpath})
+
+    # 13. Heavy job intent (big code gen, 3D/shaders, long reasoning, long documents)
+    if _HEAVY_JOB_PATTERN.search(cleaned):
+        return IntentMatch(intent="heavy_job", params={"query": cleaned})
 
     return None
 
@@ -440,26 +469,152 @@ def execute_intent(
             tool_success = False
             reply_text = f"File read failed: {exc}"
 
+    # 13. Heavy job intent
+    elif intent == "heavy_job":
+        from nivos.server.cloud_router import (
+            get_available_cloud_provider,
+            is_provider_always_allowed,
+        )
+
+        tool_name = "cloud_router"
+        provider_info = get_available_cloud_provider()
+        if not provider_info:
+            reply_text = (
+                "No cloud API key is configured in Settings > Cloud keys. "
+                "This is a heavy job (big code generation / long reasoning / long document) "
+                "that can run locally on your deep tier (qwen3.5:9b), but please note that local execution will be slow on CPU.\n\n"
+                "Options:\n"
+                "• Type 'run locally' to proceed on the deep tier (qwen3.5:9b)\n"
+                "• Add a free Gemini API key in Settings > Cloud keys for fast cloud processing"
+            )
+            metadata.update({
+                "needs_key": True,
+                "cloud_key_set": False,
+                "recommended_local_tier": "deep (qwen3.5:9b)",
+                "data_left_device": False,
+                "engine": "local_advisory",
+            })
+        else:
+            prov_id, prov_name, default_model = provider_info
+            if is_provider_always_allowed(prov_id):
+                reply_text = f"Routing heavy job to {prov_name} ({default_model}). Always-allow permission active."
+                metadata.update({
+                    "approved": True,
+                    "provider": prov_name,
+                    "provider_id": prov_id,
+                    "model": default_model,
+                    "data_left_device": True,
+                    "engine": prov_name,
+                })
+            else:
+                reply_text = (
+                    f"This will send your message to {prov_name}. Continue?\n\n"
+                    f"• Allow once\n"
+                    f"• Allow always for this provider\n"
+                    f"• Cancel"
+                )
+                metadata.update({
+                    "needs_approval": True,
+                    "provider": prov_name,
+                    "provider_id": prov_id,
+                    "default_model": default_model,
+                    "data_left_device": False,
+                    "engine": "approval_prompt",
+                })
+
+    # 14. Cloud approval: Allow once
+    elif intent == "cloud_approval_once":
+        from nivos.server.cloud_router import get_available_cloud_provider
+
+        tool_name = "cloud_router"
+        provider_info = get_available_cloud_provider()
+        prov_name = provider_info[1] if provider_info else "the cloud provider"
+        default_model = provider_info[2] if provider_info else "cloud-model"
+        reply_text = f"Confirmed. Sending your request to {prov_name} ({default_model}) (Allow once)."
+        metadata.update({
+            "action": "allow_once",
+            "provider": prov_name,
+            "model": default_model,
+            "data_left_device": True,
+            "engine": prov_name,
+        })
+
+    # 15. Cloud approval: Allow always
+    elif intent == "cloud_approval_always":
+        from nivos.server.cloud_router import (
+            get_available_cloud_provider,
+            set_provider_always_allowed,
+        )
+
+        tool_name = "cloud_router"
+        provider_info = get_available_cloud_provider()
+        prov_id = provider_info[0] if provider_info else "google"
+        prov_name = provider_info[1] if provider_info else "Google Gemini"
+        default_model = provider_info[2] if provider_info else "gemini-2.5-flash"
+        set_provider_always_allowed(prov_id)
+        reply_text = f"Confirmed. {prov_name} has been set to 'Allow always' for heavy jobs. Proceeding with your request."
+        metadata.update({
+            "action": "allow_always",
+            "provider": prov_name,
+            "model": default_model,
+            "data_left_device": True,
+            "engine": prov_name,
+        })
+
+    # 16. Cloud approval: Cancel
+    elif intent == "cloud_approval_cancel":
+        tool_name = "cloud_router"
+        reply_text = "Cancelled cloud request. Your message was not sent to the cloud. You can continue chatting locally."
+        metadata.update({
+            "action": "cancel",
+            "data_left_device": False,
+            "engine": "intent_router",
+        })
+
+    # 17. Run locally on deep tier
+    elif intent == "run_locally":
+        tool_name = "local_model"
+        reply_text = "Routing to local deep tier (qwen3.5:9b). Processing locally on your device..."
+        metadata.update({
+            "action": "run_locally",
+            "tier": "deep (qwen3.5:9b)",
+            "model": "qwen3.5:9b",
+            "data_left_device": False,
+            "engine": "ollama",
+        })
+
     # Log to Activity (TraceStore)
     if trace_store is not None:
         try:
             import uuid
 
             ts = time.time()
+            data_left = bool(metadata.get("data_left_device", False))
+            engine_val = str(metadata.get("engine", "code"))
+            model_val = str(metadata.get("model", "code-intent"))
             trace = Trace(
                 trace_id=f"intent-{uuid.uuid4().hex[:12]}",
                 query=user_query or match.intent,
                 agent="intent-router",
-                model="code-intent",
-                engine="code",
+                model=model_val,
+                engine=engine_val,
                 steps=[
                     TraceStep(
                         step_type=StepType.ROUTE,
                         timestamp=ts,
                         duration_seconds=0.01,
                         input={"intent": intent, "tool": tool_name},
-                        output={"result": reply_text[:400]},
-                        metadata={"matched_intent": intent},
+                        output={
+                            "result": reply_text[:400],
+                            "engine": engine_val,
+                            "data_left_device": data_left,
+                        },
+                        metadata={
+                            "matched_intent": intent,
+                            "engine": engine_val,
+                            "data_left_device": data_left,
+                            "model": model_val,
+                        },
                     )
                 ],
                 result=reply_text[:500],
@@ -467,7 +622,13 @@ def execute_intent(
                 started_at=ts,
                 ended_at=ts,
                 total_latency_seconds=0.01,
-                metadata={"intent": intent, "tool": tool_name or "none"},
+                metadata={
+                    "intent": intent,
+                    "tool": tool_name or "none",
+                    "engine": engine_val,
+                    "data_left_device": data_left,
+                    "model": model_val,
+                },
             )
             trace_store.save(trace)
         except Exception as exc:

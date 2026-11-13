@@ -22,6 +22,7 @@ from nivos.core.types import Message
 # ---------------------------------------------------------------------------
 
 _CLOUD_ENV_FILE = get_config_dir() / "cloud-keys.env"
+_APPROVALS_FILE = get_config_dir() / "cloud_approvals.json"
 
 _OPENAI_PREFIXES = ("gpt-", "o1-", "o3-", "o4-", "chatgpt-")
 _ANTHROPIC_PREFIXES = ("claude-",)
@@ -65,6 +66,99 @@ def _load_keys() -> dict[str, str]:
         if val:
             keys[name] = val
     return keys
+
+
+def get_available_cloud_provider() -> tuple[str, str, str] | None:
+    """Return the preferred available cloud provider, its display name, and default model.
+
+    Priority:
+      1. Google Gemini (free tier first): gemini-2.5-flash
+      2. OpenAI: gpt-4o
+      3. Anthropic: claude-sonnet-4-20250514
+      4. OpenRouter: openrouter/auto
+      5. Atlas Cloud: atlascloud/openai/gpt-4.1-mini
+      6. MiniMax: MiniMax-M2.5
+    """
+    keys = _load_keys()
+    if keys.get("GEMINI_API_KEY") or keys.get("GOOGLE_API_KEY"):
+        return ("google", "Google Gemini", "gemini-2.5-flash")
+    if keys.get("OPENAI_API_KEY"):
+        return ("openai", "OpenAI", "gpt-4o")
+    if keys.get("ANTHROPIC_API_KEY"):
+        return ("anthropic", "Anthropic", "claude-sonnet-4-20250514")
+    if keys.get("OPENROUTER_API_KEY"):
+        return ("openrouter", "OpenRouter", "openrouter/auto")
+    if keys.get("ATLASCLOUD_API_KEY"):
+        return ("atlascloud", "Atlas Cloud", "atlascloud/openai/gpt-4.1-mini")
+    if keys.get("MINIMAX_API_KEY"):
+        return ("minimax", "MiniMax", "MiniMax-M2.5")
+    return None
+
+
+def is_provider_always_allowed(provider_id: str) -> bool:
+    """Check if the user has chosen 'Allow always' for this cloud provider."""
+    if not _APPROVALS_FILE.exists():
+        return False
+    try:
+        data = json.loads(_APPROVALS_FILE.read_text(encoding="utf-8"))
+        return provider_id.lower() in [p.lower() for p in data.get("always_allowed", [])]
+    except Exception:
+        return False
+
+
+def set_provider_always_allowed(provider_id: str) -> None:
+    """Record that the user chose 'Allow always' for this cloud provider."""
+    data = {}
+    config_dir = get_config_dir()
+    config_dir.mkdir(parents=True, exist_ok=True)
+    if _APPROVALS_FILE.exists():
+        try:
+            data = json.loads(_APPROVALS_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            data = {}
+    allowed = set(data.get("always_allowed", []))
+    allowed.add(provider_id.lower())
+    data["always_allowed"] = sorted(list(allowed))
+    _APPROVALS_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def clear_provider_approvals() -> None:
+    """Clear all saved provider approvals (useful for testing or resetting)."""
+    if _APPROVALS_FILE.exists():
+        try:
+            _APPROVALS_FILE.unlink()
+        except Exception:
+            pass
+
+
+def sanitize_messages_for_cloud(messages: Sequence[Message]) -> list[Message]:
+    """Sanitize message history to NEVER leak vault notes or me.md to the cloud."""
+    sanitized: list[Message] = []
+    for m in messages:
+        content = m.content or ""
+        role = m.role.value if hasattr(m.role, "value") else str(m.role)
+
+        # Check for me.md or vault note injections
+        lower_c = content.lower()
+        if "me.md" in lower_c or "nivos-memory" in lower_c or "obsidian" in lower_c or "vault note" in lower_c:
+            lines = content.splitlines()
+            cleaned_lines = []
+            skip = False
+            for line in lines:
+                l_lower = line.lower()
+                if "## user profile" in l_lower or "me.md" in l_lower or "obsidian:" in l_lower or "[vault note" in l_lower:
+                    skip = True
+                    continue
+                if skip and line.startswith("#"):
+                    skip = False
+                if not skip:
+                    cleaned_lines.append(line)
+            content = "\n".join(cleaned_lines).strip()
+            if not content and role == "system":
+                continue
+
+        sanitized.append(Message(role=role, content=content))
+    return sanitized
 
 
 def get_provider(model: str) -> str | None:
@@ -445,3 +539,32 @@ async def stream_cloud(
 
     else:
         raise ValueError(f"Unknown cloud provider for model: {model!r}")
+
+
+async def stream_cloud_with_fallback(
+    model: str,
+    messages: Sequence[Message],
+    temperature: float = 0.7,
+    max_tokens: int = 1024,
+    fallback_local_model: str = "qwen3.5:9b",
+) -> AsyncIterator[str]:
+    """Stream from a cloud provider, handling 429 rate limit errors with a plain warning and local fallback."""
+    provider = get_provider(model)
+    prov_name = "Google Gemini" if provider == "google" else (provider.capitalize() if provider else "Cloud")
+    safe_msgs = sanitize_messages_for_cloud(messages)
+
+    try:
+        async for token in stream_cloud(model, safe_msgs, temperature, max_tokens):
+            yield token
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code == 429:
+            notice = (
+                f"Rate limit error (429: Too Many Requests) received from {prov_name}.\n"
+                f"Falling back to local model ({fallback_local_model}) on your computer...\n\n"
+            )
+            yield notice
+            async for token in stream_local(fallback_local_model, safe_msgs, temperature, max_tokens):
+                yield token
+        else:
+            raise
+

@@ -675,15 +675,34 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
     # event loop and every other concurrent request with it.
     try:
         if provider and not request_body.tools:
-            messages = _to_messages(request_body.messages)
+            from nivos.server.cloud_router import sanitize_messages_for_cloud, stream_local
+            messages = sanitize_messages_for_cloud(_to_messages(request_body.messages))
             tokens = []
-            async for token in stream_cloud(
-                model,
-                messages,
-                temperature=request_body.temperature,
-                max_tokens=request_body.max_tokens,
-            ):
-                tokens.append(token)
+            try:
+                async for token in stream_cloud(
+                    model,
+                    messages,
+                    temperature=request_body.temperature,
+                    max_tokens=request_body.max_tokens,
+                ):
+                    tokens.append(token)
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code == 429:
+                    prov_label = "Google Gemini" if provider == "google" else (provider.capitalize() if provider else "Cloud")
+                    tokens = [
+                        f"Rate limit error (429: Too Many Requests) received from {prov_label}.\n"
+                        f"Falling back to local model (qwen3.5:9b) on your computer...\n\n"
+                    ]
+                    async for token in stream_local(
+                        "qwen3.5:9b",
+                        messages,
+                        temperature=request_body.temperature,
+                        max_tokens=request_body.max_tokens,
+                    ):
+                        tokens.append(token)
+                    model = "qwen3.5:9b"
+                else:
+                    raise
             content = "".join(tokens)
             response = ChatCompletionResponse(
                 model=model,
@@ -1419,7 +1438,10 @@ async def _handle_stream(
             # confusion), which is detected by checking the routed engine's
             # is_cloud attribute.
             if use_cloud:
-                token_iter = stream_cloud(
+                from nivos.server.cloud_router import sanitize_messages_for_cloud, stream_cloud_with_fallback
+
+                messages = sanitize_messages_for_cloud(messages)
+                token_iter = stream_cloud_with_fallback(
                     model, messages, req.temperature, req.max_tokens
                 )
             else:
@@ -1495,12 +1517,15 @@ async def _handle_stream(
         if trace_store is not None and full_content:
             from nivos.traces.collector import record_response_trace
 
+            telemetry_eng = actual_telemetry_engine
+            if "Rate limit error (429" in full_content:
+                telemetry_eng = "ollama"
             record_response_trace(
                 trace_store,
                 query=query_text,
                 result=full_content,
                 model=model,
-                engine=actual_telemetry_engine,
+                engine=telemetry_eng,
                 started_at=started_at,
                 ended_at=time.time(),
             )

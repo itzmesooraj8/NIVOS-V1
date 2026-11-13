@@ -41,6 +41,9 @@ interface TraceSummary {
   duration_ms?: number;
   steps: TraceStep[];
   created_at: string;
+  engine?: string;
+  model?: string;
+  metadata?: Record<string, unknown>;
 }
 
 function getStepDurationMs(step: TraceStep): number {
@@ -62,6 +65,16 @@ function formatDuration(ms: number): string {
 function getStepDetails(step: TraceStep): { title: string; subtitle?: string; icon: typeof Sparkles } {
   const type = step.step_type?.toLowerCase() || '';
   const data = step.data || {};
+  const dataLeft = Boolean(data.data_left_device || (step.metadata as any)?.data_left_device || (step.output as any)?.data_left_device);
+  const stepEngine = (data.engine || (step.metadata as any)?.engine || (step.output as any)?.engine || '') as string;
+  if (dataLeft) {
+    return {
+      title: `Answered by ${stepEngine || 'Cloud'}`,
+      subtitle: `Data left machine (Cloud: ${data.model || (step.metadata as any)?.model || 'cloud'})`,
+      icon: Globe,
+    };
+  }
+
   const tool = (
     (data.tool ||
       (step.input as any)?.tool ||
@@ -199,6 +212,14 @@ function TraceCard({
       <div className="text-sm truncate mb-1" style={{ color: 'var(--color-text)' }}>
         {trace.query || 'Untitled interaction'}
       </div>
+      {(trace.engine?.toLowerCase().includes('cloud') || trace.steps?.some(s => s.data?.data_left_device || (s.metadata as any)?.data_left_device)) && (
+        <div className="mb-1">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-sky-500/10 text-sky-400 font-medium border border-sky-500/20">
+            <Globe size={10} />
+            Data left machine ({trace.engine || 'Cloud'})
+          </span>
+        </div>
+      )}
       <div
         className="flex items-center gap-2 text-[11px]"
         style={{ color: 'var(--color-text-tertiary)' }}
