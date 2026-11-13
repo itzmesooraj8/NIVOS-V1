@@ -252,75 +252,73 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
             user_query = m.content
             break
 
-    # 0. Instant model-free clock answer for pure date/time/day questions
-    from nivos.prompt.realtime_context import is_direct_datetime_query, format_direct_datetime_response
-    if is_direct_datetime_query(user_query):
-        tz_name = getattr(getattr(config, "user", None), "timezone", "Asia/Kolkata")
-        user_loc = getattr(getattr(config, "user", None), "location", "Palakkad, Kerala, India")
-        clock_reply = format_direct_datetime_response(
-            user_query,
-            timezone_name=tz_name,
-            location=user_loc,
-        )
+    # 0. Intent layer: code decides, not the model
+    from nivos.server.intent_router import classify_intent, execute_intent
+    intent_match = classify_intent(user_query)
+    if intent_match is not None:
+        trace_store = getattr(request.app.state, "trace_store", None)
+        intent_res = await asyncio.to_thread(execute_intent, intent_match, config, trace_store)
+        reply_content = intent_res.reply_text
+        reason_label = f"Intent router ({intent_res.intent})"
         if request_body.stream:
-            async def _stream_clock_response():
-                chunk_id = f"chatcmpl-clock-{uuid.uuid4().hex[:12]}"
+            async def _stream_intent_response():
+                chunk_id = f"chatcmpl-intent-{uuid.uuid4().hex[:12]}"
                 role_chunk = ChatCompletionChunk(
                     id=chunk_id,
-                    model="server-clock",
+                    model="intent-router",
                     choices=[
                         StreamChoice(
                             delta=DeltaMessage(role="assistant"),
                         )
                     ],
-                    routing_reason="Instant server clock (no model call)",
+                    routing_reason=reason_label,
                 )
                 yield f"data: {role_chunk.model_dump_json()}\n\n"
 
                 content_chunk = ChatCompletionChunk(
                     id=chunk_id,
-                    model="server-clock",
+                    model="intent-router",
                     choices=[
                         StreamChoice(
-                            delta=DeltaMessage(content=clock_reply),
+                            delta=DeltaMessage(content=reply_content),
                         )
                     ],
-                    routing_reason="Instant server clock (no model call)",
+                    routing_reason=reason_label,
                 )
                 yield f"data: {content_chunk.model_dump_json()}\n\n"
 
                 stop_chunk = ChatCompletionChunk(
                     id=chunk_id,
-                    model="server-clock",
+                    model="intent-router",
                     choices=[
                         StreamChoice(
                             delta=DeltaMessage(),
                             finish_reason="stop",
                         )
                     ],
-                    routing_reason="Instant server clock (no model call)",
+                    routing_reason=reason_label,
                 )
                 yield f"data: {stop_chunk.model_dump_json()}\n\n"
                 yield "data: [DONE]\n\n"
 
-            return StreamingResponse(_stream_clock_response(), media_type="text/event-stream")
+            return StreamingResponse(_stream_intent_response(), media_type="text/event-stream")
         else:
             return ChatCompletionResponse(
-                id=f"chatcmpl-clock-{uuid.uuid4().hex[:12]}",
-                model="server-clock",
+                id=f"chatcmpl-intent-{uuid.uuid4().hex[:12]}",
+                model="intent-router",
                 choices=[
                     Choice(
                         index=0,
-                        message=ChoiceMessage(role="assistant", content=clock_reply),
+                        message=ChoiceMessage(role="assistant", content=reply_content),
                         finish_reason="stop",
                     )
                 ],
                 usage=UsageInfo(
                     prompt_tokens=0,
-                    completion_tokens=len(clock_reply.split()),
-                    total_tokens=len(clock_reply.split()),
+                    completion_tokens=len(reply_content.split()),
+                    total_tokens=len(reply_content.split()),
                 ),
-                routing_reason="Instant server clock (no model call)",
+                routing_reason=reason_label,
             )
 
     # 1. Search Policy & Pre-fetching for current-info and weather
