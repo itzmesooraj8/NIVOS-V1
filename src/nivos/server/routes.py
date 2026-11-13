@@ -1657,6 +1657,26 @@ async def pull_model(request: Request):
     return {"status": "ok", "model": model_name}
 
 
+@router.post("/v1/models/repair-embeddings")
+async def repair_embeddings_endpoint(request: Request):
+    """Repair corrupted embedding models (missing blobs) via Ollama rm and pull."""
+    import asyncio
+    from nivos.connectors.embeddings import do_repair_embeddings
+
+    model_name = "nomic-embed-text"
+    try:
+        body = await request.json()
+        if isinstance(body, dict) and body.get("model"):
+            model_name = str(body["model"]).strip()
+    except Exception:
+        pass
+
+    ok, msg = await asyncio.to_thread(do_repair_embeddings, model_name)
+    if not ok:
+        raise HTTPException(status_code=500, detail=msg)
+    return {"status": "ok", "message": msg, "model": model_name}
+
+
 @router.delete("/v1/models/{model_name:path}")
 async def delete_model(model_name: str, request: Request):
     """Delete a model from Ollama."""

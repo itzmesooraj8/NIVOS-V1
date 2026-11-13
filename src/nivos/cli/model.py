@@ -718,3 +718,20 @@ def convert(
             border_style="green",
         )
     )
+
+
+@model.command("repair-embeddings")
+@click.option("--model-name", default="nomic-embed-text", help="Embedding model to repair.")
+def repair_embeddings_cmd(model_name: str) -> None:
+    """Repair corrupted embedding models (missing blobs) via Ollama rm and pull."""
+    from nivos.connectors.embeddings import do_repair_embeddings
+
+    console = Console()
+    console.print(f"[yellow]Repairing embedding model {model_name}...[/yellow]")
+    ok, msg = do_repair_embeddings(model_name)
+    if ok:
+        console.print(f"[green]✓ {msg}[/green]")
+    else:
+        console.print(f"[red]✗ {msg}[/red]")
+        sys.exit(1)
+

@@ -32,6 +32,39 @@ DEFAULT_OLLAMA_HOST = "http://localhost:11434"
 DEFAULT_EMBED_MODEL = "nomic-embed-text"
 
 
+def do_repair_embeddings(model_name: str = DEFAULT_EMBED_MODEL) -> tuple[bool, str]:
+    """Repair embedding model by running ollama rm then ollama pull."""
+    import shutil
+    import subprocess
+
+    ollama_bin = shutil.which("ollama") or "ollama"
+    try:
+        subprocess.run(
+            [ollama_bin, "rm", model_name],
+            capture_output=True,
+            check=False,
+            text=True,
+        )
+    except Exception as exc:
+        return False, f"Failed removing {model_name}: {exc}"
+
+    try:
+        proc = subprocess.run(
+            [ollama_bin, "pull", model_name],
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=300.0,
+        )
+        if proc.returncode == 0:
+            return True, f"Successfully repaired {model_name}"
+        err = (proc.stderr or proc.stdout or "").strip()
+        return False, f"Failed pulling {model_name}: {err}"
+    except Exception as exc:
+        return False, f"Failed pulling {model_name}: {exc}"
+
+
+
 class OllamaEmbedder:
     """Embed text via a local Ollama daemon.
 

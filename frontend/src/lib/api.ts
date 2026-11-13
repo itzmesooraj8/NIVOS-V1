@@ -319,6 +319,20 @@ export async function pullModel(modelName: string): Promise<void> {
   }
 }
 
+export async function repairEmbeddings(modelName = 'nomic-embed-text'): Promise<string> {
+  const res = await apiFetch(`/v1/models/repair-embeddings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: modelName }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => res.statusText);
+    throw new Error(`Failed to repair embeddings: ${detail}`);
+  }
+  const data = await res.json();
+  return data.message || 'Embeddings model repaired';
+}
+
 export async function deleteModel(modelName: string): Promise<void> {
   if (isTauri()) {
     try {

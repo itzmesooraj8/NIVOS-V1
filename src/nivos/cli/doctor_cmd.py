@@ -370,6 +370,69 @@ def _check_nodejs() -> CheckResult:
         return CheckResult("Node.js", "warn", f"Error checking version: {exc}")
 
 
+def _check_embeddings_model(
+    probes: Optional[Dict[str, _EngineProbe]] = None,
+) -> CheckResult:
+    """Check whether embedding model nomic-embed-text is available and uncorrupted."""
+    resolved_probes = probes if probes is not None else _probe_engines()
+    ollama_probe = resolved_probes.get("ollama")
+    if not ollama_probe or not ollama_probe.healthy or ollama_probe.engine is None:
+        return CheckResult(
+            "Embeddings model",
+            "warn",
+            "Ollama unreachable",
+            details="Start Ollama to check embedding models.",
+        )
+
+    try:
+        models = ollama_probe.engine.list_models()
+        has_embed = any("nomic-embed-text" in m for m in models)
+        if not has_embed:
+            return CheckResult(
+                "Embeddings model",
+                "warn",
+                "nomic-embed-text not installed",
+                details="Run `nivos model repair-embeddings` or `ollama pull nomic-embed-text`.",
+            )
+
+        import json
+        import os
+        import urllib.request
+        from nivos.core.config import load_config
+
+        config = load_config()
+        host = (
+            config.engine.ollama_host
+            or os.environ.get("OLLAMA_HOST")
+            or "http://localhost:11434"
+        ).rstrip("/")
+        req = urllib.request.Request(
+            f"{host}/api/embeddings",
+            data=json.dumps({"model": "nomic-embed-text", "prompt": "test"}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=4.0) as resp:
+            if resp.status == 200:
+                return CheckResult(
+                    "Embeddings model",
+                    "ok",
+                    "nomic-embed-text ready (768-dim)",
+                )
+        return CheckResult(
+            "Embeddings model",
+            "warn",
+            "Corrupted model (metadata/blob error)",
+            details="Run `nivos model repair-embeddings` to re-pull the clean model.",
+        )
+    except Exception as exc:
+        return CheckResult(
+            "Embeddings model",
+            "warn",
+            f"Corrupted or broken: {exc}",
+            details="Run `nivos model repair-embeddings` to fix missing blobs.",
+        )
+
+
 def _check_docker() -> CheckResult:
     """Check Docker daemon availability for the sandbox."""
     try:
@@ -413,6 +476,7 @@ def _run_all_checks() -> List[CheckResult]:
     engine_probes = _probe_engines()
     checks.extend(_check_engines(engine_probes))
     checks.extend(_check_models(engine_probes))
+    checks.append(_check_embeddings_model(engine_probes))
     checks.append(_check_default_model(engine_probes))
     checks.extend(_check_optional_deps())
     checks.append(_check_speech_backend())
@@ -429,8 +493,19 @@ def _results_to_dicts(checks: List[CheckResult]) -> List[Dict[str, Any]]:
 
 @click.command()
 @click.option("--json", "as_json", is_flag=True, help="Output results as JSON.")
-def doctor(as_json: bool) -> None:
+@click.option("--fix-embeddings", is_flag=True, help="Automatically repair corrupted embedding models.")
+def doctor(as_json: bool, fix_embeddings: bool = False) -> None:
     """Run diagnostic checks on your Nivos installation."""
+    if fix_embeddings:
+        from nivos.connectors.embeddings import do_repair_embeddings
+
+        console = Console()
+        console.print("[yellow]Running embeddings repair action...[/yellow]")
+        ok, msg = do_repair_embeddings("nomic-embed-text")
+        if ok:
+            console.print(f"[green]✓ {msg}[/green]")
+        else:
+            console.print(f"[red]✗ {msg}[/red]")
     checks = _run_all_checks()
 
     if as_json:

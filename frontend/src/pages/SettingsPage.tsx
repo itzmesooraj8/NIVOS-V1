@@ -51,6 +51,7 @@ import {
   fetchModels,
   fetchServerInfo,
   fetchDiagnostics,
+  repairEmbeddings,
   fetchMcpServers,
   addMcpServer,
   deleteMcpServer,
@@ -2105,6 +2106,7 @@ export function SettingsPage() {
   }, []);
 
   const [memoryStatus, setMemoryStatus] = useState<MemoryStatus>({ kind: 'loading' });
+  const [repairingEmbeddings, setRepairingEmbeddings] = useState(false);
   const memoryRequestId = useRef(0);
   const [memoryEnabled, setMemoryEnabled] = useState(() => {
     try { return localStorage.getItem('nivos-memory-enabled') !== 'false'; } catch { return true; }
@@ -2549,6 +2551,36 @@ export function SettingsPage() {
           {/* Memory */}
           <Section title="Memory">
             <MemoryStatusRow status={memoryStatus} onRetry={() => { void refreshMemoryStatus(); }} />
+            <SettingRow
+              label="Embedding model"
+              description="nomic-embed-text for local semantic retrieval. Re-pull if corrupted."
+            >
+              <button
+                type="button"
+                onClick={async () => {
+                  setRepairingEmbeddings(true);
+                  try {
+                    const msg = await repairEmbeddings();
+                    toast.success(msg || 'Embeddings repaired');
+                    void refreshMemoryStatus();
+                  } catch (e: any) {
+                    toast.error(e?.message || 'Failed to repair embeddings');
+                  } finally {
+                    setRepairingEmbeddings(false);
+                  }
+                }}
+                disabled={repairingEmbeddings}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                style={{
+                  background: 'var(--color-bg-tertiary)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-text)',
+                }}
+              >
+                <RefreshCw size={12} className={repairingEmbeddings ? 'animate-spin' : ''} />
+                {repairingEmbeddings ? 'Repairing...' : 'Repair embeddings'}
+              </button>
+            </SettingRow>
             <SettingRow label="Use memory context" description="Automatically inject relevant memories into conversations">
               <button
                 onClick={() => {
