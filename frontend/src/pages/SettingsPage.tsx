@@ -41,6 +41,7 @@ import {
   setInferenceSource,
   getCloudKeyStatus,
   saveCloudKey,
+  testCloudKey,
   getPrivacySettings,
   savePrivacySettings,
   fetchToolCredentialStatus,
@@ -297,6 +298,23 @@ function ApiKeyInput({
     }
   };
 
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ status: string; message: string } | null>(null);
+
+  const handleTest = async () => {
+    setError('');
+    setTestResult(null);
+    setTesting(true);
+    try {
+      const res = await testCloudKey(keyName, value.trim());
+      setTestResult(res);
+    } catch (e: any) {
+      setTestResult({ status: 'error', message: e?.message || 'Connection error' });
+    } finally {
+      setTesting(false);
+    }
+  };
+
   return (
     <div className="flex items-center gap-2">
       <input
@@ -316,8 +334,28 @@ function ApiKeyInput({
           Remove
         </button>
       )}
+      {(hasKey || value.trim()) && !toolName && (
+        <button
+          onClick={() => void handleTest()}
+          disabled={testing}
+          className="px-2 py-1 rounded text-[10px] cursor-pointer"
+          style={{ color: 'var(--color-primary)', border: '1px solid var(--color-primary)' }}
+        >
+          {testing ? 'Testing...' : 'Test key'}
+        </button>
+      )}
       {saved && <span className="text-[10px]" style={{ color: 'var(--color-success)' }}>Saved</span>}
       {error && <span className="text-[10px]" style={{ color: 'var(--color-error)' }}>{error}</span>}
+      {testResult && (
+        <span
+          className="text-[10px]"
+          style={{
+            color: testResult.status === 'ok' ? 'var(--color-success)' : 'var(--color-error)',
+          }}
+        >
+          {testResult.message}
+        </span>
+      )}
     </div>
   );
 }

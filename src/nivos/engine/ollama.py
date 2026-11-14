@@ -165,6 +165,7 @@ class OllamaEngine(AsyncHTTPEngineMixin, InferenceEngine):
                 max_tokens=max_tokens,
                 kwargs=kwargs,
             ),
+            "keep_alive": kwargs.get("keep_alive", "30m"),
         }
         # Disable extended thinking by default (Qwen3.5 etc.).
         # When enabled, thinking tokens consume the entire budget and
@@ -287,6 +288,7 @@ class OllamaEngine(AsyncHTTPEngineMixin, InferenceEngine):
                 max_tokens=max_tokens,
                 kwargs=kwargs,
             ),
+            "keep_alive": kwargs.get("keep_alive", "30m"),
         }
         # Mirror generate()'s default: disable extended thinking unless the
         # caller opted in. Qwen3/etc. with thinking on can stall the visible
@@ -386,6 +388,7 @@ class OllamaEngine(AsyncHTTPEngineMixin, InferenceEngine):
                 max_tokens=max_tokens,
                 kwargs=kwargs,
             ),
+            "keep_alive": kwargs.get("keep_alive", "30m"),
         }
         if "think" not in kwargs:
             payload["think"] = False
@@ -543,7 +546,7 @@ class OllamaEngine(AsyncHTTPEngineMixin, InferenceEngine):
             h = parsed.hostname or "127.0.0.1"
             if h in ("127.0.0.1", "localhost", "::1"):
                 p = parsed.port or (443 if parsed.scheme == "https" else 11434)
-                with socket.create_connection((h, p), timeout=0.1):
+                with socket.create_connection((h, p), timeout=min(timeout, 1.0)):
                     pass
         except OSError:
             return False

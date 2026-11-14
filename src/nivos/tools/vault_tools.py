@@ -377,8 +377,12 @@ class SaveToInboxTool(BaseTool):
             from nivos.storage.checkpoint_manager import create_checkpoint
 
             checkpoint_info = create_checkpoint(target_file, operation="inbox")
-        except Exception:
-            pass
+        except Exception as exc:
+            return ToolResult(
+                tool_name="save_to_inbox",
+                content=f"Checkpoint creation failed: {exc}. Aborting note creation.",
+                success=False,
+            )
 
         try:
             target_file.write_text(content, encoding="utf-8")

@@ -91,7 +91,11 @@ def _load_vault_me_md(vault_path: str = "") -> str:
         return ""
 
 
-def _ensure_identity_prompt(messages: list[Message], app_config) -> list[Message]:
+def _ensure_identity_prompt(
+    messages: list[Message],
+    app_config,
+    should_send_tools: bool = False,
+) -> list[Message]:
     """Return one leading system message, adding identity when needed.
 
     The desktop UI's chat backend posts only user/assistant turns to
@@ -141,10 +145,12 @@ def _ensure_identity_prompt(messages: list[Message], app_config) -> list[Message
 
             from nivos.prompt.builder import SystemPromptBuilder
 
+            tools_list = getattr(getattr(cfg, "tools", None), "enabled", []) if should_send_tools else []
             builder = SystemPromptBuilder(
                 agent_template=cfg.agent.default_system_prompt or "",
                 memory_files_config=getattr(cfg, "memory_files", None),
                 system_prompt_config=getattr(cfg, "system_prompt", None),
+                enabled_tools=tools_list,
             )
             prompt = builder.build()
         except Exception:
@@ -159,7 +165,12 @@ def _ensure_identity_prompt(messages: list[Message], app_config) -> list[Message
         system_parts.append(prompt)
     me_profile = _load_vault_me_md()
     if me_profile and not any("from me.md" in part or "about me" in part.lower() for part in system_parts):
-        system_parts.append(f"## User Profile (from me.md)\n{me_profile}")
+        from nivos.server.cloud_router import wrap_sensitive_content
+
+        tagged_profile = wrap_sensitive_content(
+            f"## User Profile (from me.md)\n{me_profile}", source="me.md"
+        )
+        system_parts.append(tagged_profile)
     system_parts.extend(message.text for message in system_messages if message.text)
 
     non_system_messages = [
@@ -341,10 +352,19 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
     # 2. Model Routing Tiers
     from nivos.server.tier_router import TierRouter, enforce_resident_memory_budget
     tier_router = TierRouter(config)
+    has_history = len(request_body.messages) > 1 and any(
+        m.role in ("assistant", "user") for m in request_body.messages[:-1]
+    )
+    req_m = (
+        request_body.model
+        if request_body.model and request_body.model not in {"auto", "default"}
+        else None
+    )
     selected_model, routing_reason, should_send_tools = tier_router.route_query(
         user_query,
-        requested_model=request_body.model or getattr(request.app.state, "model", ""),
+        requested_model=req_m,
         has_prefetched_data=bool(prefetched_context),
+        has_history=has_history,
     )
     model = selected_model
     request_body.model = model
@@ -378,8 +398,8 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
 
     from nivos.server.cloud_router import get_provider, _load_keys, is_cloud_model, stream_cloud
 
-    if _uses_direct_cloud_router(engine, model):
-        provider = get_provider(model)
+    if _uses_direct_cloud_router(engine, model) or model.startswith("gemini-"):
+        provider = get_provider(model) or ("google" if model.startswith("gemini-") else None)
         if provider:
             keys = _load_keys()
             key_map = {
@@ -393,7 +413,13 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
             needed = key_map.get(provider, ())
             has_key = any(keys.get(k) for k in needed)
             if not has_key:
-                raise HTTPException(status_code=400, detail="Add your key in Settings")
+                if provider == "google" or model.startswith("gemini-"):
+                    model = main_m
+                    request_body.model = main_m
+                    routing_reason = "No Gemini key set. Add one in Settings > Cloud keys (fell back to qwen3.5:4b)"
+                    provider = None
+                else:
+                    raise HTTPException(status_code=400, detail="Add your key in Settings")
     else:
         provider = None
 
@@ -546,10 +572,9 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
                 suggested_max_tokens=suggested,
                 routing_reason=routing_reason,
             )
-            # Bump max_tokens when complexity suggests more than what
-            # the client requested — never reduce below the request value.
-            if suggested > request_body.max_tokens:
-                request_body.max_tokens = suggested
+            # Respect explicit client max_tokens; only adjust when not explicitly set
+            if "max_tokens" not in request_body.model_fields_set:
+                request_body.max_tokens = min(suggested, 256)
         except Exception:
             logging.getLogger("nivos.server").debug(
                 "Complexity analysis failed",
@@ -565,6 +590,10 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
         )
     elif complexity_info is not None:
         complexity_info.routing_reason = routing_reason
+
+    # Cap max_tokens to 128 for fast-tier short Q&A to ensure snappy CPU response
+    if "fast tier" in routing_reason.lower() and (request_body.max_tokens is None or request_body.max_tokens > 128):
+        request_body.max_tokens = 128
 
     # Prompt diet breakdown calculation and logging
     try:
@@ -872,9 +901,26 @@ def _handle_direct(
     """Direct engine call without agent."""
     messages = _to_messages(req.messages)
     messages = _ensure_identity_prompt(messages, app_config)
-    kwargs: dict[str, Any] = {}
-    if req.tools:
-        kwargs["tools"] = req.tools
+    import inspect
+
+    direct_kwargs: dict[str, Any] = {}
+    try:
+        sig = inspect.signature(engine.generate)
+        params = sig.parameters
+        accepts_var_kwargs = any(
+            p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()
+        )
+        if accepts_var_kwargs or "think" in params:
+            direct_kwargs["think"] = False
+        if accepts_var_kwargs or "keep_alive" in params:
+            direct_kwargs["keep_alive"] = "30m"
+        if req.tools and (accepts_var_kwargs or "tools" in params):
+            direct_kwargs["tools"] = req.tools
+    except Exception:
+        direct_kwargs = {"think": False, "keep_alive": "30m"}
+        if req.tools:
+            direct_kwargs["tools"] = req.tools
+    kwargs = direct_kwargs
     if bus:
         from nivos.telemetry.instrumented_engine import InstrumentedEngine
         from nivos.telemetry.wrapper import instrumented_generate
@@ -1440,9 +1486,9 @@ async def _handle_stream(
             if use_cloud:
                 from nivos.server.cloud_router import sanitize_messages_for_cloud, stream_cloud_with_fallback
 
-                messages = sanitize_messages_for_cloud(messages)
+                cloud_messages = sanitize_messages_for_cloud(messages)
                 token_iter = stream_cloud_with_fallback(
-                    model, messages, req.temperature, req.max_tokens
+                    model, cloud_messages, req.temperature, req.max_tokens
                 )
             else:
                 # Use engine.stream() by default (preserves mock-engine
@@ -1467,11 +1513,28 @@ async def _handle_stream(
                         model, messages, req.temperature, req.max_tokens
                     )
                 else:
+                    import inspect
+
+                    stream_kwargs: dict[str, Any] = {}
+                    try:
+                        sig = inspect.signature(engine.stream)
+                        params = sig.parameters
+                        accepts_var_kwargs = any(
+                            p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()
+                        )
+                        if accepts_var_kwargs or "think" in params:
+                            stream_kwargs["think"] = False
+                        if accepts_var_kwargs or "keep_alive" in params:
+                            stream_kwargs["keep_alive"] = "30m"
+                    except Exception:
+                        stream_kwargs = {"think": False, "keep_alive": "30m"}
+
                     token_iter = engine.stream(
                         messages,
                         model=model,
                         temperature=req.temperature,
                         max_tokens=req.max_tokens,
+                        **stream_kwargs,
                     )
             async for token in token_iter:
                 full_content += token
@@ -1938,6 +2001,21 @@ async def delete_cloud_key(key_name: str, request: Request):
         except Exception:
             pass
     return {"status": "ok", "key": key_name, "set": False}
+
+
+@router.post("/v1/cloud/test-key")
+@router.post("/v1/cloud/keys/test")
+async def test_cloud_key(request: Request):
+    """Test a cloud API key and report OK / invalid key / rate limit in plain words."""
+    body = await request.json()
+    key_name = str(body.get("key_name") or body.get("key") or "GEMINI_API_KEY").strip()
+    key_value = str(body.get("key_value") or body.get("value") or "").strip()
+    if not key_value:
+        file_keys = _read_cloud_keys_file()
+        key_value = file_keys.get(key_name) or os.environ.get(key_name, "")
+    from nivos.server.cloud_router import probe_cloud_key
+
+    return probe_cloud_key(key_name, key_value)
 
 
 @router.get("/v1/settings/privacy")

@@ -28,8 +28,8 @@ def file_tool_kwargs(name: str, config: Any = None) -> dict[str, List[str]]:
 def resolve_allowed_dirs(allowed_dirs: Optional[List[str]]) -> List[str]:
     """Return *allowed_dirs*, or ``[security] allowed_dirs`` from the config.
 
-    An explicit empty list keeps the historical unrestricted behaviour. Invalid
-    or unreadable configuration must never silently remove a restriction.
+    An empty list fails closed (denies all file access). Invalid or unreadable
+    configuration must never silently remove a restriction.
     """
     if allowed_dirs is None:
         from nivos.core.config import load_config

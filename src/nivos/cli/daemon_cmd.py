@@ -379,7 +379,7 @@ def _api_healthy(port: int, timeout: float = 2.0) -> bool:
     import socket
     import urllib.request
     try:
-        with socket.create_connection(("127.0.0.1", port), timeout=0.1):
+        with socket.create_connection(("127.0.0.1", port), timeout=min(timeout, 1.0)):
             pass
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=timeout) as resp:
             return resp.status == 200

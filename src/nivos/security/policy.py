@@ -70,41 +70,94 @@ PROTECTED_WRITE_PATTERNS = [
 ]
 
 
-def is_path_safe_for_write(path_str: str, allowed_dirs: Optional[list[str]] = None) -> Tuple[bool, str]:
-    """Validate that a target write path is inside workspace/ or Nivos-Inbox/ or allowed_dirs, and not protected."""
-    if not path_str or not isinstance(path_str, str):
+def _get_canonical_vault_inbox() -> Optional[Path]:
+    """Resolve the canonical Nivos-Inbox directory inside the configured Obsidian vault."""
+    try:
+        from nivos.core.config import load_config
+
+        cfg = load_config()
+        obs_cfg = getattr(cfg, "obsidian", None)
+        vp = getattr(obs_cfg, "vault_path", "") if obs_cfg else ""
+        if not vp:
+            vp = r"C:\Nivos\NIVOS-vault"
+        vault_p = Path(vp).expanduser().resolve()
+        return (vault_p / "Nivos-Inbox").resolve()
+    except Exception:
+        return None
+
+
+def _validate_canonical_path(
+    path_str: str | Path,
+    operation: str = "write",
+    allowed_dirs: Optional[list[str]] = None,
+) -> Tuple[bool, str]:
+    """Canonical path validator preventing traversal, substring spoofing, and escaping symlinks."""
+    if not path_str or (isinstance(path_str, str) and not path_str.strip()):
         return False, "Target path is missing or invalid."
 
-    norm_path = path_str.replace("\\", "/").lower()
+    raw_path_str = str(path_str).strip()
+    norm_path = raw_path_str.replace("\\", "/").lower()
 
-    # Never allow writing, editing, or deleting me.md
-    for protected in PROTECTED_WRITE_PATTERNS:
-        if norm_path.endswith(protected) or f"/{protected}" in norm_path:
-            return False, f"Writing to protected file '{protected}' is strictly forbidden."
+    # Reject protected patterns for mutating operations (write, patch, delete)
+    if operation in ("write", "patch", "delete"):
+        for protected in PROTECTED_WRITE_PATTERNS:
+            if norm_path == protected or norm_path.endswith(f"/{protected}") or f"/{protected}/" in norm_path:
+                return False, f"{operation.capitalize()} operation on protected file '{protected}' is strictly forbidden."
 
-    # Check sensitive file names
     from nivos.security.file_policy import is_sensitive_file
 
-    target_p = Path(path_str).expanduser()
-    if is_sensitive_file(target_p):
-        return False, f"Writing to sensitive file '{path_str}' is denied."
+    target_p = Path(raw_path_str).expanduser()
+    try:
+        resolved = target_p.resolve()
+    except Exception as exc:
+        return False, f"Could not resolve canonical path '{path_str}': {exc}"
 
-    # Check allowed roots: workspace/, Nivos-Inbox/, or configured security.allowed_dirs
+    # Check sensitivity
+    if is_sensitive_file(target_p) or is_sensitive_file(resolved):
+        return False, f"Access to sensitive file '{path_str}' is denied."
+
+    # Additional check on resolved filename for protected patterns
+    if operation in ("write", "patch", "delete"):
+        for protected in PROTECTED_WRITE_PATTERNS:
+            if resolved.name.lower() == protected.lower():
+                return False, f"{operation.capitalize()} operation on protected file '{protected}' is strictly forbidden."
+
+    # Verify confinement within authorized directories
+    # 1. Workspace
     from nivos.core.paths import get_workspace_dir
 
     try:
-        resolved = target_p.resolve()
         ws_dir = get_workspace_dir().resolve()
         if resolved == ws_dir or resolved.is_relative_to(ws_dir):
             return True, ""
     except Exception:
         pass
 
-    # Check Nivos-Inbox
-    if "nivos-inbox" in norm_path:
-        return True, ""
+    # 2. Canonical Vault Nivos-Inbox
+    inbox_dir = _get_canonical_vault_inbox()
+    if inbox_dir is not None:
+        try:
+            if resolved == inbox_dir or resolved.is_relative_to(inbox_dir):
+                return True, ""
+        except Exception:
+            pass
 
-    # Check allowed_dirs if configured
+    # 3. For read operations, also allow reading other non-sensitive notes in the vault
+    if operation == "read":
+        try:
+            from nivos.tools.vault_tools import _get_vault_path
+
+            vp = _get_vault_path()
+            if vp is not None:
+                vault_dir = vp.resolve()
+                if resolved == vault_dir or resolved.is_relative_to(vault_dir):
+                    if resolved.name.lower() == "me.md":
+                        return False, "Reading me.md directly is restricted to profile loader."
+                    return True, ""
+        except Exception:
+            pass
+
+    # 4. Explicit or configured allowed_dirs
     if allowed_dirs is None:
         try:
             from nivos.core.config import load_config
@@ -123,6 +176,26 @@ def is_path_safe_for_write(path_str: str, allowed_dirs: Optional[list[str]] = No
                 continue
 
     return False, f"Target path '{path_str}' is outside workspace/, Nivos-Inbox/, and allowed directories."
+
+
+def is_path_safe_for_write(path_str: str | Path, allowed_dirs: Optional[list[str]] = None) -> Tuple[bool, str]:
+    """Validate that a target write path is inside workspace/ or Nivos-Inbox/ or allowed_dirs, and not protected."""
+    return _validate_canonical_path(path_str, operation="write", allowed_dirs=allowed_dirs)
+
+
+def is_path_safe_for_read(path_str: str | Path, allowed_dirs: Optional[list[str]] = None) -> Tuple[bool, str]:
+    """Validate that a target read path is inside workspace/, vault, or allowed_dirs, and not sensitive."""
+    return _validate_canonical_path(path_str, operation="read", allowed_dirs=allowed_dirs)
+
+
+def is_path_safe_for_delete(path_str: str | Path, allowed_dirs: Optional[list[str]] = None) -> Tuple[bool, str]:
+    """Validate that a target delete path is inside workspace/ or allowed_dirs, and not protected."""
+    return _validate_canonical_path(path_str, operation="delete", allowed_dirs=allowed_dirs)
+
+
+def is_path_safe_for_patch(path_str: str | Path, allowed_dirs: Optional[list[str]] = None) -> Tuple[bool, str]:
+    """Validate that a target patch path is inside workspace/ or allowed_dirs, and not protected."""
+    return _validate_canonical_path(path_str, operation="patch", allowed_dirs=allowed_dirs)
 
 
 def is_tool_allowed(
@@ -204,6 +277,9 @@ __all__ = [
     "PROTECTED_WRITE_PATTERNS",
     "RequestOrigin",
     "SAFE_READONLY_TOOLS",
+    "is_path_safe_for_delete",
+    "is_path_safe_for_patch",
+    "is_path_safe_for_read",
     "is_path_safe_for_write",
     "is_tool_allowed",
 ]

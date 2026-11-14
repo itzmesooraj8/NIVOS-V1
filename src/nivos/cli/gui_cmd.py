@@ -386,7 +386,7 @@ def _check_frontend_port(port: int) -> None:
 def _api_healthy(port: int, timeout: float = 3.0) -> bool:
     """Return whether an API server is answering on *port*."""
     try:
-        with socket.create_connection(("127.0.0.1", port), timeout=0.1):
+        with socket.create_connection(("127.0.0.1", port), timeout=min(timeout, 1.0)):
             pass
         with urllib.request.urlopen(
             f"http://127.0.0.1:{port}/health", timeout=timeout

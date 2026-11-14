@@ -50,6 +50,18 @@ export async function saveCloudKey(keyName: string, keyValue: string): Promise<v
   }
 }
 
+export async function testCloudKey(keyName: string, keyValue?: string): Promise<{ status: string; message: string }> {
+  const res = await apiFetch('/v1/cloud/test-key', {
+    method: 'POST',
+    body: JSON.stringify({ key_name: keyName, key_value: keyValue || '' }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Failed to test cloud key' }));
+    return { status: 'error', message: err.detail || 'Test failed' };
+  }
+  return await res.json();
+}
+
 export interface PrivacySettings {
   allow_obsidian_to_cloud: boolean;
 }

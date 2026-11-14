@@ -1,17 +1,17 @@
-# Nivos configuration — GLM-4.7-Flash eval on 8x A100-80GB
+# Nivos default configuration
 
 # ═══════════════════════════════════════════════════════════════
 # PILLAR 1: Intelligence — The Model
 # ═══════════════════════════════════════════════════════════════
 [intelligence]
-default_model = "zai-org/GLM-4.7-Flash"   # HuggingFace model ID
-fallback_model = "glm-4.7-flash"          # Catalog alias fallback
-preferred_engine = "vllm"                 # MoE model, vLLM is best for A100s
-provider = "local"                        # Running locally on this machine
-quantization = "none"                     # Full precision, we have 640GB VRAM
-# Generation defaults for eval
-temperature = 0.0                         # Deterministic for reproducibility
-max_tokens = 2048                         # Standard eval output length
+default_model = "qwen3.5:4b"               # Default model
+fallback_model = "qwen3.5:2b"              # Fast model fallback
+preferred_engine = "ollama"                # Local Ollama engine
+provider = "local"                         # Running locally on this machine
+quantization = "none"                      # Model quantization
+# Generation defaults
+temperature = 0.0                          # Deterministic for reproducibility
+max_tokens = 2048                          # Standard output length
 top_p = 0.9
 top_k = 40
 repetition_penalty = 1.0
@@ -40,7 +40,7 @@ enabled = true
 # PILLAR 4: Engine — The Inference Runtime
 # ═══════════════════════════════════════════════════════════════
 [engine]
-default = "vllm"
+default = "ollama"
 
 [engine.vllm]
 host = "http://localhost:8001"            # vLLM serving port
@@ -124,8 +124,8 @@ port = 8000
 agent = "native_openhands"
 
 [user]
-location = "Palakkad, Kerala, India"
-timezone = "Asia/Kolkata"
+location = ""
+timezone = "UTC"
 
 [routing]
 fast = "qwen3.5:2b"

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from collections.abc import AsyncIterator
 from typing import Any, Sequence
 
@@ -23,6 +24,47 @@ from nivos.core.types import Message
 
 _CLOUD_ENV_FILE = get_config_dir() / "cloud-keys.env"
 _APPROVALS_FILE = get_config_dir() / "cloud_approvals.json"
+
+SENSITIVE_TAG_OPEN = "<nivos-sensitive"
+SENSITIVE_TAG_CLOSE = "</nivos-sensitive>"
+_SENSITIVE_TAG_RE = re.compile(
+    r"<nivos-sensitive(?:\s+[^>]*)?>[\s\S]*?</nivos-sensitive>", re.IGNORECASE
+)
+
+
+def wrap_sensitive_content(text: str, source: str = "vault") -> str:
+    """Wrap private vault, memory, or me.md content in a sensitivity tag."""
+    if not text:
+        return ""
+    return f'<nivos-sensitive source="{source}">\n{text}\n</nivos-sensitive>'
+
+
+def contains_sensitive_content(text: str) -> bool:
+    """Check whether a string contains sensitivity tags."""
+    if not text:
+        return False
+    return SENSITIVE_TAG_OPEN in text and SENSITIVE_TAG_CLOSE in text
+
+
+def is_cloud_dispatch_auto_approved(
+    provider_id: str, messages: Sequence[Message]
+) -> bool:
+    """Check if dispatch to provider is auto-approved under 'Allow always'.
+
+    Requirements:
+    1. Provider must be in always_allowed list.
+    2. NONE of the messages can contain tagged sensitive content (me.md, memory, vault).
+       If tagged content is present, explicit user confirmation is always required.
+    """
+    if not is_provider_always_allowed(provider_id):
+        return False
+
+    for m in messages:
+        c = m.content or ""
+        if contains_sensitive_content(c):
+            return False
+
+    return True
 
 _OPENAI_PREFIXES = ("gpt-", "o1-", "o3-", "o4-", "chatgpt-")
 _ANTHROPIC_PREFIXES = ("claude-",)
@@ -40,6 +82,76 @@ _LOCAL_HF_ORGS = (
     "unsloth/",
     "lmstudio-community/",
 )
+
+
+def validate_key_format(key_name: str, key_value: str) -> tuple[bool, str]:
+    """Validate API key format (e.g. AIza... for Google AI Studio)."""
+    val = (key_value or "").strip()
+    if not val:
+        return False, "API key cannot be empty."
+
+    k_clean = key_name.upper()
+    if "GEMINI" in k_clean or "GOOGLE" in k_clean:
+        if not val.startswith("AIza"):
+            return False, "Unexpected key format: Google AI Studio keys typically start with 'AIza...'"
+    elif "ANTHROPIC" in k_clean:
+        if not val.startswith("sk-ant-"):
+            return False, "Unexpected key format: Anthropic keys typically start with 'sk-ant-...'"
+    elif "OPENAI" in k_clean:
+        if not val.startswith("sk-"):
+            return False, "Unexpected key format: OpenAI keys typically start with 'sk-...'"
+
+    return True, ""
+
+
+def probe_cloud_key(key_name: str, key_value: str) -> dict[str, Any]:
+    """Make a minimal probe request to verify key validity, returning status and plain words."""
+    val = (key_value or "").strip()
+    valid, format_reason = validate_key_format(key_name, val)
+    if not valid:
+        return {"status": "invalid_format", "message": format_reason}
+
+    k_clean = key_name.upper()
+    try:
+        if "GEMINI" in k_clean or "GOOGLE" in k_clean:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models?key={val}"
+            resp = httpx.get(url, timeout=8.0)
+            if resp.status_code == 200:
+                return {"status": "ok", "message": "Key is valid and working."}
+            elif resp.status_code in (400, 403) or "API_KEY_INVALID" in resp.text:
+                return {"status": "invalid_key", "message": "Invalid API key."}
+            elif resp.status_code == 429 or "RESOURCE_EXHAUSTED" in resp.text:
+                return {"status": "rate_limit", "message": "Rate limit exceeded on this API key."}
+            else:
+                return {"status": "error", "message": f"Provider error (HTTP {resp.status_code})"}
+
+        elif "OPENAI" in k_clean:
+            resp = httpx.get("https://api.openai.com/v1/models", headers={"Authorization": f"Bearer {val}"}, timeout=8.0)
+            if resp.status_code == 200:
+                return {"status": "ok", "message": "Key is valid and working."}
+            elif resp.status_code in (401, 403):
+                return {"status": "invalid_key", "message": "Invalid API key."}
+            elif resp.status_code == 429:
+                return {"status": "rate_limit", "message": "Rate limit exceeded on this API key."}
+            else:
+                return {"status": "error", "message": f"Provider error (HTTP {resp.status_code})"}
+
+        elif "ANTHROPIC" in k_clean:
+            resp = httpx.get("https://api.anthropic.com/v1/models", headers={"x-api-key": val, "anthropic-version": "2023-06-01"}, timeout=8.0)
+            if resp.status_code == 200:
+                return {"status": "ok", "message": "Key is valid and working."}
+            elif resp.status_code in (401, 403):
+                return {"status": "invalid_key", "message": "Invalid API key."}
+            elif resp.status_code == 429:
+                return {"status": "rate_limit", "message": "Rate limit exceeded on this API key."}
+            else:
+                return {"status": "error", "message": f"Provider error (HTTP {resp.status_code})"}
+
+        else:
+            return {"status": "ok", "message": "Key format accepted."}
+
+    except Exception as exc:
+        return {"status": "error", "message": f"Connection error: {exc}"}
 
 
 def _load_keys() -> dict[str, str]:
@@ -132,30 +244,36 @@ def clear_provider_approvals() -> None:
 
 
 def sanitize_messages_for_cloud(messages: Sequence[Message]) -> list[Message]:
-    """Sanitize message history to NEVER leak vault notes or me.md to the cloud."""
+    """Sanitize message history by strictly stripping tagged sensitive content."""
     sanitized: list[Message] = []
     for m in messages:
         content = m.content or ""
         role = m.role.value if hasattr(m.role, "value") else str(m.role)
 
-        # Check for me.md or vault note injections
-        lower_c = content.lower()
-        if "me.md" in lower_c or "nivos-memory" in lower_c or "obsidian" in lower_c or "vault note" in lower_c:
-            lines = content.splitlines()
-            cleaned_lines = []
-            skip = False
-            for line in lines:
-                l_lower = line.lower()
-                if "## user profile" in l_lower or "me.md" in l_lower or "obsidian:" in l_lower or "[vault note" in l_lower:
-                    skip = True
-                    continue
-                if skip and line.startswith("#"):
-                    skip = False
-                if not skip:
-                    cleaned_lines.append(line)
-            content = "\n".join(cleaned_lines).strip()
-            if not content and role == "system":
-                continue
+        # 1. Strip tagged sensitive blocks cleanly
+        if contains_sensitive_content(content):
+            content = _SENSITIVE_TAG_RE.sub("", content).strip()
+
+        # 2. Legacy fallback for system messages only (never strip user messages by keyword)
+        if role == "system":
+            lower_c = content.lower()
+            if "## user profile (from me.md)" in lower_c or "[vault note:" in lower_c:
+                lines = content.splitlines()
+                cleaned_lines = []
+                skip = False
+                for line in lines:
+                    l_lower = line.lower()
+                    if "## user profile" in l_lower or "[vault note:" in l_lower:
+                        skip = True
+                        continue
+                    if skip and line.startswith("#"):
+                        skip = False
+                    if not skip:
+                        cleaned_lines.append(line)
+                content = "\n".join(cleaned_lines).strip()
+
+        if not content and role == "system":
+            continue
 
         sanitized.append(Message(role=role, content=content))
     return sanitized

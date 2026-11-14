@@ -18,6 +18,20 @@ import type { ManagedAgent } from './api';
 import { isEmbedOnlyModel } from './model-capabilities';
 import { serializeToolCallArguments } from './tool-call';
 
+export function isCloudModelId(id: string): boolean {
+  if (!id) return false;
+  const lower = id.toLowerCase();
+  return (
+    lower.startsWith('gemini-') ||
+    lower.startsWith('gpt-') ||
+    lower.startsWith('claude-') ||
+    lower.startsWith('openrouter/') ||
+    lower.startsWith('o1-') ||
+    lower.startsWith('o3-') ||
+    lower.startsWith('o4-')
+  );
+}
+
 export interface CachedConnector {
   connector_id: string;
   display_name: string;
@@ -514,15 +528,24 @@ export const useAppStore = create<AppState>((set, get) => {
         // same list as chat models. Auto-picking models[0] selected the
         // embedder and every chat failed with HTTP 400 "does not support
         // chat". Prefer a real chat model for selection / fallback.
+        // Filter chat models (exclude embed-only models)
         const chatModels = models.filter((m) => !isEmbedOnlyModel(m.id));
+        // Cloud models are excluded from auto-selection unless cloud is enabled
+        const cloudAllowed = Boolean((state.settings as any)?.cloudEnabled);
+        const candidateModels = cloudAllowed
+          ? chatModels
+          : chatModels.filter((m) => !isCloudModelId(m.id));
+
         const preferred =
           (state.settings.defaultModel &&
-            chatModels.some((m) => m.id === state.settings.defaultModel) &&
+            candidateModels.some((m) => m.id === state.settings.defaultModel) &&
             state.settings.defaultModel) ||
-          chatModels.find((m) => m.id === 'qwen3.5:9b')?.id ||
-          chatModels.find((m) => m.id.includes('qwen3.5'))?.id ||
-          chatModels[0]?.id ||
-          models.find((m) => !isEmbedOnlyModel(m.id))?.id ||
+          candidateModels.find((m) => m.id === 'qwen3.5:4b')?.id ||
+          candidateModels.find((m) => m.id === 'qwen3.5:2b')?.id ||
+          candidateModels.find((m) => m.id === 'qwen3.5:9b')?.id ||
+          candidateModels.find((m) => m.id.includes('qwen3.5'))?.id ||
+          candidateModels[0]?.id ||
+          chatModels.find((m) => !isCloudModelId(m.id))?.id ||
           '';
 
         const currentIsBad =

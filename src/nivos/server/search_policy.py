@@ -24,6 +24,94 @@ _WEATHER_KEYWORDS = re.compile(
     re.IGNORECASE,
 )
 
+WMO_WEATHER_DESCRIPTIONS: dict[int, str] = {
+    0: "Clear sky",
+    1: "Mainly clear",
+    2: "Partly cloudy",
+    3: "Overcast",
+    45: "Fog",
+    48: "Depositing rime fog",
+    51: "Light drizzle",
+    53: "Moderate drizzle",
+    55: "Dense drizzle",
+    61: "Slight rain",
+    63: "Moderate rain",
+    65: "Heavy rain",
+    71: "Slight snow fall",
+    73: "Moderate snow fall",
+    75: "Heavy snow fall",
+    80: "Slight rain showers",
+    81: "Moderate rain showers",
+    82: "Violent rain showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm with slight hail",
+    99: "Thunderstorm with heavy hail",
+}
+
+
+def fetch_open_meteo_weather(location: str = "Palakkad, Kerala, India") -> str:
+    """Fetch current weather data using the public Open-Meteo API (no API key required)."""
+    import urllib.parse
+    import urllib.request
+
+    clean_loc = (location or "Palakkad, Kerala, India").strip()
+    lat, lon = None, None
+    display_name = clean_loc
+    country = ""
+    try:
+        geo_url = (
+            f"https://geocoding-api.open-meteo.com/v1/search?"
+            f"name={urllib.parse.quote(clean_loc)}&count=1&language=en&format=json"
+        )
+        req = urllib.request.Request(geo_url, headers={"User-Agent": "Nivos/1.0"})
+        with urllib.request.urlopen(req, timeout=6.0) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            results = data.get("results")
+            if results and len(results) > 0:
+                first = results[0]
+                lat = first.get("latitude")
+                lon = first.get("longitude")
+                display_name = first.get("name", clean_loc)
+                country = first.get("country", "")
+    except Exception as exc:
+        logger.debug("Geocoding failed for '%s': %s", clean_loc, exc)
+
+    if lat is None or lon is None:
+        if "palakkad" in clean_loc.lower():
+            lat, lon = 10.7867, 76.6548
+            country = "India"
+        elif "tokyo" in clean_loc.lower():
+            lat, lon = 35.6895, 139.6917
+            country = "Japan"
+        else:
+            lat, lon = 0.0, 0.0
+
+    try:
+        forecast_url = (
+            f"https://api.open-meteo.com/v1/forecast?"
+            f"latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code"
+        )
+        req2 = urllib.request.Request(forecast_url, headers={"User-Agent": "Nivos/1.0"})
+        with urllib.request.urlopen(req2, timeout=6.0) as resp2:
+            data2 = json.loads(resp2.read().decode("utf-8"))
+            current = data2.get("current", {})
+            w_code = current.get("weather_code", 0)
+            desc = WMO_WEATHER_DESCRIPTIONS.get(w_code, "Partly cloudy")
+            result_payload = {
+                "location": {"name": display_name, "country": country},
+                "current": {
+                    "temperature": current.get("temperature_2m"),
+                    "feels_like": current.get("apparent_temperature"),
+                    "humidity": current.get("relative_humidity_2m"),
+                    "description": desc,
+                },
+                "provider": "Open-Meteo",
+            }
+            return json.dumps(result_payload)
+    except Exception as exc:
+        logger.debug("Open-Meteo forecast failed: %s", exc)
+        return ""
+
 
 def classify_search_intent(
     query: str,
@@ -386,6 +474,7 @@ __all__ = [
     "classify_search_intent",
     "classify_search_intents",
     "extract_weather_location",
+    "fetch_open_meteo_weather",
     "format_search_sources",
     "format_weather_report",
     "prefetch_current_info",
