@@ -24,21 +24,21 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _PLAIN_CHAT_EXACT = re.compile(
-    r"^(?:hi|hello|hey|howdy|sup|good\s+morning|good\s+afternoon|good\s+evening|good\s+night|"
+    r"^(?:hi|hello|hey|howdy|sup|whats\s+up|what's\s+up|wassup|good\s+morning|good\s+afternoon|good\s+evening|good\s+night|"
     r"good!|good|great|nice|awesome|cool|ok|okay|perfect|done|thanks|thank\s+you|thx|"
-    r"thank\s+you\s+so\s+much|who\s+are\s+you|what\s+can\s+you\s+do|how\s+are\s+you|"
-    r"bye|goodbye|see\s+ya|ping|test)[!.,?]*$",
+    r"thank\s+you\s+so\s+much|who\s+are\s+you|what\s+can\s+you\s+do(?:\s+for\s+me)?|what\s+can\s+u\s+do(?:\s+for\s+me)?|"
+    r"how\s+are\s+you|how\s+r\s+u|how\s+are\s+u|bye|goodbye|see\s+ya|ping|test)[\s!?.,]*$",
     re.IGNORECASE,
 )
 
 _TIME_DATE_PATTERN = re.compile(
-    r"^(?:what(?:'s|\s+is)?\s+)?(?:the\s+)?(?:current\s+)?(?:time|date|day|clock)(?:\s+(?:is\s+it|now|today|right\s+now))?\??$|"
-    r"\b(?:what\s+time\s+is\s+it|what\s+is\s+the\s+time|current\s+time|what\s+is\s+today's\s+date|what\s+date\s+is\s+today|what\s+day\s+is\s+today|day\s+of\s+the\s+week)\b",
+    r"^(?:(?:what(?:'s|\s+is)?|wat|tell\s+me)\s+)?(?:the\s+)?(?:current\s+)?(?:time|date|day|clock)(?:\s+(?:is\s+it|now|today|right\s+now|please))?[\s?]*$|"
+    r"\b(?:what\s+time\s+is\s+it|wat\s+time\s+is\s+it|what\s+is\s+the\s+time|whats\s+the\s+time|what's\s+the\s+time|current\s+time|what\s+is\s+today's\s+date|what\s+date\s+is\s+today|wat\s+is\s+the\s+date|what\s+day\s+is\s+today|day\s+of\s+the\s+week)\b",
     re.IGNORECASE,
 )
 
 _SYSTEM_STATS_PATTERN = re.compile(
-    r"\b(?:how\s+much\s+(?:free\s+)?ram|ram\s+usage|free\s+ram|ram\s+left|system\s+ram|"
+    r"\b(?:how\s+much\s+(?:free\s+)?ram|how\s+much\s+ram\s+(?:is\s+)?free|ram\s+usage|free\s+ram|ram\s+free|ram\s+left|system\s+ram|"
     r"cpu\s+usage|how\s+much\s+cpu|disk\s+space|free\s+disk|disk\s+usage|"
     r"system\s+stats|hardware\s+stats|resource\s+usage|system\s+memory)\b",
     re.IGNORECASE,
@@ -125,6 +125,8 @@ def classify_intent(query: str) -> Optional[IntentMatch]:
     if not query or not query.strip():
         return None
     cleaned = query.strip()
+    norm_query = re.sub(r"\s+\?", "?", cleaned).strip()
+    trimmed = re.sub(r"[?!.,;:]+$", "", norm_query).strip()
 
     # 0. User responses to cloud prompts
     if _CLOUD_APPROVAL_ONCE.match(cleaned):
@@ -135,6 +137,35 @@ def classify_intent(query: str) -> Optional[IntentMatch]:
         return IntentMatch(intent="cloud_approval_cancel", params={"query": cleaned})
     if _RUN_LOCALLY.match(cleaned):
         return IntentMatch(intent="run_locally", params={"query": cleaned})
+
+    if trimmed.lower() in (
+        "time",
+        "current time",
+        "what time",
+        "date",
+        "clock",
+        "what's the time",
+        "whats the time",
+        "time please",
+        "wat time is it",
+        "wat is the date",
+        "wat is the date today",
+    ):
+        return IntentMatch(intent="time/date", params={"query": cleaned})
+
+    if trimmed.lower() in (
+        "whats up",
+        "what's up",
+        "wassup",
+        "sup",
+        "what can you do for me",
+        "what can you do",
+        "what can u do",
+        "what can u do for me",
+        "how r u",
+        "how are u",
+    ):
+        return IntentMatch(intent="plain_chat", params={"query": cleaned})
 
     # 1. Plain chat (greetings / pleasantries — NO search, NO tools)
     if _PLAIN_CHAT_EXACT.match(cleaned):
@@ -221,6 +252,7 @@ def execute_intent(
     match: IntentMatch,
     config: Optional[NivosConfig] = None,
     trace_store: Any = None,
+    messages: Optional[Sequence[Any]] = None,
 ) -> IntentExecutionResult:
     """Execute the tool directly in code and format the single authoritative reply."""
     cfg = config or load_config()
@@ -243,10 +275,10 @@ def execute_intent(
             reply_text = "Great to hear! Let me know if you need anything else."
         elif "thank" in q_low or "thx" in q_low:
             reply_text = "You're welcome! Glad I could help."
-        elif "who are you" in q_low:
-            reply_text = "I am Nivos, your private on-device AI assistant."
-        elif "how are you" in q_low:
-            reply_text = "I'm running well and ready to assist you!"
+        elif any(p in q_low for p in ("who are you", "what are you", "what can you do", "what can u do", "who r u")):
+            reply_text = "I am Nivos, your private on-device AI assistant. I can help with system stats, notes, files, weather, and tasks."
+        elif any(p in q_low for p in ("how are you", "how are u", "how r u")):
+            reply_text = "I'm doing great and ready to help you!"
         elif any(w in q_low for w in ("bye", "goodbye", "see ya")):
             reply_text = "Goodbye! Have a great day."
         else:
@@ -496,7 +528,9 @@ def execute_intent(
             })
         else:
             prov_id, prov_name, default_model = provider_info
-            if is_cloud_dispatch_auto_approved(prov_id, messages):
+            from nivos.core.types import Message
+            msg_list = list(messages) if messages else [Message(role="user", content=user_query)]
+            if is_cloud_dispatch_auto_approved(prov_id, msg_list):
                 reply_text = f"Routing heavy job to {prov_name} ({default_model}). Always-allow permission active."
                 metadata.update({
                     "approved": True,

@@ -118,3 +118,111 @@ tasks:
     expected_intent_or_tool: "file_read"
     pass_condition: "file_read_success"
     max_seconds: 5.0
+
+  - id: "task_21_time_trailing_q"
+    input: "time ?"
+    expected_intent_or_tool: "time/date"
+    pass_condition: "time"
+    max_seconds: 5.0
+
+  - id: "task_22_whats_up_trailing_q"
+    input: "whats up ?"
+    expected_intent_or_tool: "plain_chat"
+    pass_condition: "greeting"
+    max_seconds: 5.0
+
+  - id: "task_23_what_can_you_do_for_me"
+    input: "what can you do for me ?"
+    expected_intent_or_tool: "plain_chat"
+    pass_condition: "identity"
+    max_seconds: 5.0
+
+  - id: "task_24_time_spaces"
+    input: "time   ?"
+    expected_intent_or_tool: "time/date"
+    pass_condition: "time"
+    max_seconds: 5.0
+
+  - id: "task_25_what_time_is_it_now"
+    input: "what time is it now ?"
+    expected_intent_or_tool: "time/date"
+    pass_condition: "time"
+    max_seconds: 5.0
+
+  - id: "task_26_current_time_q"
+    input: "current time ?"
+    expected_intent_or_tool: "time/date"
+    pass_condition: "time"
+    max_seconds: 5.0
+
+  - id: "task_27_whats_the_time"
+    input: "whats the time"
+    expected_intent_or_tool: "time/date"
+    pass_condition: "time"
+    max_seconds: 5.0
+
+  - id: "task_28_time_please"
+    input: "time please"
+    expected_intent_or_tool: "time/date"
+    pass_condition: "time"
+    max_seconds: 5.0
+
+  - id: "task_29_wat_is_the_date_today"
+    input: "wat is the date today ?"
+    expected_intent_or_tool: "time/date"
+    pass_condition: "date"
+    max_seconds: 5.0
+
+  - id: "task_30_day_of_the_week"
+    input: "day of the week ?"
+    expected_intent_or_tool: "time/date"
+    pass_condition: "date"
+    max_seconds: 5.0
+
+  - id: "task_31_sup_trailing_q"
+    input: "sup ?"
+    expected_intent_or_tool: "plain_chat"
+    pass_condition: "greeting"
+    max_seconds: 5.0
+
+  - id: "task_32_wassup"
+    input: "wassup"
+    expected_intent_or_tool: "plain_chat"
+    pass_condition: "greeting"
+    max_seconds: 5.0
+
+  - id: "task_33_how_r_u"
+    input: "how r u ?"
+    expected_intent_or_tool: "plain_chat"
+    pass_condition: "pleasantry"
+    max_seconds: 5.0
+
+  - id: "task_34_what_can_u_do"
+    input: "what can u do ?"
+    expected_intent_or_tool: "plain_chat"
+    pass_condition: "identity"
+    max_seconds: 5.0
+
+  - id: "task_35_who_are_you_q"
+    input: "who are you ?"
+    expected_intent_or_tool: "plain_chat"
+    pass_condition: "identity"
+    max_seconds: 5.0
+
+  - id: "task_36_how_much_ram_free"
+    input: "how much ram free ?"
+    expected_intent_or_tool: "system_stats"
+    pass_condition: "ram"
+    max_seconds: 5.0
+
+  - id: "task_37_ram_left"
+    input: "ram left ?"
+    expected_intent_or_tool: "system_stats"
+    pass_condition: "ram"
+    max_seconds: 5.0
+
+  - id: "task_38_cpu_usage_q"
+    input: "cpu usage ?"
+    expected_intent_or_tool: "system_stats"
+    pass_condition: "cpu"
+    max_seconds: 5.0

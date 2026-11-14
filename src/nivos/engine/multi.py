@@ -49,6 +49,31 @@ class MultiEngine(InferenceEngine):
 
     def _engine_for(self, model: str) -> InferenceEngine:
         """Find the engine that owns a model, refreshing the map once if needed."""
+        # Cloud models (e.g. gemini-*) must NEVER route to Ollama
+        is_gemini = model.startswith("gemini-")
+        try:
+            from nivos.server.cloud_router import is_cloud_model
+            is_cloud = is_cloud_model(model)
+        except Exception:
+            is_cloud = False
+
+        if is_gemini or is_cloud or any(model.startswith(p) for p in self._CLOUD_PREFIXES):
+            for key, eng in self._engines:
+                if key == "cloud":
+                    if hasattr(eng, "can_serve") and not eng.can_serve(model):
+                        raise ValueError(
+                            "No Gemini key set. Add one in Settings > Cloud keys"
+                            if is_gemini
+                            else f"Add your key in Settings to use cloud model {model!r}."
+                        )
+                    logger.info("Routing cloud model %r to cloud engine", model)
+                    return eng
+            raise ValueError(
+                "No Gemini key set. Add one in Settings > Cloud keys"
+                if is_gemini
+                else f"Add your key in Settings to use cloud model {model!r}."
+            )
+
         # 1. Ollama models always go to Ollama: check Ollama first if present
         for key, eng in self._engines:
             if key == "ollama":
@@ -84,22 +109,6 @@ class MultiEngine(InferenceEngine):
                         return eng
                 except Exception:
                     pass
-
-        # 5. Cloud models:
-        try:
-            from nivos.server.cloud_router import is_cloud_model
-            is_cloud = is_cloud_model(model)
-        except Exception:
-            is_cloud = False
-
-        if is_cloud or any(model.startswith(p) for p in self._CLOUD_PREFIXES):
-            for key, eng in self._engines:
-                if key == "cloud":
-                    if hasattr(eng, "can_serve") and not eng.can_serve(model):
-                        raise ValueError(f"Add your key in Settings to use cloud model {model!r}.")
-                    logger.info("Routing cloud model %r to cloud engine", model)
-                    return eng
-            raise ValueError(f"Add your key in Settings to use cloud model {model!r}.")
 
         raise ValueError(
             f"Model {model!r} not found in any engine "

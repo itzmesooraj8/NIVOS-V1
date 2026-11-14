@@ -130,116 +130,139 @@ def run_real_tasks_eval(
     passed_count = 0
     total_count = len(tasks)
 
-    for task in tasks:
-        tid = task.get("id", "")
-        inp = task.get("input", "")
-        expected = task.get("expected_intent_or_tool", "")
-        cond = task.get("pass_condition", "")
-        max_sec = float(task.get("max_seconds", 30.0))
+    import tempfile
+    import os
 
-        t0 = time.monotonic()
-        reply_text = ""
-        tokens = 0
-        error_msg = ""
+    old_ws = os.environ.get("NIVOS_WORKSPACE")
+    with tempfile.TemporaryDirectory(prefix="nivos_eval_") as eval_temp_dir:
+        temp_ws = Path(eval_temp_dir) / "workspace"
+        temp_vault = Path(eval_temp_dir) / "vault"
+        temp_inbox = temp_vault / "Nivos-Inbox"
+        temp_ws.mkdir(parents=True, exist_ok=True)
+        temp_inbox.mkdir(parents=True, exist_ok=True)
+
+        os.environ["NIVOS_WORKSPACE"] = str(temp_ws)
+
         try:
-            req_data = json.dumps({
-                "model": "qwen3.5:4b",
-                "messages": [{"role": "user", "content": inp}],
-            }).encode("utf-8")
-            req = urllib.request.Request(
-                endpoint,
-                data=req_data,
-                headers={"Content-Type": "application/json"},
-            )
-            with urllib.request.urlopen(req, timeout=max_sec + 5.0) as resp:
-                resp_json = json.loads(resp.read().decode("utf-8"))
-                reply_text = resp_json.get("choices", [{}])[0].get("message", {}).get("content", "")
-                usage = resp_json.get("usage", {})
-                tokens = usage.get("total_tokens") or (usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0))
-        except Exception as exc:
-            # Fallback to in-process execution if server endpoint is offline
-            try:
-                from nivos.server.intent_router import classify_intent, execute_intent
-                match = classify_intent(inp)
-                if match:
-                    res = execute_intent(match)
-                    reply_text = res.reply_text
+            for task in tasks:
+                tid = task.get("id", "")
+                inp = task.get("input", "")
+                expected = task.get("expected_intent_or_tool", "")
+                cond = task.get("pass_condition", "")
+                max_sec = float(task.get("max_seconds", 30.0))
+
+                t0 = time.monotonic()
+                reply_text = ""
+                tokens = 0
+                error_msg = ""
+                try:
+                    req_data = json.dumps({
+                        "model": "qwen3.5:4b",
+                        "messages": [{"role": "user", "content": inp}],
+                    }).encode("utf-8")
+                    req = urllib.request.Request(
+                        endpoint,
+                        data=req_data,
+                        headers={
+                            "Content-Type": "application/json",
+                            "X-Nivos-Workspace": str(temp_ws),
+                            "X-Nivos-Vault-Path": str(temp_vault),
+                        },
+                    )
+                    with urllib.request.urlopen(req, timeout=max_sec + 5.0) as resp:
+                        resp_json = json.loads(resp.read().decode("utf-8"))
+                        reply_text = resp_json.get("choices", [{}])[0].get("message", {}).get("content", "")
+                        usage = resp_json.get("usage", {})
+                        tokens = usage.get("total_tokens") or (usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0))
+                except Exception as exc:
+                    # Fallback to in-process execution if server endpoint is offline
+                    try:
+                        from nivos.server.intent_router import classify_intent, execute_intent
+                        match = classify_intent(inp)
+                        if match:
+                            res = execute_intent(match)
+                            reply_text = res.reply_text
+                        else:
+                            error_msg = str(exc)
+                    except Exception as inner_exc:
+                        error_msg = f"{exc} | {inner_exc}"
+
+                elapsed = time.monotonic() - t0
+
+                # Evaluate pass condition
+                is_pass = False
+                lower_reply = reply_text.lower()
+                if not error_msg:
+                    if cond == "greeting":
+                        is_pass = any(w in lower_reply for w in ["hi", "hello", "hey", "help", "assist", "greetings", "nivos"])
+                    elif cond == "pleasantry":
+                        is_pass = any(w in lower_reply for w in ["welcome", "glad", "happy", "help", "anytime", "great", "good"])
+                    elif cond == "identity":
+                        is_pass = "nivos" in lower_reply or "assistant" in lower_reply
+                    elif cond == "time":
+                        is_pass = bool(re.search(r"\b\d{1,2}:\d{2}\b|am|pm|time is", lower_reply))
+                    elif cond == "date":
+                        is_pass = bool(re.search(r"2026|today|monday|tuesday|wednesday|thursday|friday|saturday|sunday|january|february|march|april|may|june|july|august|september|october|november|december", lower_reply))
+                    elif cond == "ram":
+                        is_pass = "ram" in lower_reply or "gb" in lower_reply or "%" in lower_reply
+                    elif cond == "cpu":
+                        is_pass = "cpu" in lower_reply or "%" in lower_reply
+                    elif cond == "disk":
+                        is_pass = "disk" in lower_reply or "gb" in lower_reply or "free" in lower_reply
+                    elif cond == "weather":
+                        is_pass = "weather" in lower_reply or "tokyo" in lower_reply or "°c" in lower_reply or "temperature" in lower_reply
+                    elif cond == "open_app_no_shell":
+                        is_pass = ("spotify" in lower_reply or "calculator" in lower_reply or "opened" in lower_reply or "launched" in lower_reply) and "cmd.exe" not in lower_reply and "powershell" not in lower_reply
+                    elif cond == "file_created_with_receipt":
+                        is_pass = "created" in lower_reply or "receipt" in lower_reply or "eval_test.txt" in lower_reply
+                    elif cond == "note_saved":
+                        is_pass = "saved" in lower_reply or "inbox" in lower_reply or "nivos-inbox" in lower_reply
+                    elif cond == "vault_searched":
+                        is_pass = "vault" in lower_reply or "note" in lower_reply or "search" in lower_reply or "found" in lower_reply or "match" in lower_reply
+                    elif cond == "web_searched":
+                        is_pass = "search" in lower_reply or "python" in lower_reply or "results" in lower_reply or "release" in lower_reply
+                    elif cond == "approval_required":
+                        is_pass = "approval" in lower_reply or "approve" in lower_reply or "confirm" in lower_reply or "allow" in lower_reply or "cannot" in lower_reply
+                    elif cond == "math_result_1000":
+                        is_pass = "1000" in reply_text or "1,000" in reply_text
+                    elif cond == "file_read_success":
+                        is_pass = "hello world" in lower_reply or "eval_test.txt" in lower_reply or len(reply_text.strip()) > 0
+                    else:
+                        is_pass = len(reply_text.strip()) > 0
+
+                if is_pass and elapsed <= max_sec:
+                    status_str = "[bold green]PASS[/bold green]"
+                    passed_count += 1
+                    status_val = "PASS"
                 else:
-                    error_msg = str(exc)
-            except Exception as inner_exc:
-                error_msg = f"{exc} | {inner_exc}"
+                    status_str = "[bold red]FAIL[/bold red]"
+                    status_val = "FAIL"
 
-        elapsed = time.monotonic() - t0
+                table.add_row(
+                    tid,
+                    inp[:36] + ("..." if len(inp) > 36 else ""),
+                    expected,
+                    status_str,
+                    f"{elapsed:.2f}",
+                    str(tokens),
+                )
 
-        # Evaluate pass condition
-        is_pass = False
-        lower_reply = reply_text.lower()
-        if not error_msg:
-            if cond == "greeting":
-                is_pass = any(w in lower_reply for w in ["hi", "hello", "hey", "help", "assist", "greetings"])
-            elif cond == "pleasantry":
-                is_pass = any(w in lower_reply for w in ["welcome", "glad", "happy", "help", "anytime", "great", "good"])
-            elif cond == "identity":
-                is_pass = "nivos" in lower_reply
-            elif cond == "time":
-                is_pass = bool(re.search(r"\b\d{1,2}:\d{2}\b|am|pm|time is", lower_reply))
-            elif cond == "date":
-                is_pass = bool(re.search(r"2026|today|monday|tuesday|wednesday|thursday|friday|saturday|sunday|january|february|march|april|may|june|july|august|september|october|november|december", lower_reply))
-            elif cond == "ram":
-                is_pass = "ram" in lower_reply or "gb" in lower_reply or "%" in lower_reply
-            elif cond == "cpu":
-                is_pass = "cpu" in lower_reply or "%" in lower_reply
-            elif cond == "disk":
-                is_pass = "disk" in lower_reply or "gb" in lower_reply or "free" in lower_reply
-            elif cond == "weather":
-                is_pass = "weather" in lower_reply or "tokyo" in lower_reply or "°c" in lower_reply or "temperature" in lower_reply
-            elif cond == "open_app_no_shell":
-                is_pass = ("spotify" in lower_reply or "calculator" in lower_reply or "opened" in lower_reply or "launched" in lower_reply) and "cmd.exe" not in lower_reply and "powershell" not in lower_reply
-            elif cond == "file_created_with_receipt":
-                is_pass = "created" in lower_reply or "receipt" in lower_reply or "eval_test.txt" in lower_reply
-            elif cond == "note_saved":
-                is_pass = "saved" in lower_reply or "inbox" in lower_reply or "nivos-inbox" in lower_reply
-            elif cond == "vault_searched":
-                is_pass = "vault" in lower_reply or "note" in lower_reply or "search" in lower_reply or "found" in lower_reply or "match" in lower_reply
-            elif cond == "web_searched":
-                is_pass = "search" in lower_reply or "python" in lower_reply or "results" in lower_reply or "release" in lower_reply
-            elif cond == "approval_required":
-                is_pass = "approval" in lower_reply or "approve" in lower_reply or "confirm" in lower_reply or "allow" in lower_reply or "cannot" in lower_reply
-            elif cond == "math_result_1000":
-                is_pass = "1000" in reply_text or "1,000" in reply_text
-            elif cond == "file_read_success":
-                is_pass = "hello world" in lower_reply or "eval_test.txt" in lower_reply or len(reply_text.strip()) > 0
+                results.append({
+                    "id": tid,
+                    "input": inp,
+                    "expected_intent_or_tool": expected,
+                    "pass_condition": cond,
+                    "status": status_val,
+                    "latency_seconds": round(elapsed, 4),
+                    "tokens": tokens,
+                    "reply_preview": reply_text[:200],
+                    "error": error_msg,
+                })
+        finally:
+            if old_ws is not None:
+                os.environ["NIVOS_WORKSPACE"] = old_ws
             else:
-                is_pass = len(reply_text.strip()) > 0
-
-        if is_pass and elapsed <= max_sec:
-            status_str = "[bold green]PASS[/bold green]"
-            passed_count += 1
-            status_val = "PASS"
-        else:
-            status_str = "[bold red]FAIL[/bold red]"
-            status_val = "FAIL"
-
-        table.add_row(
-            tid,
-            inp[:36] + ("..." if len(inp) > 36 else ""),
-            expected,
-            status_str,
-            f"{elapsed:.2f}",
-            str(tokens),
-        )
-
-        results.append({
-            "id": tid,
-            "input": inp,
-            "expected_intent_or_tool": expected,
-            "pass_condition": cond,
-            "status": status_val,
-            "latency_seconds": round(elapsed, 4),
-            "tokens": tokens,
-            "reply_preview": reply_text[:200],
-            "error": error_msg,
-        })
+                os.environ.pop("NIVOS_WORKSPACE", None)
 
     console.print(table)
     pass_rate = (passed_count / total_count * 100.0) if total_count else 0.0

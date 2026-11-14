@@ -84,6 +84,76 @@ _LOCAL_HF_ORGS = (
 )
 
 
+def validate_key_format(key_name: str, key_value: str) -> tuple[bool, str]:
+    """Validate API key format (e.g. AIza... for Google AI Studio)."""
+    val = (key_value or "").strip()
+    if not val:
+        return False, "API key cannot be empty."
+
+    k_clean = key_name.upper()
+    if "GEMINI" in k_clean or "GOOGLE" in k_clean:
+        if not val.startswith("AIza"):
+            return False, "Unexpected key format: Google AI Studio keys typically start with 'AIza...'"
+    elif "ANTHROPIC" in k_clean:
+        if not val.startswith("sk-ant-"):
+            return False, "Unexpected key format: Anthropic keys typically start with 'sk-ant-...'"
+    elif "OPENAI" in k_clean:
+        if not val.startswith("sk-"):
+            return False, "Unexpected key format: OpenAI keys typically start with 'sk-...'"
+
+    return True, ""
+
+
+def probe_cloud_key(key_name: str, key_value: str) -> dict[str, Any]:
+    """Make a minimal probe request to verify key validity, returning status and plain words."""
+    val = (key_value or "").strip()
+    valid, format_reason = validate_key_format(key_name, val)
+    if not valid:
+        return {"status": "invalid_format", "message": format_reason}
+
+    k_clean = key_name.upper()
+    try:
+        if "GEMINI" in k_clean or "GOOGLE" in k_clean:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models?key={val}"
+            resp = httpx.get(url, timeout=8.0)
+            if resp.status_code == 200:
+                return {"status": "ok", "message": "Key is valid and working."}
+            elif resp.status_code in (400, 403) or "API_KEY_INVALID" in resp.text:
+                return {"status": "invalid_key", "message": "Invalid API key."}
+            elif resp.status_code == 429 or "RESOURCE_EXHAUSTED" in resp.text:
+                return {"status": "rate_limit", "message": "Rate limit exceeded on this API key."}
+            else:
+                return {"status": "error", "message": f"Provider error (HTTP {resp.status_code})"}
+
+        elif "OPENAI" in k_clean:
+            resp = httpx.get("https://api.openai.com/v1/models", headers={"Authorization": f"Bearer {val}"}, timeout=8.0)
+            if resp.status_code == 200:
+                return {"status": "ok", "message": "Key is valid and working."}
+            elif resp.status_code in (401, 403):
+                return {"status": "invalid_key", "message": "Invalid API key."}
+            elif resp.status_code == 429:
+                return {"status": "rate_limit", "message": "Rate limit exceeded on this API key."}
+            else:
+                return {"status": "error", "message": f"Provider error (HTTP {resp.status_code})"}
+
+        elif "ANTHROPIC" in k_clean:
+            resp = httpx.get("https://api.anthropic.com/v1/models", headers={"x-api-key": val, "anthropic-version": "2023-06-01"}, timeout=8.0)
+            if resp.status_code == 200:
+                return {"status": "ok", "message": "Key is valid and working."}
+            elif resp.status_code in (401, 403):
+                return {"status": "invalid_key", "message": "Invalid API key."}
+            elif resp.status_code == 429:
+                return {"status": "rate_limit", "message": "Rate limit exceeded on this API key."}
+            else:
+                return {"status": "error", "message": f"Provider error (HTTP {resp.status_code})"}
+
+        else:
+            return {"status": "ok", "message": "Key format accepted."}
+
+    except Exception as exc:
+        return {"status": "error", "message": f"Connection error: {exc}"}
+
+
 def _load_keys() -> dict[str, str]:
     """Read available cloud keys every call so live updates are picked up."""
     keys: dict[str, str] = {}

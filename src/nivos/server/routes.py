@@ -383,8 +383,8 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
 
     from nivos.server.cloud_router import get_provider, _load_keys, is_cloud_model, stream_cloud
 
-    if _uses_direct_cloud_router(engine, model):
-        provider = get_provider(model)
+    if _uses_direct_cloud_router(engine, model) or model.startswith("gemini-"):
+        provider = get_provider(model) or ("google" if model.startswith("gemini-") else None)
         if provider:
             keys = _load_keys()
             key_map = {
@@ -398,7 +398,13 @@ async def chat_completions(request_body: ChatCompletionRequest, request: Request
             needed = key_map.get(provider, ())
             has_key = any(keys.get(k) for k in needed)
             if not has_key:
-                raise HTTPException(status_code=400, detail="Add your key in Settings")
+                if provider == "google" or model.startswith("gemini-"):
+                    model = main_m
+                    request_body.model = main_m
+                    routing_reason = "No Gemini key set. Add one in Settings > Cloud keys (fell back to qwen3.5:4b)"
+                    provider = None
+                else:
+                    raise HTTPException(status_code=400, detail="Add your key in Settings")
     else:
         provider = None
 
@@ -1943,6 +1949,21 @@ async def delete_cloud_key(key_name: str, request: Request):
         except Exception:
             pass
     return {"status": "ok", "key": key_name, "set": False}
+
+
+@router.post("/v1/cloud/test-key")
+@router.post("/v1/cloud/keys/test")
+async def test_cloud_key(request: Request):
+    """Test a cloud API key and report OK / invalid key / rate limit in plain words."""
+    body = await request.json()
+    key_name = str(body.get("key_name") or body.get("key") or "GEMINI_API_KEY").strip()
+    key_value = str(body.get("key_value") or body.get("value") or "").strip()
+    if not key_value:
+        file_keys = _read_cloud_keys_file()
+        key_value = file_keys.get(key_name) or os.environ.get(key_name, "")
+    from nivos.server.cloud_router import probe_cloud_key
+
+    return probe_cloud_key(key_name, key_value)
 
 
 @router.get("/v1/settings/privacy")
