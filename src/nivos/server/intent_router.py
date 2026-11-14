@@ -473,7 +473,7 @@ def execute_intent(
     elif intent == "heavy_job":
         from nivos.server.cloud_router import (
             get_available_cloud_provider,
-            is_provider_always_allowed,
+            is_cloud_dispatch_auto_approved,
         )
 
         tool_name = "cloud_router"
@@ -496,7 +496,7 @@ def execute_intent(
             })
         else:
             prov_id, prov_name, default_model = provider_info
-            if is_provider_always_allowed(prov_id):
+            if is_cloud_dispatch_auto_approved(prov_id, messages):
                 reply_text = f"Routing heavy job to {prov_name} ({default_model}). Always-allow permission active."
                 metadata.update({
                     "approved": True,

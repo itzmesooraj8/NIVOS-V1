@@ -318,8 +318,12 @@ class ApplyPatchTool(BaseTool):
             from nivos.storage.checkpoint_manager import create_checkpoint
 
             checkpoint_info = create_checkpoint(path, operation="patch")
-        except Exception:
-            pass
+        except Exception as exc:
+            return ToolResult(
+                tool_name="apply_patch",
+                content=f"Checkpoint creation failed: {exc}. Aborting patch for safety.",
+                success=False,
+            )
 
         # Write patched content
         try:

@@ -51,9 +51,9 @@ class FileReadTool(BaseTool):
         )
 
     def _is_path_allowed(self, path: Path) -> bool:
-        """Check if path is within allowed directories."""
+        """Check if path is within allowed directories (fail-closed if empty)."""
         if not self._allowed_dirs:
-            return True
+            return False
         resolved = path.resolve()
         return any(
             resolved == d or resolved.is_relative_to(d) for d in self._allowed_dirs

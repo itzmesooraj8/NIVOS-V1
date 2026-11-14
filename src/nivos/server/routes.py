@@ -159,7 +159,12 @@ def _ensure_identity_prompt(messages: list[Message], app_config) -> list[Message
         system_parts.append(prompt)
     me_profile = _load_vault_me_md()
     if me_profile and not any("from me.md" in part or "about me" in part.lower() for part in system_parts):
-        system_parts.append(f"## User Profile (from me.md)\n{me_profile}")
+        from nivos.server.cloud_router import wrap_sensitive_content
+
+        tagged_profile = wrap_sensitive_content(
+            f"## User Profile (from me.md)\n{me_profile}", source="me.md"
+        )
+        system_parts.append(tagged_profile)
     system_parts.extend(message.text for message in system_messages if message.text)
 
     non_system_messages = [

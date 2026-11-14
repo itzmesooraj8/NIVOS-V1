@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from collections.abc import AsyncIterator
 from typing import Any, Sequence
 
@@ -23,6 +24,47 @@ from nivos.core.types import Message
 
 _CLOUD_ENV_FILE = get_config_dir() / "cloud-keys.env"
 _APPROVALS_FILE = get_config_dir() / "cloud_approvals.json"
+
+SENSITIVE_TAG_OPEN = "<nivos-sensitive"
+SENSITIVE_TAG_CLOSE = "</nivos-sensitive>"
+_SENSITIVE_TAG_RE = re.compile(
+    r"<nivos-sensitive(?:\s+[^>]*)?>[\s\S]*?</nivos-sensitive>", re.IGNORECASE
+)
+
+
+def wrap_sensitive_content(text: str, source: str = "vault") -> str:
+    """Wrap private vault, memory, or me.md content in a sensitivity tag."""
+    if not text:
+        return ""
+    return f'<nivos-sensitive source="{source}">\n{text}\n</nivos-sensitive>'
+
+
+def contains_sensitive_content(text: str) -> bool:
+    """Check whether a string contains sensitivity tags."""
+    if not text:
+        return False
+    return SENSITIVE_TAG_OPEN in text and SENSITIVE_TAG_CLOSE in text
+
+
+def is_cloud_dispatch_auto_approved(
+    provider_id: str, messages: Sequence[Message]
+) -> bool:
+    """Check if dispatch to provider is auto-approved under 'Allow always'.
+
+    Requirements:
+    1. Provider must be in always_allowed list.
+    2. NONE of the messages can contain tagged sensitive content (me.md, memory, vault).
+       If tagged content is present, explicit user confirmation is always required.
+    """
+    if not is_provider_always_allowed(provider_id):
+        return False
+
+    for m in messages:
+        c = m.content or ""
+        if contains_sensitive_content(c):
+            return False
+
+    return True
 
 _OPENAI_PREFIXES = ("gpt-", "o1-", "o3-", "o4-", "chatgpt-")
 _ANTHROPIC_PREFIXES = ("claude-",)
@@ -132,30 +174,36 @@ def clear_provider_approvals() -> None:
 
 
 def sanitize_messages_for_cloud(messages: Sequence[Message]) -> list[Message]:
-    """Sanitize message history to NEVER leak vault notes or me.md to the cloud."""
+    """Sanitize message history by strictly stripping tagged sensitive content."""
     sanitized: list[Message] = []
     for m in messages:
         content = m.content or ""
         role = m.role.value if hasattr(m.role, "value") else str(m.role)
 
-        # Check for me.md or vault note injections
-        lower_c = content.lower()
-        if "me.md" in lower_c or "nivos-memory" in lower_c or "obsidian" in lower_c or "vault note" in lower_c:
-            lines = content.splitlines()
-            cleaned_lines = []
-            skip = False
-            for line in lines:
-                l_lower = line.lower()
-                if "## user profile" in l_lower or "me.md" in l_lower or "obsidian:" in l_lower or "[vault note" in l_lower:
-                    skip = True
-                    continue
-                if skip and line.startswith("#"):
-                    skip = False
-                if not skip:
-                    cleaned_lines.append(line)
-            content = "\n".join(cleaned_lines).strip()
-            if not content and role == "system":
-                continue
+        # 1. Strip tagged sensitive blocks cleanly
+        if contains_sensitive_content(content):
+            content = _SENSITIVE_TAG_RE.sub("", content).strip()
+
+        # 2. Legacy fallback for system messages only (never strip user messages by keyword)
+        if role == "system":
+            lower_c = content.lower()
+            if "## user profile (from me.md)" in lower_c or "[vault note:" in lower_c:
+                lines = content.splitlines()
+                cleaned_lines = []
+                skip = False
+                for line in lines:
+                    l_lower = line.lower()
+                    if "## user profile" in l_lower or "[vault note:" in l_lower:
+                        skip = True
+                        continue
+                    if skip and line.startswith("#"):
+                        skip = False
+                    if not skip:
+                        cleaned_lines.append(line)
+                content = "\n".join(cleaned_lines).strip()
+
+        if not content and role == "system":
+            continue
 
         sanitized.append(Message(role=role, content=content))
     return sanitized

@@ -67,9 +67,9 @@ class FileWriteTool(BaseTool):
         )
 
     def _is_path_allowed(self, path: Path) -> bool:
-        """Check if path is within allowed directories."""
+        """Check if path is within allowed directories (fail-closed if empty)."""
         if not self._allowed_dirs:
-            return True
+            return False
         resolved = path.resolve()
         return any(
             resolved == d or resolved.is_relative_to(d) for d in self._allowed_dirs
@@ -166,8 +166,12 @@ class FileWriteTool(BaseTool):
             from nivos.storage.checkpoint_manager import create_checkpoint
 
             checkpoint_info = create_checkpoint(path, operation=mode)
-        except Exception:
-            pass
+        except Exception as exc:
+            return ToolResult(
+                tool_name="file_write",
+                content=f"Checkpoint creation failed: {exc}. Aborting write for safety.",
+                success=False,
+            )
 
         if mode == "write":
             try:
