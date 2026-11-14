@@ -156,10 +156,17 @@ def run_real_tasks_eval(
                 tokens = 0
                 error_msg = ""
                 try:
-                    req_data = json.dumps({
-                        "model": "qwen3.5:4b",
-                        "messages": [{"role": "user", "content": inp}],
-                    }).encode("utf-8")
+                    messages_payload = task.get("messages")
+                    if not messages_payload:
+                        messages_payload = [{"role": "user", "content": inp}]
+                    req_payload = {
+                        "model": task.get("model", "qwen3.5:4b"),
+                        "messages": messages_payload,
+                    }
+                    if task.get("stream", False):
+                        req_payload["stream"] = True
+
+                    req_data = json.dumps(req_payload).encode("utf-8")
                     req = urllib.request.Request(
                         endpoint,
                         data=req_data,
@@ -170,10 +177,27 @@ def run_real_tasks_eval(
                         },
                     )
                     with urllib.request.urlopen(req, timeout=max_sec + 5.0) as resp:
-                        resp_json = json.loads(resp.read().decode("utf-8"))
-                        reply_text = resp_json.get("choices", [{}])[0].get("message", {}).get("content", "")
-                        usage = resp_json.get("usage", {})
-                        tokens = usage.get("total_tokens") or (usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0))
+                        resp_content_type = resp.headers.get("content-type", "")
+                        raw_bytes = resp.read()
+                        if "text/event-stream" in resp_content_type:
+                            text_chunks = []
+                            for line in raw_bytes.decode("utf-8", errors="replace").splitlines():
+                                if line.startswith("data: ") and not line.startswith("data: [DONE]"):
+                                    try:
+                                        chunk_d = json.loads(line[6:])
+                                        for ch in chunk_d.get("choices", []):
+                                            c = ch.get("delta", {}).get("content")
+                                            if c:
+                                                text_chunks.append(c)
+                                    except Exception:
+                                        pass
+                            reply_text = "".join(text_chunks)
+                            tokens = len(reply_text.split())
+                        else:
+                            resp_json = json.loads(raw_bytes.decode("utf-8"))
+                            reply_text = resp_json.get("choices", [{}])[0].get("message", {}).get("content", "")
+                            usage = resp_json.get("usage", {})
+                            tokens = usage.get("total_tokens") or (usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0))
                 except Exception as exc:
                     # Fallback to in-process execution if server endpoint is offline
                     try:
@@ -227,6 +251,21 @@ def run_real_tasks_eval(
                         is_pass = "1000" in reply_text or "1,000" in reply_text
                     elif cond == "file_read_success":
                         is_pass = "hello world" in lower_reply or "eval_test.txt" in lower_reply or len(reply_text.strip()) > 0
+                    elif cond == "model_answer":
+                        is_pass = (
+                            len(reply_text.strip()) > 5
+                            and "error during generation" not in lower_reply
+                            and "cannot access local variable" not in lower_reply
+                            and not reply_text.strip().lower().startswith("error:")
+                        )
+                    elif cond == "capital_france":
+                        is_pass = "paris" in lower_reply and "error during generation" not in lower_reply
+                    elif cond == "follow_up_fruit":
+                        is_pass = any(w in lower_reply for w in ["blueberr", "fruit"]) and "error during generation" not in lower_reply
+                    elif cond == "deepest_ocean":
+                        is_pass = any(w in lower_reply for w in ["pacific", "ocean"]) and "error during generation" not in lower_reply
+                    elif cond == "short_email":
+                        is_pass = any(w in lower_reply for w in ["subject", "meeting", "thank", "john"]) and "error during generation" not in lower_reply
                     else:
                         is_pass = len(reply_text.strip()) > 0
 

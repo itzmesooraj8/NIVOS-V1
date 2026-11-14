@@ -1451,9 +1451,9 @@ async def _handle_stream(
             if use_cloud:
                 from nivos.server.cloud_router import sanitize_messages_for_cloud, stream_cloud_with_fallback
 
-                messages = sanitize_messages_for_cloud(messages)
+                cloud_messages = sanitize_messages_for_cloud(messages)
                 token_iter = stream_cloud_with_fallback(
-                    model, messages, req.temperature, req.max_tokens
+                    model, cloud_messages, req.temperature, req.max_tokens
                 )
             else:
                 # Use engine.stream() by default (preserves mock-engine

@@ -361,7 +361,7 @@ def warmup_dual_models(
 
 def enforce_resident_memory_budget(
     active_model: str,
-    host: str = "http://localhost:11434",
+    host: str = "http://127.0.0.1:11434",
     max_budget_gb: float = 6.5,
     fast_model: str = "qwen3.5:2b",
     main_model: str = "qwen3.5:4b",

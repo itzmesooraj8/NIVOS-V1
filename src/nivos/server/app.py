@@ -274,6 +274,43 @@ def create_app(
             except Exception as exc:
                 logger.debug("Channel connection background task: %s", exc)
 
+            # 7. Model path self-check (verify chat completion path to local model)
+            try:
+                from nivos.server.routes import _handle_stream
+                from nivos.server.models import ChatCompletionRequest, ChatMessage
+
+                fast_m = getattr(getattr(config, "routing", None), "fast", "qwen3.5:2b") or "qwen3.5:4b"
+                test_req = ChatCompletionRequest(
+                    model=fast_m,
+                    messages=[ChatMessage(role="user", content="ping")],
+                    stream=True,
+                    max_tokens=5,
+                )
+                eng = getattr(app.state, "engine", None)
+                if eng is not None:
+                    test_resp = await _handle_stream(eng, test_req.model, test_req, app_config=config)
+                    first_token = ""
+                    async for chunk in test_resp.body_iterator:
+                        if chunk.startswith("data: ") and not chunk.startswith("data: [DONE]"):
+                            import json as _json
+                            try:
+                                d = _json.loads(chunk[6:])
+                                c = d.get("choices", [{}])[0].get("delta", {}).get("content")
+                                if c:
+                                    first_token += c
+                                    break
+                            except Exception:
+                                pass
+                    if "Error during generation" in first_token:
+                        logger.error("[Startup Self-Check] Model path self-check FAILED: %s", first_token)
+                        logging.getLogger("uvicorn.error").error("[Startup Self-Check] Model path self-check FAILED: %s", first_token)
+                    else:
+                        logger.info("[Startup Self-Check] Model path self-check PASSED (model=%s, resp='%s')", test_req.model, first_token.strip()[:30])
+                        logging.getLogger("uvicorn.error").info("[Startup Self-Check] Model path self-check PASSED (model=%s, resp='%s')", test_req.model, first_token.strip()[:30])
+            except Exception as exc:
+                logger.error("[Startup Self-Check] Model path self-check encountered error: %s", exc, exc_info=True)
+                logging.getLogger("uvicorn.error").error("[Startup Self-Check] Model path self-check encountered error: %s", exc, exc_info=True)
+
         async def _run_ollama_supervisor_loop() -> None:
             supervisor = getattr(app.state, "ollama_supervisor", None)
             if supervisor is None:
