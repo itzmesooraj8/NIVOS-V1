@@ -145,8 +145,10 @@ class SystemPromptBuilder:
                     tools = ["web_search", "calculator", "think"]
             except Exception:
                 tools = ["web_search", "calculator", "think"]
-        tools_str = ", ".join(tools) if tools else "none"
-        return f"Enabled tools: {tools_str}. You have no other tools or capabilities."
+        if tools:
+            tools_str = ", ".join(tools)
+            return f"Enabled tools: {tools_str}. You have no other tools or capabilities."
+        return "Answer questions, explain concepts, and converse concisely using your knowledge."
 
     def _build_frozen_prefix(self) -> str:
         return "\n\n".join(section.content for section in self._get_frozen_sections())

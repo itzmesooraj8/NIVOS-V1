@@ -160,11 +160,13 @@ def run_real_tasks_eval(
                     if not messages_payload:
                         messages_payload = [{"role": "user", "content": inp}]
                     req_payload = {
-                        "model": task.get("model", "qwen3.5:4b"),
+                        "model": task.get("model", "auto"),
                         "messages": messages_payload,
                     }
                     if task.get("stream", False):
                         req_payload["stream"] = True
+                    if "max_tokens" in task:
+                        req_payload["max_tokens"] = task["max_tokens"]
 
                     req_data = json.dumps(req_payload).encode("utf-8")
                     req = urllib.request.Request(
@@ -251,6 +253,22 @@ def run_real_tasks_eval(
                         is_pass = "1000" in reply_text or "1,000" in reply_text
                     elif cond == "file_read_success":
                         is_pass = "hello world" in lower_reply or "eval_test.txt" in lower_reply or len(reply_text.strip()) > 0
+                    elif cond == "summary_ai":
+                        is_pass = any(w in lower_reply for w in ["artificial", "intelligence", "ai", "learn", "data", "pattern", "system", "decision"]) and "error during generation" not in lower_reply
+                    elif cond == "photosynthesis":
+                        is_pass = any(w in lower_reply for w in ["light", "plant", "sun", "energy", "chlorophyll", "oxygen", "sugar", "glucose"]) and "error during generation" not in lower_reply
+                    elif cond == "short_email":
+                        is_pass = any(w in lower_reply for w in ["subject", "meeting", "thank", "john"]) and "error during generation" not in lower_reply
+                    elif cond == "capital_france":
+                        is_pass = "paris" in lower_reply and "error during generation" not in lower_reply
+                    elif cond == "follow_up_fruit":
+                        is_pass = any(w in lower_reply for w in ["blueberr", "fruit"]) and "error during generation" not in lower_reply
+                    elif cond == "deepest_ocean":
+                        is_pass = any(w in lower_reply for w in ["pacific", "ocean", "mariana", "challenger"]) and "error during generation" not in lower_reply
+                    elif cond == "async_sync_comparison":
+                        is_pass = any(w in lower_reply for w in ["async", "sync", "blocking", "concurrency", "thread", "io-bound", "cpu-bound"]) and "error during generation" not in lower_reply
+                    elif cond == "quantum_entanglement":
+                        is_pass = any(w in lower_reply for w in ["quantum", "entangle", "particle", "state"]) and "error during generation" not in lower_reply
                     elif cond == "model_answer":
                         is_pass = (
                             len(reply_text.strip()) > 5
@@ -258,14 +276,6 @@ def run_real_tasks_eval(
                             and "cannot access local variable" not in lower_reply
                             and not reply_text.strip().lower().startswith("error:")
                         )
-                    elif cond == "capital_france":
-                        is_pass = "paris" in lower_reply and "error during generation" not in lower_reply
-                    elif cond == "follow_up_fruit":
-                        is_pass = any(w in lower_reply for w in ["blueberr", "fruit"]) and "error during generation" not in lower_reply
-                    elif cond == "deepest_ocean":
-                        is_pass = any(w in lower_reply for w in ["pacific", "ocean"]) and "error during generation" not in lower_reply
-                    elif cond == "short_email":
-                        is_pass = any(w in lower_reply for w in ["subject", "meeting", "thank", "john"]) and "error during generation" not in lower_reply
                     else:
                         is_pass = len(reply_text.strip()) > 0
 

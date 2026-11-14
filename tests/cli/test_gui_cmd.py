@@ -36,6 +36,7 @@ def test_gui_custom_ports_use_project_root_and_same_origin_proxy(
         mock.patch.object(gui_cmd.subprocess, "Popen", return_value=process) as popen,
         mock.patch.object(gui_cmd, "_FrontendOwner") as owner_type,
         mock.patch.object(gui_cmd, "_api_healthy", return_value=False),
+        mock.patch.object(gui_cmd, "_wait_for_api_healthy"),
         mock.patch.object(
             gui_cmd, "_wait_for_port", return_value=True
         ) as wait_for_port,

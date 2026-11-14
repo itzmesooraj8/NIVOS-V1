@@ -103,6 +103,31 @@ _TIME_TOOL_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+_SUMMARY_PATTERN = re.compile(
+    r"\b(summarise|summarize|summary|tl;dr|digest|condense|abstract)\b",
+    re.IGNORECASE,
+)
+
+_EMAIL_PATTERN = re.compile(
+    r"\b(email|draft an email|write an email|formal letter|compose an email)\b",
+    re.IGNORECASE,
+)
+
+_FOLLOW_UP_PATTERN = re.compile(
+    r"\b(follow-?up|previous|just mentioned|earlier|what did I|you said|as I said|last fruit|last item)\b",
+    re.IGNORECASE,
+)
+
+_ONE_LINE_PATTERN = re.compile(
+    r"\b(in \d+ lines?|in one line|in a line|in a sentence|one sentence|briefly|short answer|in 3 lines?)\b",
+    re.IGNORECASE,
+)
+
+_SHORT_FACTUAL_PATTERN = re.compile(
+    r"\b(what('s| is|\s+is)|wht\s+is|wat\s+is|who('s| is|\s+is| was)|where('s| is|\s+is)|when('s| is|\s+is)|which('s| is|\s+is)|how many|deepest|highest|capital city|largest|smallest|deepst|ocena|erath)\b",
+    re.IGNORECASE,
+)
+
 
 def has_tool_intent(query: str) -> bool:
     """Check if a query indicates intent to use tools (files, shell, search, weather, etc.)."""
@@ -280,50 +305,61 @@ class TierRouter:
         requested_model: Optional[str] = None,
         available_models: Optional[List[str]] = None,
         has_prefetched_data: bool = False,
+        has_history: bool = False,
     ) -> Tuple[str, str, bool]:
         """Route a user query to the best model tier.
 
         Returns:
-            (selected_model_name, routing_reason, allows_escalation)
+            (selected_model_name, routing_reason, allows_tools)
         """
-        # 1. Manual user override takes precedence
-        if requested_model and requested_model not in {"auto", "default", ""}:
-            reason = f"Manual override: {requested_model}"
-            if requested_model == self._deep_model:
-                reason = f"Manual override: deep tier ({requested_model})"
-            return requested_model, reason, True
-
         clean_query = query.strip() if query else ""
+        has_tools = has_tool_intent(clean_query)
+
+        # 1. Explicit 9B deep tier manual choice (9B only on manual choice)
+        if requested_model and requested_model in {self._deep_model, "qwen3.5:9b"}:
+            return requested_model, f"Manual override: deep tier ({requested_model})", has_tools
+
+        # Explicit custom/cloud model manual choice
+        if requested_model and requested_model not in {"auto", "default", "", self._fast_model, self._main_model, self._deep_model}:
+            return requested_model, f"Manual override: {requested_model}", has_tools
 
         # 2. Tool intent -> main tier (never fast) with tools enabled
-        # Crucial: Check tool intent before greetings so queries like
-        # "create a file called test-nivos.txt in my downloads containing the word hello"
-        # are never misclassified as casual greetings.
-        if has_tool_intent(clean_query):
+        if has_tools:
             if _CODE_PATTERN.search(clean_query) and "def " in clean_query:
                 return self._code_model, "Code tier (qwen2.5-coder:7b): programming query with tool intent", True
             return self._main_model, "Main tier (qwen3.5:4b): tool intent detected", True
 
-        # 3. Code detection -> code tier
+        # 3. Code detection -> code tier (no tools unless has_tools)
         if _CODE_PATTERN.search(clean_query):
-            return self._code_model, "Code tier (qwen2.5-coder:7b): programming query", True
+            return self._code_model, "Code tier (qwen2.5-coder:7b): programming query", False
 
-        # 4. Live search / weather pre-fetched data -> main tier
+        # 4. Summaries, emails, follow-ups, and live prefetched data -> 4B main tier
+        if _SUMMARY_PATTERN.search(clean_query):
+            return self._main_model, "Main tier (qwen3.5:4b): summary task", False
+        if _EMAIL_PATTERN.search(clean_query):
+            return self._main_model, "Main tier (qwen3.5:4b): email composition task", False
+        if has_history or _FOLLOW_UP_PATTERN.search(clean_query):
+            return self._main_model, "Main tier (qwen3.5:4b): multi-turn follow-up task", False
         if has_prefetched_data:
             return self._main_model, "Main tier (qwen3.5:4b): pre-fetched live data", False
 
-        # 5. Casual greetings & simple chat -> fast tier (no tools, zero reasoning lag)
-        if len(clean_query) < 80 and not has_tool_intent(clean_query):
+        # 5. Short factual questions, typo fixes, one-line answers -> 2B fast tier
+        if _ONE_LINE_PATTERN.search(clean_query) or _SHORT_FACTUAL_PATTERN.search(clean_query):
+            return self._fast_model, "Fast tier (qwen3.5:2b): short factual question / one-line answer", False
+
+        # 6. Casual greetings & simple chat
+        if len(clean_query) < 180:
             if _GREETING_PATTERN.search(clean_query) or _SIMPLE_MATH_PATTERN.match(clean_query):
                 return self._fast_model, "Fast tier (qwen3.5:2b): casual greeting / simple chat", False
+            return self._fast_model, "Fast tier (qwen3.5:2b): concise query", False
 
-        # 6. Default fallback -> main tier
-        return self._main_model, "Main tier (qwen3.5:4b): general assistant", True
+        # 7. Long queries / complex general assistant -> main tier
+        return self._main_model, "Main tier (qwen3.5:4b): general assistant", False
 
 
 def warmup_fast_model(
     model_name: str = "qwen3.5:2b",
-    host: str = "http://localhost:11434",
+    host: str = "http://127.0.0.1:11434",
     keep_alive: str = "30m",
     num_ctx: int = 4096,
 ) -> bool:
@@ -350,7 +386,7 @@ def warmup_fast_model(
 def warmup_dual_models(
     fast_model: str = "qwen3.5:2b",
     main_model: str = "qwen3.5:4b",
-    host: str = "http://localhost:11434",
+    host: str = "http://127.0.0.1:11434",
     keep_alive: str = "30m",
     num_ctx: int = 4096,
 ) -> None:

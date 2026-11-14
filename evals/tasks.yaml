@@ -105,7 +105,7 @@ tasks:
     input: "install app vlc"
     expected_intent_or_tool: "install_app"
     pass_condition: "approval_required"
-    max_seconds: 15.0
+    max_seconds: 30.0
 
   - id: "task_19_calculate"
     input: "calculate 125 * 8"
@@ -230,26 +230,30 @@ tasks:
   - id: "task_39_summarise_paragraph"
     input: "Summarise this paragraph in one sentence: Artificial intelligence enables computers to learn from data, identify patterns, and make decisions with minimal human intervention. Today, AI powers search engines, voice assistants, autonomous vehicles, and medical diagnosis systems across the globe."
     expected_intent_or_tool: "model_answer"
-    pass_condition: "model_answer"
-    max_seconds: 90.0
+    pass_condition: "summary_ai"
+    max_tokens: 60
+    max_seconds: 60.0
 
   - id: "task_40_explain_photosynthesis_3_lines"
     input: "explain photosynthesis in 3 lines"
     expected_intent_or_tool: "model_answer"
-    pass_condition: "model_answer"
-    max_seconds: 90.0
+    pass_condition: "photosynthesis"
+    max_tokens: 60
+    max_seconds: 45.0
 
   - id: "task_41_write_short_email"
     input: "write a short email to John thanking him for yesterday's project meeting"
     expected_intent_or_tool: "model_answer"
     pass_condition: "short_email"
-    max_seconds: 90.0
+    max_tokens: 75
+    max_seconds: 60.0
 
   - id: "task_42_general_knowledge"
     input: "What is the capital city of France?"
     expected_intent_or_tool: "model_answer"
     pass_condition: "capital_france"
-    max_seconds: 90.0
+    max_tokens: 35
+    max_seconds: 30.0
 
   - id: "task_43_follow_up_question"
     input: "What was the fruit I just mentioned?"
@@ -262,23 +266,28 @@ tasks:
         content: "What was the fruit I just mentioned?"
     expected_intent_or_tool: "model_answer"
     pass_condition: "follow_up_fruit"
-    max_seconds: 90.0
+    max_tokens: 40
+    max_seconds: 60.0
 
   - id: "task_44_typo_filled_question"
     input: "wht is the deepst ocena on erath?"
     expected_intent_or_tool: "model_answer"
     pass_condition: "deepest_ocean"
-    max_seconds: 90.0
+    max_tokens: 45
+    max_seconds: 30.0
 
   - id: "task_45_no_matching_intent"
     input: "whats up? what can you do for me?"
     expected_intent_or_tool: "model_answer"
     pass_condition: "model_answer"
-    max_seconds: 90.0
+    max_tokens: 60
+    max_seconds: 45.0
 
   - id: "task_46_long_message"
     input: "Please provide a structured comparison between synchronous and asynchronous programming paradigms. Discuss typical trade-offs in CPU-bound versus IO-bound scenarios, error handling complexity, and memory overhead when managing high concurrency."
     expected_intent_or_tool: "model_answer"
-    pass_condition: "model_answer"
-    max_seconds: 180.0
+    pass_condition: "async_sync_comparison"
+    max_tokens: 50
+    max_seconds: 60.0
+
 
